@@ -1,3 +1,5 @@
+C MODPATH-PLOT Version 4.00 (V4, Release 3, 7-2003)
+C    Fix problem in CONTOR with contours being flipped in Y direction
 C MODPATH-PLOT Version 4.00 (V4, Release 1, 2-2000)
 C  Changes to work with MODFLOW-2000
 C
@@ -406,6 +408,16 @@ C
      1             IYF,IYL,ILABEL,DTXX,DTXY,IUNIT)
 C
    55 CONTINUE
+C
+C
+C-----FLIP THE CONTOUR DATA ARRAY BACK AS IT WAS
+      DO 1001 J=1,NY/2
+      K=NY-J+1
+      DO 1001 I=1,NX
+      TEMP=Z(I,J)
+      Z(I,J)=Z(I,K)
+      Z(I,K)=TEMP
+1001  CONTINUE
 C
       CLOSE(IUNIT)
       RETURN

@@ -1,3 +1,6 @@
+C MODPATH Version 4.00 (V4, Release 3, 1-2002
+C Changes:
+C   In FLOLIN, write a message and stop if cell thickness is negative,
 C MODPATH Version 3.00 (V3, Release 2, 5-99)
 C Changes:
 C   No change from previous release: (V3, Release 1, 9-94)
@@ -175,6 +178,11 @@ C
       IF(ZMX.EQ.ZMN) ZMX=ZMX+0.01
       ZP= ZLOC*ZMX + (1.0-ZLOC)*ZMN
       DZ= ZMX-ZMN
+      IF(DZ.LE.0.0) THEN
+         WRITE(I7,*)' RUN STOPPED because cell thickness is negative.'
+         WRITE(I7,*) KP,IP,JP,ZMX,ZMN
+         STOP
+      END IF
 C
 C  ASSIGN FACE VELOCITIES
 C

@@ -1,8 +1,8 @@
-April, 2001
+July, 2003
 U. S. Geological Survey
 
 
-                      MODPATH/MODPATH-PLOT Version 4.2
+                      MODPATH/MODPATH-PLOT Version 4.3
               Distribution for IBM-PC compatible computers
 
 
@@ -33,10 +33,10 @@ The following self-extracting distribution file, containing the software,
 test data sets, and information files, is currently available for
 computer systems using one of the Microsoft Windows operating systems:
 
-         mpath4_2.exe
+         mpath4_3.exe
 
-File mpath.4_2/doc/modpath.txt describes the history of the software
-versions.  Also included in directory mpath.4_2/doc is a Portable
+File mpath.4_3/doc/modpath.txt describes the history of the software
+versions.  Also included in directory mpath.4_3/doc is a Portable
 Document Format (PDF) version of the MODPATH documentatoin
 (ofr94464.pdf).
 
@@ -52,7 +52,7 @@ B. EXTRACTING FILES
 
 Extract the files by executing file:
 
-        mpath4_2.exe
+        mpath4_3.exe
 
 When the extraction progrm runs, specify that the files should be
 restored to directory C:\WRDAPP .  The following directory structure
@@ -62,7 +62,7 @@ to the right):
 
 	C:\WRDAPP
               |
-              |-- MPATH90.4_2
+              |-- MPATH90.4_3
               |       |
               |       |-- DATA       (MODPATH test data files)
               |       |
@@ -118,7 +118,7 @@ D: INSTALLING
 
 Files MPATH4.BAT and MPLOT4.BAT must be copied from the SETUP directory
 to a directory in the user's search path. These BAT files rely on the
-runfiles being located in directory C:\WRDAPP\MPATH.4_2\SETUP.
+runfiles being located in directory C:\WRDAPP\MPATH.4_3\SETUP.
 
 
 
@@ -169,7 +169,7 @@ window.
 
 F. TESTING
 
-Directory C:\WRDAPP\MPATH.4_2\DATA has data files for running the example
+Directory C:\WRDAPP\MPATH.4_3\DATA has data files for running the example
 problems described in the MODPATH documentation.  Run these problems as
 follows:
 

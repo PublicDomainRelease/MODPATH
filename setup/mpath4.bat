@@ -6,12 +6,12 @@ REM value C:\WRDAPP
 REM
 if "%WRDAPP%" == "" GOTO DEFAULT
 echo %WRDAPP%\mpath.4_2\setup\  >  mpsearch
-%WRDAPP%\mpath.4_2\setup\mpathr4_2.exe %1
+%WRDAPP%\mpath.4_3\setup\mpathr4_3.exe %1
 GOTO DONE
 
 :DEFAULT
-echo C:\WRDAPP\mpath.4_2\setup\ > mpsearch
-C:\WRDAPP\mpath.4_2\setup\mpathr4_2.exe %1
+echo C:\WRDAPP\mpath.4_3\setup\ > mpsearch
+C:\WRDAPP\mpath.4_3\setup\mpathr4_3.exe %1
 
 :DONE
 del mpsearch

@@ -1,4 +1,4 @@
-C  MODPATH release: Version 4.00 (V4, Release 1, 2-2000)
+C  MODPATH release: Version 4.00 (V4, Release 3, 1-2002)
 C    New routines to read MODFLOW-2000 discretization file
 C
       SUBROUTINE DIS2AL(INDIS,IOUT,LAYCBD,NCBL,IGRID,NCOL,NROW,NLAY,
@@ -104,7 +104,7 @@ C------RETURN.
       END
 C=======================================================================
       SUBROUTINE DIS2RP(IN,IOUT,DELR,DELC,ZTOP,ZBOT,LAYCBD,NCON,PERLEN,
-     1          NUMTS,TIMX,ISS,NCOL,NROW,NLAY,NPER)
+     1          NUMTS,TIMX,ISS,NCOL,NROW,NLAY,NPER,ISSFLG)
 C
 C     ******************************************************************
 C     READ GLOBAL ARRAYS; ASSIGN IPAR.
@@ -114,8 +114,7 @@ C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
       DIMENSION DELR(NCOL),DELC(NROW),ZTOP(NCOL,NROW,NLAY),
      1   ZBOT(NCOL,NROW,NLAY),LAYCBD(200),NCON(NLAY)
-      DIMENSION PERLEN(NPER),NUMTS(NPER),TIMX(NPER)
-      DIMENSION ISSFLG(1000)
+      DIMENSION PERLEN(NPER),NUMTS(NPER),TIMX(NPER),ISSFLG(NPER)
       CHARACTER*200 LINE
       CHARACTER*24 ANAME(5)
       DATA ANAME(1) /'                    DELR'/

@@ -1,8 +1,11 @@
-C  MODPATH release: Version 4.00 (V4, Release 1, 2-2000)
+C  MODPATH release: Version 4.00
 C    Changes to work with MODFLOW-2000 -- IFACE values come from budget file
 C    rather than from MODFLOW stress files.
 C       Bug Fixes:
-C            1. ADDQAR -- added code to multiply IBOUND by 1000 for weak sinks
+C         1. ADDQAR -- added code to multiply IBOUND by 1000 for weak sinks
+C         2. ADDQAR, ver. 4.3 -- Corrected error in which RCH and EVT were
+C                  applied to the wrong layer when using COMPCAT BUDGET
+C                  and the layer is not layer 1
 C
 C MODPATH Version 3.00 (V3, Release 2, 5-99)
 C
@@ -60,7 +63,7 @@ C***** SUBROUTINE *****
       SUBROUTINE HQDATA(HEAD,QX,QY,QZ,BUFF,IUNIT,IBOUND,IBUFF,QSTO,QSS,
      1 DELR,DELC,
      2 LAYCON,KKPER,KKSTP,INHQ,FNAME,PERLEN,NUMTS,TIMX,IBSTRT,
-     3 HDRY,HNOFLO)
+     3 HDRY,HNOFLO,ISSFLG)
 C
       INCLUDE 'idat1.inc'
       COMMON /IDAT2/ IRCHTP,IEVTTP,NRCHOP,NEVTOP
@@ -70,7 +73,7 @@ C
      1 QY(NCOL,NRP1,NLAY),QZ(NCOL,NROW,NLP1),BUFF(NCOL,NROW,NLAY),
      2 IUNIT(NUNIT),IBOUND(NCOL,NROW,NLAY),IBUFF(NCOL,NROW,NLAY),
      3 QSTO(NCOL,NROW,NLAY),QSS(NCOL,NROW,NLAY),DELR(NCOL),DELC(NROW),
-     6 LAYCON(NLAY),PERLEN(NPER),NUMTS(NPER),TIMX(NPER),
+     6 LAYCON(NLAY),PERLEN(NPER),NUMTS(NPER),TIMX(NPER),ISSFLG(NPER),
      7 IBSTRT(NCOL,NROW,NLAY)
 C
       INTEGER NHLAY,NSTPSV
@@ -187,7 +190,7 @@ C  READ HEADS
 C  Read CBC flows
             CALL FLOWS (QX,QY,QZ,BUFF,IUNIT,IBOUND,IBUFF,QSTO,
      1        DELR,DELC,NCOL,NROW,NLAY,NCP1,NRP1,NLP1,NUNIT,QSS,I7,
-     2        IPER,ISTP,IRCHTP,IEVTTP,ISS)
+     2        IPER,ISTP,IRCHTP,IEVTTP,ISSFLG)
          END IF
 C
          IF (ISS.EQ.0 .AND. INHQ.EQ.3) THEN
@@ -471,11 +474,11 @@ C
 C***** SUBROUTINE *****
       SUBROUTINE FLOWS (QX,QY,QZ,BUFF,IUNIT,IBOUND,IBUFF,QSTO,
      1 DELR,DELC,NCOL,NROW,NLAY,NCP1,NRP1,NLP1,NUNIT,QSS,I7,
-     2 KPER,KSTP,IRCHTP,IEVTTP,ISS)
+     2 KPER,KSTP,IRCHTP,IEVTTP,ISSFLG)
 C
       DIMENSION DELC(NROW),DELR(NCOL),QX(NCP1,NROW,NLAY),
      1 QY(NCOL,NRP1,NLAY),QZ(NCOL,NROW,NLP1),BUFF(NCOL,NROW,NLAY),
-     2 IUNIT(NUNIT),IBUFF(NCOL,NROW,NLAY),
+     2 IUNIT(NUNIT),IBUFF(NCOL,NROW,NLAY),ISSFLG(KPER),
      3 IBOUND(NCOL,NROW,NLAY),QSS(NCOL,NROW,NLAY),QSTO(NCOL,NROW,NLAY)
       CHARACTER*16 TEXT
 C
@@ -486,12 +489,6 @@ C
       DO 1 I=1,NROW
       DO 1 J=1,NCOL
 1     QSS(J,I,K)=0.0
-      IF(ISS.NE.0) THEN
-         DO 2 K=1,NLAY
-         DO 2 I=1,NROW
-         DO 2 J=1,NCOL
-2        QSTO(J,I,K)=0.0
-      END IF
 C 
 C
 C  GENERATE PROCESSED FACE FLOW TERMS
@@ -499,12 +496,17 @@ C
       WRITE(I7,1100) KPER,KSTP
       IUCBC=IUNIT(7)
 C
-C  READ STORAGE IF SIMULATION IS TRANSIENT
+C  READ STORAGE IF STRESS PERIOD IS TRANSIENT
 C
-      IF(ISS.EQ.0) THEN
+      IF(ISSFLG(KPER).EQ.0) THEN
          CALL RDBUDG (QSTO,TEXT,NCOL,NROW,NLAY,IUCBC,I7,KPER,KSTP,
      1           IBUFF)
          IF(TEXT.NE.'         STORAGE') GO TO 100
+      ELSE
+         DO 2 K=1,NLAY
+         DO 2 I=1,NROW
+         DO 2 J=1,NCOL
+2        QSTO(J,I,K)=0.0
       END IF
 C
 C  READ CONSTANT HEAD FLOWS
@@ -1099,20 +1101,20 @@ C
       DO 100 I=1,NROW
       DO 100 J=1,NCOL
       IF(NBTYPE.EQ.3) K=IBUFF(J,I,1)
-      IF(BUFF(J,I,K).NE.0.0) THEN
+      IF(BUFF(J,I,KK).NE.0.0) THEN
          IF(ITOP.EQ.0) THEN
-            IF(BUFF(J,I,K).LT.0.0.AND.ABS(IBOUND(J,I,K)).LT.1000)
+            IF(BUFF(J,I,KK).LT.0.0.AND.ABS(IBOUND(J,I,K)).LT.1000)
      1                      IBOUND(J,I,K)= 1000*IBOUND(J,I,K)
-            QSS(J,I,K)=QSS(J,I,K) + BUFF(J,I,K)
+            QSS(J,I,K)=QSS(J,I,K) + BUFF(J,I,KK)
          ELSE
             CALL FACTYP(K,1,J,I,K-1,NBD,IBOUND,NCOL,NROW,NLAY,J,I,K,6,
      1            TEXT,IO)
             IF(NBD.EQ.1) THEN
-               QZ(J,I,K)=QZ(J,I,K) - BUFF(J,I,K)
+               QZ(J,I,K)=QZ(J,I,K) - BUFF(J,I,KK)
             ELSE
-               IF(BUFF(J,I,K).LT.0.0.AND.ABS(IBOUND(J,I,K)).LT.1000)
+               IF(BUFF(J,I,KK).LT.0.0.AND.ABS(IBOUND(J,I,K)).LT.1000)
      1                      IBOUND(J,I,K)= 1000*IBOUND(J,I,K)
-               QSS(J,I,K)=QSS(J,I,K) + BUFF(J,I,K)
+               QSS(J,I,K)=QSS(J,I,K) + BUFF(J,I,KK)
             END IF
          END IF
       END IF

@@ -1,3 +1,8 @@
+C  MODPATH release: Version 4.00 (V4, Release 3, 7-2003)
+C    In FLOWDATA.FOR, fixed ADDQAR to put ET and RCH into proper layer when
+C       usining compact budget and the layer is not 1
+C    In MPMOVE.FOR, added a check for negative cell thickness  5-1-02
+C    Fix problem with combined steady-state and transient stress periods
 C  MODPATH release: Version 4.00 (V4, Release 2, 4-2001)
 C    Use flat binary files on personal computers
 C    Always write head into composite budget file even for confined cells
@@ -49,7 +54,7 @@ C
 C#LAHEY - BEGIN#  ALLOCATE MEMORY FOR ARRAY "A" DYNAMICALLY
       DIMENSION A(:)
       ALLOCATABLE :: A
-      PARAMETER(LENA=15000000)
+      PARAMETER(LENA=50000000)
 C#LAHEY - END#
  
 C-----------------------------------------------------------------------
@@ -67,7 +72,7 @@ C#LAHEY - END#
  
 C    SET VERSION NUMBER
 C
-      VER(1)='MODPATH Version 4.00 (V4, Release 2, 4-2001)'
+      VER(1)='MODPATH Version 4.00 (V4, Release 3, 7-2003)'
       PRGNAM=VER(1)
  
 C... SET NUMBER OF UNITS RESERVED BY MODPATH. USED TO DIMENSION THE ARRAY
@@ -234,7 +239,7 @@ C
      2LCXLC,LCQSS,LCYLC,LCZLC,LCZLL,LCTOT,LCJLC,LCILC,LCKLC,
      4LCQSTO,
      5LCINI,LCPERL,LCNTS,LCTMX,LCIBST,IUNIT,HDRY,HNOFLO,
-     6MAXPTS,ISUM,LAYCBD)
+     6MAXPTS,ISUM,LAYCBD,LCISSFLG)
 C
 C#LAHEY - BEGIN#  ALLOCATE MEMORY TO ARRAY "A"
       ALLOCATE (A(ISUM))
@@ -250,7 +255,7 @@ C
      4A(LCKLC),A(LCQSS),A(LCQSTO),
      5A(LCINI),
      6A(LCPERL),A(LCNTS),A(LCTMX),A(LCIBST),HDRY,HNOFLO,VER(1),
-     7LAYCBD)
+     7LAYCBD,A(LCISSFLG))
 C
       STOP
       END

@@ -1,3 +1,6 @@
+C MODPATH-PLOT Version 4.00 (V4, Release 3, 7-2003)
+C    Fix problem with combined steady-state and transient stress periods
+C    Fix problem with contours being flipped in Y direction
 C MODPATH-PLOT Version 4.00 (V4, Release 2, 4-2001)
 C  Use flat binary files on personal computers
 C MODPATH-PLOT Version 4.00 (V4, Release 1, 2-2000)
@@ -94,7 +97,7 @@ C#LAHEY - END#
 C
 C  Set version number
 C
-      VER(1)='MODPATH-PLOT Version 4.00 (V4, Release 2, 4-2001)'
+      VER(1)='MODPATH-PLOT Version 4.00 (V4, Release 3, 7-2003)'
       PRGNAM=VER(1)
 C
 C  SET DEFAULT RESPONSE FILE NAME
@@ -463,7 +466,7 @@ C
      3LCIBX,LCIGZ,LCXLOC,LCYLOC,LCCLEV,LCBUFF,LCICB,LCHPRV,
      4LCPAR,LCZXB,LCZXT,LCPERL,LCTIMX,LCNTS,LCIGZB,LCIBPZ,LCCDAT,
      5LCIBRM,NLVMAX,IUMAIN,IUNAR(5),NXDIM,NIGZ,NPARY,MAXPTS,NPER,
-     6HNOFLO,HDRY,ISUM,IUNIT(1),LAYCBD)
+     6HNOFLO,HDRY,ISUM,IUNIT(1),LAYCBD,LCISSFLG)
 C
 C#LAHEY - BEGIN#
       ALLOCATE (A(ISUM))
@@ -478,7 +481,7 @@ C
      3A(LCIGZ),A(LCXLOC),A(LCYLOC),A(LCCLEV),A(LCBUFF),IUNAR,HNOFLO,
      4HDRY,VER,CFGPTH,A(LCZXT),A(LCZXB),A(LCPAR),A(LCICB),A(LCHPRV),
      5A(LCPERL),A(LCTIMX),A(LCNTS),A(LCIGZB),A(LCIBPZ),A(LCCDAT),
-     6A(LCIBRM),LAYCBD)
+     6A(LCIBRM),LAYCBD,A(LCISSFLG))
 C
       STOP
       END
