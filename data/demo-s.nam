@@ -1,0 +1,10 @@
+list                  6 demo-s.lst fixed
+bas                   5 demo-s.bas
+bcf                  11 demo-s.bcf
+oc                   12 demo-s.oc
+rch                  13 demo-s.rch
+wel                  14 demo-s.wel
+sip                  15 demo-s.sip
+riv                  16 demo-s.riv
+data(binary)         30 demo-s.hed
+data(binary)         32 demo-s.bud

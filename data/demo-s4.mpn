@@ -1,0 +1,9 @@
+main          10  ../data/demo-s.mp
+wel           11  ../data/demo-s.wel
+riv           12  ../data/demo-s.riv
+rch           13  ../data/demo-s.rch
+budget        50  ../data/demo-s.bud
+head(binary)  60  ../data/demo-s.hed
+endpoint      75  endpoint.s4
+time-series   77  timesers.s4
+

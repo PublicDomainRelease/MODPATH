@@ -1,0 +1,92 @@
+@========================= MODPATH/PLOT Settings File =========================
+@
+@                               Color HP-GL File
+@
+@==============================================================================
+
+@ Color Cycling Parameters (Number of colors in cycle; Cycling sequence)
+@-----------------------------------------------------------------------
+  color cycle:  8    1 2 3 4 5 6 7 8
+
+@ Color Table Definitions
+@-----------------------------------------------------------------------
+  color table:  0   1.00  1.00  1.00  'White'
+  color table:  1   0.00  0.00  0.00  'Black'
+  color table:  2   1.00  0.00  0.00  'Red'
+  color table:  3   0.00  1.00  0.00  'Green'
+  color table:  4   0.00  0.00  1.00  'Blue'
+  color table:  5   0.50  0.10  0.67  'Violet'
+  color table:  6   1.00  1.00  0.00  'Yellow'
+  color table:  7   1.00  0.60  0.00  'Orange'
+  color table:  8   1.00  0.00  1.00  'Magenta'
+  color table:  9   0.60  0.30  0.10  'Brown'
+  color table: 10   0.00  1.00  1.00  'Cyan'
+  color table: 11   0.40  0.00  0.00  'Dark Red'
+  color table: 12   0.00  0.40  0.00  'Dark Green'
+  color table: 13   0.00  0.00  0.40  'Dark Blue'
+  color table: 14   0.60  0.60  0.60  'Light Gray'
+  color table: 15   0.30  0.30  0.30  'Dark Gray'
+@--- colors 16-30 are shades of the spectrum ---
+  color table: 16   0.00  0.00  1.00  ' '
+  color table: 17   0.00  0.16  1.00  ' '
+  color table: 18   0.00  0.49  1.00  ' '
+  color table: 19   0.00  0.82  1.00  ' '
+  color table: 20   0.00  1.00  1.00  ' '
+  color table: 21   0.00  1.00  0.67  ' '
+  color table: 22   0.00  1.00  0.33  ' '
+  color table: 23   0.00  1.00  0.00  ' '
+  color table: 24   0.16  1.00  0.00  ' '
+  color table: 25   0.49  1.00  0.00  ' '
+  color table: 26   0.82  1.00  0.00  ' '
+  color table: 27   1.00  1.00  0.00  ' '
+  color table: 28   1.00  0.67  0.00  ' '
+  color table: 29   1.00  0.33  0.00  ' '
+  color table: 30   1.00  0.00  0.00  ' '
+
+
+@ Item Colors (Item number, Color number)
+@------------------------------------------------------------------------
+  item color:   1   1           @ boundary of active grid
+  item color:   2   1           @ interior grid lines
+  item color:   3   1           @ grid or sub-grid rectangle
+  item color:   4   4           @ fill for inactive cells
+  item color:   5  10           @ fill for quasi-3d layers
+  item color:   6   1           @ outline of top & bottom of quasi-3d layers
+  item color:   7   1           @ plot title and scale bar annotation
+  item color:   8   2           @ wells
+  item color:   9   2           @ drains
+  item color:  10   2           @ general head boundaries
+  item color:  11   4           @ rivers and streams
+  item color:  12   0           @ outline color for solid fill grid unit data
+  item color:  13  10           @ contour color
+
+@ Shade Patterns  (1 = +45 diagonal lines)
+@------------------------------------------------------------------------
+  Inactive Cell Pattern:  1
+  Confining Bed Pattern:  1
+
+@ Color Menu Items
+@------------------------------------------------------------------------
+  Color Menu Items:  15
+
+@ Default Data Marker Type and Scale factor (1 = dot)
+@------------------------------------------------------------------------
+  Data Marker: 1  0.25  0
+
+@ Grid Unit Color and Shade Pattern
+@------------------------------------------------------------------------
+  grid unit:  1  14 1  
+  grid unit:  2  11 2
+  grid unit:  3  12 3
+  grid unit:  4  13 4
+  grid unit:  5   2 5
+  grid unit:  6   3 6
+  grid unit:  7   4 1
+  grid unit:  8   5 2
+  grid unit:  9   6 3
+  grid unit: 10   7 4
+  grid unit: 11   8 5
+  grid unit: 12   9 6
+  grid unit: 13  10 1
+  grid unit: 14  11 2
+  grid unit: 15  12 3

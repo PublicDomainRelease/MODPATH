@@ -1,0 +1,11 @@
+list                  6 demo-t.lst fixed
+bas                   5 demo-t.bas
+bcf                  11 demo-t.bcf
+oc                   12 demo-t.oc
+rch                  13 demo-t.rch
+wel                  14 demo-t.wel
+sip                  15 demo-t.sip
+riv                  16 demo-t.riv
+data(binary)         32 demo-t.hed
+data(binary)         34 demo-t.bud
+data(binary)         65 demo-s.hed

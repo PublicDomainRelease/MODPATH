@@ -1,0 +1,32 @@
+@========================= MODPATH/PLOT Settings File =========================
+@
+@                          Monochrome PostScript File
+@
+@==============================================================================
+
+@ Default Data Marker Type and Scale Factor (1 = dot)
+@------------------------------------------------------------------------
+  Data Marker:  3  0.05
+
+@ Color Menu Items
+@------------------------------------------------------------------------
+  Color Menu Items:  1
+
+@ Grid Unit Color and Shade Pattern
+@------------------------------------------------------------------------
+  grid unit:  1   1 1
+  grid unit:  2   1 2
+  grid unit:  3   1 3
+  grid unit:  4   1 4
+  grid unit:  5   1 5
+  grid unit:  6   1 6
+  grid unit:  7   1 1
+  grid unit:  8   1 2
+  grid unit:  9   1 3
+  grid unit: 10   1 4
+  grid unit: 11   1 5
+  grid unit: 12   1 6
+  grid unit: 13   1 1
+  grid unit: 14   1 2
+  grid unit: 15   1 3
+  grid unit: 16   1 4

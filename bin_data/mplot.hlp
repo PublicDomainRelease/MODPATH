@@ -1,0 +1,372 @@
+: kis    8  0
+> * If you enter a blank line, you will be prompted for input from
+>   the keyboard. The prompts and user responses then are recorded in a
+>   response file named "mplot.rsp".
+> * If you enter the name of an existing response file, data will be read
+>   directly from the response file.
+>
+> See Chapter 5: Prompt and Response System
+>                Section: "Keyboard and Response File Input"
+ 
+: 5.2.1  9  0
+> * The "Name File" supplies MODPATH-PLOT with the information it needs to
+>   manage input data files. It includes (1) data file names, (2) file unit
+>   numbers, and (3) file types.
+>
+> See Chapter 4: MODPATH-PLOT User's Guide
+>                Section: "Specifying Input Data Files for MODPATH-PLOT"
+>
+>    Appendix A: Input Files
+>                Section: "Name File"
+ 
+: 4.22.1 7 0
+> * Values for many of the parameters that control the appearance of plots
+>   are specified in "settings" files. If you specify a settings file here,
+>   the parameters defined in it will supercede the current values for those
+>   parameters. Enter a blank line to accept the current settings.
+>
+> See Chapter 4: MODPATH-PLOT User's Guide
+>                Section: "Settings File"
+ 
+: 4.20.1 11 0
+> * The choices that appear on this menu of output devices are controlled by
+>   the entries in the setup file, device.dat.
+>
+> * NOTE: If this run is reading input from an existing response file,
+>   the menu options are taken directly from the response file. If
+>   device.dat has been modified since the response file was generated,
+>   the menu options will not accurately reflect the available graphics
+>   devices.
+>
+> See Appendix D: Installation
+>                 Section: "Device File"
+ 
+: 2.1.2A 11  0
+> * You have two options for computing the time step that will be used
+>   to compute the active grid and draw contours.
+> * Option 1 allows you to enter the stress period and time step directly.
+>   If you select this option, you will be prompted to enter the period
+>   and time step.
+> * Option 2 allows you to enter a value of simulation time and have
+>   MODPATH-PLOT compute the appropriate stress period and time step.
+>   If you select this option, you will be prompted to enter a value of
+>   simulation time and a time units conversion factor. MODPATH-PLOT will
+>   multiply the simulation time by the units conversion factor to obtain
+>   the simulation time in the time units used by MODFLOW and MODPATH.
+ 
+: 2.1.3  9  0
+> * Plot types 1 - 5 display particle tracking results from MODPATH runs.
+> * You may plot the GRID ONLY (plot type 6) for any orientation without
+>   running MODPATH first.
+> * If a map view orientation was selected, you may also generate a plot
+>   of CONTOURS ONLY (plot type 7). The contour plot option is not available
+>   for cross sections.
+>
+> See Chapter 4: MODPATH-PLOT User's Guide
+>                Section: "Plot Types"
+ 
+: 2.1.4  13  0
+> * DRAW ACTIVE GRID BOUNDARY ONLY -- the boundary of the active grid is
+>        outlined. Interior grid lines are only drawn between active grid
+>        cells. Inactive cells are not shaded if this option is selected.
+> * DRAW FULL GRID BOUNDARY ONLY -- the entire grid (or subgrid) is outlined
+>        without distinction between active and inactive cells. Interior grid
+>        lines are drawn between all cells.
+> * DRAW ACTIVE AND FULL GRID BOUNDARIES -- the boundary of the active
+>        grid is outlined. Interior grid lines are only drawn between active
+>        cells. The outline of the full grid (or subgrid) is also
+>        drawn. Inactive cells are shaded if that option is in effect.
+>
+> See Chapter 4: MODPATH-PLOT User's Guide
+>                Section: "Grid Options"
+ 
+: 2.1.45A  7  0
+> * Grid unit data allows you to shade blocks of grid cells to show features
+>   such as hydrogeology.
+> * To display Grid Unit Data you must set up a Grid Unit Array
+>   data file (GUA) and specify it in the Name File.
+>
+> See Chapter 4: MODPATH-PLOT User's Guide
+>                Section: "Grid Options (Displaying Grid Unit Data)"
+ 
+: 2.1.5  5  0
+> The IBOUND array for the layer number you specify here will be used to
+> draw the outline of the active grid for a map view plot.
+>
+> See Chapter 4: MODPATH-PLOT User's Guide
+>                Section: "Grid Options"
+ 
+: 2.1.6  11  0
+> * You may choose to plot results in map view or in cross sections aligned
+>   along rows or columns.
+> * Two types of cross section plots can be constructed:
+>     1. TRUE -- draws the grid and particle data using the true vertical
+>        geometry of the model layers.
+>     2. NORMALIZED -- computes average thicknesses for each model layer
+>        and draws a rectangular grid based on average layer thicknesses.
+>        Previous versions of MODPATH-PLOT only produced normalized sections.
+>
+> See Chapter 4: MODPATH-PLOT User's Guide
+>                Section: "Grid Options"
+ 
+: 2.1.7  5  0
+> * Grid unit data for the layer you specify here will be displayed on a map
+>   view plot.
+>
+> See Chapter 4: MODPATH-PLOT User's Guide
+>                Section: "Grid Options"
+ 
+: 2.1.8  11  0
+> * PLOT ALL DATA BY PROJECTION -- all particle points and pathlines are
+>        projected onto the cross section or map view plot. All particle
+>        data is visible, but 3-d effects may make points and lines overlap.
+> * ONLY PLOT DATA WITHIN A 2-D SLICE -- if you select this option, MODPATH
+>        prompts you to enter a layer, row, or column number that defines the
+>        plane of the 2-d slice that is plotted. Particle locations and
+>        pathline segments are only displayed if they are within the layer,
+>        row, or column that defines the slice.
+>
+> See Chapter 4: MODPATH-PLOT User's Guide
+>                Section: "Plot Types"
+ 
+: 2.1.15A  16 0
+> 1. PLOT ONLY PARTICLES THAT ARE STILL ACTIVE -- Particles can remain
+>    active at the end of a MODPATH analysis only if the simulation was
+>    (a) transient, or (b) had a user-specified stopping time.
+>
+> 2. PLOT ONLY THOSE PARTICLES THAT TERMINATED NORMALLY -- Particles that
+>    have reached a discharge point or boundary (or, recharge boundary for
+>    backward runs) are considered to have "terminated normally".
+>
+> 3. PLOT BOTH ACTIVE AND NORMALLY-TERMINATED PARTICLES -- All particles are
+>    plotted except those that terminated abnormally. Abnormal termination
+>    includes particles that were stranded in dry cells during a transient
+>    simulation and particles that for some reason were "not released" in a
+>    simulation using the multiple release particle generation option.
+>
+> See Chapter 4: MODPATH-PLOT User's Guide
+>                Section: "Plot Types"
+ 
+: 2.1.41  9  0
+> * MODPATH always generates an endpoint file.
+> * MODPATH has the option of creating either TEXT or BINARY endpoint files.
+> * The default name of a TEXT endpoint file is "endpoint"
+> * The default name of a BINARY endpoint file is "endpoint.bin"
+> * To save an endpoint file from being overwritten by MODPATH, you must
+>   rename it.
+>
+> See Chapter 3: MODPATH User's Guide
+>                Section: "Output Mode (Endpoints Mode)"
+ 
+: 2.1.46  11  0
+> * If you select YES for this option, pathlines for particles that terminate
+>   in cells with a zone code value equal to 1 (i.e. IBOUND = 1 or -1) will
+>   not be drawn.
+> * You can control the lines that will be displayed by setting zone codes.
+>   Zone codes can be coded directly in the IBOUND array of the main data
+>   file, or can be reset on-the-fly while running MODPATH-PLOT.
+> * If you select NO for this option, all lines will be drawn.
+> * This option is only available for pathlines generated by forward tracking.
+>
+> See Chapter 4: MODPATH-PLOT User's Guide
+>                Section: "Plot Types (Zone Codes)"
+ 
+: 2.1.47  9  0
+> * If you select YES for this option, time point markers will be displayed
+>   for any special time points specified in the MODPATH run that generated
+>   the pathline file.
+> * If you select NO for this option, no time point markers will be displayed.
+> * Time point markers will only be displayed if the pathline file contains
+>   special time points.
+>
+> See Chapter 3: MODPATH User's Guide
+>                Section: "Output Mode (Pathline Mode)"
+ 
+: 2.1.48  9  0
+> * If you select YES for this option, pathlines only will be drawn up to a
+>   a specified value of tracking time. You will be prompted to enter the
+>   tracking time value.
+> * If you select NO for this option, the full pathline will be drawn.
+> * For this option to produce reliable results, the tracking time you
+>   specify MUST be present as a special time point in the pathline file.
+>
+> See Chapter 3: MODPATH User's Guide
+>                Section: "Output Mode (Pathline Mode)"
+ 
+ 
+: 2.1.50  10 0
+> * MODPATH-PLOT assigns each grid cell a "Zone Code" value.
+> * Zone codes are stored in the IBOUND array.
+> * MODPATH-PLOT uses zone codes extensively to sort particle tracking
+>        output graphically by color or marker style.
+> * You have the option to interactively reset some or all of the zone codes.
+> * The interactive changes you make do not affect the values of IBOUND
+>        saved in your data files.
+>
+> See Chapter 4: MODPATH-PLOT User's Guide
+>                Section: "Plot Types (Zone Codes)"
+ 
+: 2.1.52  13  0
+> * The colors menu displays colors 1 through 15 regardless of how many
+>   colors are supported by the selected graphics device.
+> * Color numbers larger than 15 can be entered for devices that support
+>   more than 15 colors. However, those colors are not displayed on the
+>   menu.
+> * If you enter a number larger than the maximum number of colors supported
+>   by the output device, color number 1 is used.
+> * For monochrome devices, all color numbers larger than 1 are set
+>   equal to the foreground color for the device (usually black or white)
+>   regardless of what colors appear in the menu.
+>
+> See Chapter 4: MODPATH-PLOT User's Guide
+>                Section: "Color Options"
+ 
+: 6.1.1  16  0
+> * HEAD or DRAWDOWN IN A LAYER -- the head or drawdown file generated by
+>   MODFLOW is read. Either the standard binary head and drawdown files
+>   or the alternative ASCII text-style head and drawdown files produced
+>   by the 1994 version of MODFLOW can be used. The text-style file must
+>   include a one-line header for each layer of data.
+>
+> * OTHER GRIDDED DATA -- contour data is read directly from a text file
+>   that must be specified as type CONTOUR-DATA in the Name File.
+>   The data must be stacked sequentially by row.
+>
+> * HEAD DIFFERENCE BETWEEN TWO LAYERS -- you will be prompted to enter two
+>   layer numbers. The head difference between the two layers will be
+>   computed and contoured.
+>
+> See Chapter 4: MODPATH-PLOT User's Guide
+>                Section: "Contouring"
+ 
+: 6.1.2  14  0
+> * If option 3 was selected (OTHER GRIDDED DATA), the layer number
+>   is used to determine the IBOUND values that will be used to blank out
+>   contours. If you do not want to blank out contours using the IBOUND
+>   array, just enter "0" as the layer number. Contours are always blanked
+>   in cells with a data value = HNOFLO
+>
+> * If option 4 was selected (HEAD DIFFERENCE BETWEEN TWO LAYERS), enter two
+>   layer numbers. The head difference will be computed and contoured.
+>      Example --  if you enter:  1  5
+>                  then, layer 5 heads would be subtracted from layer 1 heads
+>                  and the difference would be contoured.
+>
+> See Chapter 4: MODPATH-PLOT User's Guide
+>                Section: "Contouring"
+ 
+: 6.1.2A  7  0
+> * The CONTOUR-DATA file is a text file containing one-layer of gridded
+>   data.
+> * If this file is specified in the Name File as type CONTOUR-DATA, you
+>   will not be prompted to enter the file name interactively.
+>
+> See Chapter 4: MODPATH-PLOT User's Guide
+>                Section: "Contouring"
+ 
+ 
+: 6.1.12  1 0
+> This option determines whether any contour labels are plotted.
+ 
+: 6.1.8A  10 0
+> 1. GENERATE CONTOURS INTERACTIVELY -- you are given the option of
+>    specifying the contour interval and range of contours interactively.
+> 2. READ CONTOUR LEVELS FROM A FILE -- contour levels are read directly
+>    from a data file. Data is input free-format with one value per line.
+>    The contour level file can be opened in the Name File as type
+>    CONTOUR-LEVEL. If the file is not specified in the Name File, you will
+>    be prompted for the file name interactively.
+>
+> See Chapter 4: MODPATH-PLOT User's Guide
+>                Section: "Contouring"
+ 
+: 6.1.9  14 0
+> REFERENCE CONTOUR -- is used to establish the starting point for plotting
+>    and labeling contours. The reference contour does not need to fall
+>    within the range of data values that will be contoured.
+> CONTOUR INTERVAL -- contours are plotted using this regular interval by
+>    working forward and backward from the reference contour.
+> LABELING INTERVAL -- contours are labeled using this regular interval by
+>    working forward and backward from the reference contour. The labeling
+>    interval should be an even multiple of the contour interval.
+>
+> Example:   0  0.5  1.0    would plot contours:
+>    ... -1.5  -1.0  0  0.5  1.5 ... and label   ... -1.0  0  1.0  ...
+>
+> See Chapter 4: MODPATH-PLOT User's Guide
+>                Section: "Contouring"
+ 
+: 6.1.6  10 0
+> * If you enter minimum and maximum data values, MODPATH-PLOT only will
+>   draw contours within that range. This option allows you to limit the
+>   number of contours that are drawn.
+> * If you enter a blank line, MODPATH-PLOT draws as many contours as needed
+>   to span the full range of data values. For reference, MODPATH-PLOT
+>   displays the minimum and maximum values for the full range of data on
+>   the screen.
+>
+> See Chapter 4: MODPATH-PLOT User's Guide
+>                Section: "Contouring"
+ 
+: 2.1.44  9 0
+> * A Drawing Commands File (DCF) allows you to specify drawing instructions
+>   that will allow MODPATH-PLOT to draw user-defined polylines, polygons,
+>   markers, and text on any map view plot.
+> * Enter a blank line if you do not want to plot from a DCF.
+> * If a drawing commands file is specified in the Name File as type DCF,
+>   you will not be prompted to enter a file name interactively.
+>
+> See Appendix A: Input Files
+>                 Section: "Drawing Commands File"
+ 
+: 2.1.53  11 0
+> 1. DRAW PLOT TO AN EXACT MAP SCALE -- you will be prompted to enter a map
+>    scale for the plot.
+> 2. SCALE PLOT AUTOMATICALLY -- the plot will automatically be scaled to the
+>    output device you selected.
+>
+> If you select option 1 and the device cannot support an exact map scale
+> plot, MODPATH-PLOT will automatically produce the largest plot possible for
+> the output device.
+>
+> See Chapter 4: MODPATH-PLOT User's Guide
+>                Section: "Plot Scaling"
+ 
+: 2.1.53A  6 0
+> This scaling factor allows you to adjust the size of the plot downward from
+> the maximum size possible (factor = 1). You are not allowed to enter a
+> scale factor less than 0.05 or larger than 1.
+>
+> See Chapter 4: MODPATH-PLOT User's Guide
+>                Section: "Plot Scaling"
+ 
+: 6.1.11  10 0
+> * You can specify a FORTRAN format to use to read the data. The format
+>   must be enclosed in parentheses. Example: (8F10.0)  will read 8 values
+>   per line with each value occupying a 10-column wide field.
+>
+> * If all of the data entries in the file have at least one space separating
+>   them, you can enter a blank line and MODPATH-PLOT will read the data
+>   with free-format style. Tab characters are not allowed in the file.
+>
+> See Chapter 4: MODPATH-PLOT User's Guide
+>                Section: "Contouring"
+ 
+: 6.1.3  8 0
+> * You can specify the line in the file that points to the start of the
+>   contour data.
+> * This option lets you stack several layers of data in one file, or lets
+>   you read contour data from a file that contains other kinds of data,
+>   like a MODFLOW listing file.
+>
+> See Chapter 4: MODPATH-PLOT User's Guide
+>                Section: "Contouring"
+ 
+: 6.1.8B  6 0
+> * The CONTOUR-LEVEL file tells MODPATH-PLOT which contours to plot.
+> * The file was not specified in the Name File, so you must enter a file
+>   name now.
+>
+> See Chapter 4: MODPATH-PLOT User's Guide
+>                Section: "Contouring"
+ 
