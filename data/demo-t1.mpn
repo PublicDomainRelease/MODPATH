@@ -1,10 +1,7 @@
-main          10  ../data/demo-t.mp
-wel           11  ../data/demo-t.wel
-riv           12  ../data/demo-t.riv
-rch           13  ../data/demo-t.rch
-budget        50  ../data/demo-t.bud
-head(binary)  60  ../data/demo-t.hed
-cbf           70  ../data/demo-t.cbf
-endpoint      75  endpoint.t1
-pathline      76  pathline.t1
-
+MAIN                 70 DEMO-T.MP
+DIS                   9 demo-t.dis
+HEAD(BINARY)          1 DEMO-T.HED
+BUDGET                2 DEMO-T.BUD
+ENDPOINT              3 ENDPOINT.T1
+PATHLINE              4 PATHLINE.T1
+CBF                  78 DEMO-T.CBF

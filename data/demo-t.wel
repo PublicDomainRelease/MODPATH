@@ -1,9 +1,7 @@
-         2         0
-         1                                         period 1
-         4        14        14   -80000.         0 
-         2                                         period 2
-         4        14        14   -80000.         0 
-         1        14        14   -80000.         0 
-        -1                                         period 3
-
-
+         2        34 AUXILIARY IFACE    MXWELL IWELCB
+         1           ITMP -- Stress Period   1
+         4        14        14 -8.000E+4         0
+         2           ITMP -- Stress Period   2
+         4        14        14 -8.000E+4         0
+         1        14        14 -8.000E+4         0
+        -1           ITMP -- Stress Period   3

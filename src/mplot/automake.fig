@@ -1,0 +1,8 @@
+NOQUITONERROR
+
+FILES=*.for
+COMPILE=@lf90  -c -winconsole -chk %fi
+
+LINK=@lf90 @%rf C:\INT\LIB\INTRES.OBJ -winconsole -offset 10000h -exe %ex  -Lib C:\INT\LIB\INTMWL90.LIB -LIB C:\INT\LIB\WINSPOOL.LIB -LIB C:\INT\LIB\SHORTL90.LIB
+TARGET=mplot90r4_1.exe
+

@@ -1,23 +1,23 @@
-@[MODPATH-PLOT Version 3.00 (V3, Release 2, 6-2000)]
+@[MODPATH-PLOT Version 3.00 (V3, Release 1, 9-94) ]
 @
 @----------------------------------------------------------------------------
 @  File: plot-s4.rsp
 @
 @  Response file for steady state flow sample problem: run 4
 @
-@  This response file shows the responses necessary to plot a single time step 
-@  (time step number 2, which displays the plume after 10 years of releasing 
-@  particles). You can plot other time steps by substituting the appropriate 
-@  time step number. 
+@  This response file shows the responses necessary to plot a single time step
+@  (time step number 2, which displays the plume after 10 years of releasing
+@  particles). You can plot other time steps by substituting the appropriate
+@  time step number.
 @
-@  Another way to plot additional time steps quickly is to edit this response
-@  file and add the text string, (?), to the end of the prompt termination
-@  lines for the prompts that ask for (1) the title, and (2) the time step
-@  number that should be plotted. Whenever MODPATH or MODPATH-PLOT finds the 
-@  character string, (?), in a prompt termination line, that prompt is 
-@  issued interactively. Otherwise, responses are read directly from the file.
-@  In this case, you will be prompted to enter a title and the number of the 
-@  time step that you want to plot. 
+@  Another way to plot additional time steps quickly is to execute MODPATH-PLOT
+@  and specifiy the name of this file when prompted for the name of a response
+@  file. The text string "(?)" has been added to the prompt termination lines
+@  for the prompts that ask for the time step number and the title. Whenever
+@  MODPATH or MODPATH-PLOT finds the character string, "(?)", in a prompt
+@  termination line, that prompt is issued interactively. Otherwise, responses
+@  are read directly from the file. In this case, you will be prompted to enter
+@  a title and the number of the time step that you want to plot.
 @----------------------------------------------------------------------------
 @
 * TO REDEFINE SETTINGS, ENTER NAME OF FILE WITH SETTINGS DATA:
@@ -26,23 +26,16 @@
  
 * ENTER THE NAME FILE:
 @RESPONSE: HELP LABEL = 5.2.1
-../data/demo-s4.mpn
+demo-s4.mpn
 * ENTER TITLE (80 CHARACTERS OR LESS):
-@RESPONSE: HELP LABEL = 2.1.40 
-Plume after 10 years.
+@RESPONSE: HELP LABEL = 2.1.40
+Particle distribution at specified time step.
 * ENTER THE TYPE OF GRAPHICS OUTPUT DEVICE:
-*      1 = Monitor
-*          ------------------------------------
-*      2 = Black-and-White PostScript
-*      3 = Gray-Scale PostScript
-*      4 = Color PostScript
-*          ------------------------------------
-*      5 = HP-GL Graphics Plotter Output
-*          ------------------------------------
-*      6 = Computer Graphics Metafile (Binary CGM)
-*      7 = Computer Graphics Metafile (Clear Text CGM)
+*      1 = Windows Meta File
+*      2 = Postscript File
+*      3 = DXF File
 @RESPONSE: HELP LABEL = 4.20.1
-4
+1
 * WHAT IS THE ORIENTATION OF THE PLOT ?
 *   1 = MAP VIEW
 *   2 = TRUE CROSS SECTION ALONG A COLUMN
@@ -99,8 +92,18 @@ n
 *   (TO PLOT ALL OF THE TIME STEPS, ENTER A NEGATIVE NUMBER)
 @RESPONSE: HELP LABEL = 2.1.16
 1
+* This MODPATH-PLOT response file has been set up to give
+* you the option of interactively specifying which MODPATH
+* time step you want to plot. You will be prompted to enter
+* the time step number at the keyboard. All of the other
+* data will be read directly from the response file. To see
+* how this is accomplished, examine the response file
+* (plot-s4.rsp) in a text editor and refer to the MODPATH
+* documentation report, USGS Open-File Report 94-464.
+*
 * ENTER THE TIME STEP NUMBERS THAT YOU WANT TO PLOT:
-@RESPONSE: HELP LABEL = 2.1.17 
+* (enter a value between 1 and 10)
+@RESPONSE: HELP LABEL = 2.1.17 (?)
 2
 * ENTER RANGE OF GRID COORDINATES FOR THIS PLOT:
 *      MIN COLUMN, MAX COLUMN, MIN LAYER, MAX LAYER

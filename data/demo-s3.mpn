@@ -1,9 +1,6 @@
-main          10  ../data/demo-s.mp
-wel           11  ../data/demo-s.wel
-riv           12  ../data/demo-s.riv
-rch           13  ../data/demo-s.rch
-budget        50  ../data/demo-s.bud
-head(binary)  60  ../data/demo-s.hed
-endpoint      75  endpoint.s3
-pathline      76  pathline.s3
-
+MAIN                 70 DEMO-S.MP
+DIS                   9 demo-s.dis
+HEAD(BINARY)          1 DEMO-S.HED
+BUDGET                2 DEMO-S.BUD
+ENDPOINT              3 ENDPOINT.S3
+PATHLINE              4 PATHLINE.S3

@@ -1,4 +1,4 @@
-@[MODPATH-PLOT Version 3.00 (V3, Release 2, 6-2000)]
+@[MODPATH Version 3.00 (V3, Release 1, 9-94) ]
 @
 @----------------------------------------------------------------------------
 @  File: path-s3.rsp
@@ -8,7 +8,7 @@
 @
 * ENTER THE NAME FILE:
 @RESPONSE: HELP LABEL = 4.2.1
-../data/demo-s3.mpn
+demo-s3.mpn
 * DO YOU WANT TO STOP COMPUTING PATHS AFTER A SPECIFIED LENGTH OF TIME ?
 @RESPONSE: HELP LABEL = 2.1.41
 n
@@ -28,7 +28,7 @@ n
 1
 * ENTER NAME OF DATA FILE CONTAINING STARTING LOCATIONS:
 @RESPONSE: HELP LABEL = 2.1.39
-../data/demo-s3.loc
+demo-s3.loc
 * IN WHICH DIRECTION SHOULD PARTICLES BE TRACKED?
 *     1 = FORWARD IN THE DIRECTION OF FLOW
 *     2 = BACKWARDS TOWARD RECHARGE LOCATIONS

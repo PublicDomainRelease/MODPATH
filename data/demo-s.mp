@@ -1,28 +1,14 @@
-27 27 5   1  1  0  0   999.9  1.0E+30  0
-compact
-1 0 0 0 0
-1 0 0 0 0
-internal  1.0  (free) 0
- 400. 400. 400. 400. 400. 400. 400. 400. 300. 200.
- 150. 100.  60.  40.  60. 100. 150. 200. 300. 400.
- 400. 400. 400. 400. 400. 400. 400.
-internal  1.0  (free) 0
- 400. 400. 400. 400. 400. 400. 400. 400. 300. 200.
- 150. 100.  60.  40.  60. 100. 150. 200. 300. 400.
- 400. 400. 400. 400. 400. 400. 400.
-internal  1.0  (free) 0
- 100.  50.  50.  50.  50.
-internal  1.0  (free) 0
-  20.   0.   0.   0.   0.
-220.
-open/close  ibound.1  1  (free)  0
-constant  1
-constant  1
-open/close  ibound.4  1  (free)  0
-constant  1
-constant  0.3
-constant  0.3
-constant  0.3
-constant  0.3
-constant  0.3
-constant  0.3
+    0    999.90  1.00E+30         0  1  1  MXSIZ,HNOFLO,HDRY,NPART,ITOP,ITOP
+OPTIONS RECORD
+ 1 0 0 0 0
+OPEN/CLOSE IBOUND.1         1 '(27I2)'    4  IBNDMP layer  1
+CONSTANT          1  IBNDMP layer  2
+CONSTANT          1  IBNDMP layer  3
+OPEN/CLOSE IBOUND.4         1 '(27I2)'    4  IBNDMP layer  4
+CONSTANT          1  IBNDMP layer  5
+CONSTANT   3.000E-01  POR layer  1
+CONSTANT   3.000E-01  PORCB layer  1
+CONSTANT   3.000E-01  POR layer  2
+CONSTANT   3.000E-01  POR layer  3
+CONSTANT   3.000E-01  POR layer  4
+CONSTANT   3.000E-01  POR layer  5

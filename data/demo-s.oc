@@ -1,4 +1,8 @@
-         4         4        60         0
-         0         1         1         1
-         1         0         1         0
-
+HEAD PRINT FORMAT 4
+DRAWDOWN PRINT FORMAT 4
+HEAD SAVE UNIT 30
+COMPACT BUDGET
+  PERIOD 1 STEP 1
+  PRINT HEAD
+  SAVE HEAD
+  SAVE BUDGET

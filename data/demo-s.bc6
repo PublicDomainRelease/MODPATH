@@ -1,0 +1,13 @@
+        32  1.00E+30         0  5.00E-01         1         1  IBCFCB,HDRY,IWDFLG,WETFCT,IWETIT,IHDWET
+ 1 0 0 0 0
+CONSTANT 1.0    TRPY
+         0 5.000E+01                                HY layer  1
+         0 5.000E-04                                VCONT layer  1
+         0 1.250E+03                                TRAN layer  2
+         0 1.000E-02                                VCONT layer  2
+         0 1.250E+03                                TRAN layer  3
+         0 1.000E-02                                VCONT layer  3
+         0 1.250E+03                                TRAN layer  4
+         0 1.000E-02                                VCONT layer  4
+         0 1.250E+03                                TRAN layer  5
+

@@ -1,34 +1,20 @@
-@[MODPATH-PLOT Version 3.00 (V3, Release 2, 6-2000)]
-@
-@---------------------------------------------------------------------------
-@  File: plot-s1.rsp
-@
-@  Response file for steady state flow sample problem: run 1
-@---------------------------------------------------------------------------
-@
+@[MODPATH-PLOT Version 4.00 (V4, Release 1, 2-2000) [PC]]
 * TO REDEFINE SETTINGS, ENTER NAME OF FILE WITH SETTINGS DATA:
 * ( <CR> = USE DEFAULT SETTINGS FOR DEVICE)
 @RESPONSE: HELP LABEL = 4.22.1
  
 * ENTER THE NAME FILE:
 @RESPONSE: HELP LABEL = 5.2.1
-../data/demo-s1.mpn
+demo-s1.mpn
 * ENTER TITLE (80 CHARACTERS OR LESS):
 @RESPONSE: HELP LABEL = 2.1.40
-Capture area of well as defined by forward tracking from water table.
+test
 * ENTER THE TYPE OF GRAPHICS OUTPUT DEVICE:
-*      1 = Monitor
-*          ------------------------------------
-*      2 = Black-and-White PostScript
-*      3 = Gray-Scale PostScript
-*      4 = Color PostScript
-*          ------------------------------------
-*      5 = HP-GL Graphics Plotter Output
-*          ------------------------------------
-*      6 = Computer Graphics Metafile (Binary CGM)
-*      7 = Computer Graphics Metafile (Clear Text CGM)
-@RESPONSE: HELP LABEL = 4.20.1
-4
+*      1 = Windows Meta File
+*      2 = Postscript File
+*      3 = DXF File
+@RESPONSE: HELP LABEL = 4.20.1 (?)
+1
 * WHAT IS THE ORIENTATION OF THE PLOT ?
 *   1 = MAP VIEW
 *   2 = TRUE CROSS SECTION ALONG A COLUMN

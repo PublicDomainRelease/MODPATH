@@ -1,4 +1,4 @@
-@[MODPATH-PLOT Version 3.00 (V3, Release 2, 6-2000)]
+@[MODPATH-PLOT Version 3.00 (V3, Release 1, 9-94) ]
 @
 @----------------------------------------------------------------------------
 @  File: plot-s3.rsp
@@ -12,23 +12,16 @@
  
 * ENTER THE NAME FILE:
 @RESPONSE: HELP LABEL = 5.2.1
-../data/demo-s3.mpn
+demo-s3.mpn
 * ENTER TITLE (80 CHARACTERS OR LESS):
 @RESPONSE: HELP LABEL = 2.1.40
 Pathlines along a cross section through the well.
 * ENTER THE TYPE OF GRAPHICS OUTPUT DEVICE:
-*      1 = Monitor
-*          ------------------------------------
-*      2 = Black-and-White PostScript
-*      3 = Gray-Scale PostScript
-*      4 = Color PostScript
-*          ------------------------------------
-*      5 = HP-GL Graphics Plotter Output
-*          ------------------------------------
-*      6 = Computer Graphics Metafile (Binary CGM)
-*      7 = Computer Graphics Metafile (Clear Text CGM)
+*      1 = Windows Meta File
+*      2 = Postscript File
+*      3 = DXF File
 @RESPONSE: HELP LABEL = 4.20.1
-4
+1
 * WHAT IS THE ORIENTATION OF THE PLOT ?
 *   1 = MAP VIEW
 *   2 = TRUE CROSS SECTION ALONG A COLUMN

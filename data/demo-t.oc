@@ -1,21 +1,47 @@
-         4         4        60         0
-         0         1         1         1  p1 s1
-         1         0         1         0
-         0         1         1         1  p2 s1
-         1         0         1         0
-         0         1         1         1  p2 s2
-         1         0         1         0
-         0         1         1         1  p2 s3
-         1         0         1         0
-         0         1         1         1  p2 s4
-         1         0         1         0
-         0         1         1         1  p2 s5
-         1         0         1         0
-         0         1         1         1  p2 s6
-         1         0         1         0
-         0         1         1         1  p2 s7
-         1         0         1         0
-         0         1         1         1  p2 s8
-         1         0         1         0
-         0         1         1         1  p3 s1
-         1         0         1         0
+HEAD PRINT FORMAT 4
+DRAWDOWN PRINT FORMAT 4
+HEAD SAVE UNIT 32
+COMPACT BUDGET
+PERIOD 1 STEP 1
+   PRINT HEAD
+   SAVE HEAD
+   PRINT BUDGET
+   SAVE BUDGET
+PERIOD 2 STEP 1
+   PRINT BUDGET
+   SAVE HEAD
+   SAVE BUDGET
+PERIOD 2 STEP 2
+   PRINT BUDGET
+   SAVE HEAD
+   SAVE BUDGET
+PERIOD 2 STEP 3
+   PRINT BUDGET
+   SAVE HEAD
+   SAVE BUDGET
+PERIOD 2 STEP 4
+   PRINT BUDGET
+   SAVE HEAD
+   SAVE BUDGET
+PERIOD 2 STEP 5
+   PRINT BUDGET
+   SAVE HEAD
+   SAVE BUDGET
+PERIOD 2 STEP 6
+   PRINT BUDGET
+   SAVE HEAD
+   SAVE BUDGET
+PERIOD 2 STEP 7
+   PRINT BUDGET
+   SAVE HEAD
+   SAVE BUDGET
+PERIOD 2 STEP 8
+   PRINT BUDGET
+   PRINT HEAD
+   SAVE HEAD
+   SAVE BUDGET
+PERIOD 3 STEP 1
+   PRINT BUDGET
+   PRINT HEAD
+   SAVE HEAD
+   SAVE BUDGET

@@ -1,0 +1,59 @@
+@ This settings file sets up a spectrum of colors from blue to red spanning
+@ color numbers 2 through 13. It is useful for shading real number data
+@ by value ranges using the Grid Unit Array (GUA) option.
+
+color cycle: 4   1 13 7 2       
+
+@Color Table 
+color table: 0   0.00 0.00 0.00  'Black'
+color table: 1   1.00 1.00 1.00  'White'
+color table: 2   0.00 0.33 1.00  'color 2'
+color table: 3   0.00 0.67 1.00  'color 3'   
+color table: 4   0.00 1.00 1.00  'color 4'     
+color table: 5   0.00 1.00 0.67  'color 5'
+color table: 6   0.00 1.00 0.33  'color 6'
+color table: 7   0.00 1.00 0.00  'color 7'
+color table: 8   0.33 1.00 0.00  'color 8'
+color table: 9   0.67 1.00 0.00  'color 9'
+color table: 10  1.00 1.00 0.00  'color 10'
+color table: 11  1.00 0.67 0.00  'color 11'
+color table: 12  1.00 0.33 0.00  'color 12'
+color table: 13  1.00 0.00 0.00  'color 13'
+color table: 14  0.60 0.60 0.60  'Light Gray'
+color table: 15  0.30 0.30 0.30  'Dark Gray'
+
+color menu items: 15
+
+@ Item Color information for plot features
+item color:  1   14   @inactive grid boundary
+item color:  2   15   @interior grid lines
+item color:  3    1   @grid rectangle
+item color:  4   15   @inactive cell fill
+item color:  5   14   @quasi 3d fill
+item color:  6   14   @quasi 3d outline
+item color:  7    1   @title and scale
+item color:  8    1   @wells
+item color:  9    1   @drains
+item color: 10    1   @general head boundaries
+item color: 11    1   @rivers
+item color: 12    0   @solid fill grid unit outline
+item color: 13    1   @contour color
+
+inactive cell pattern: 1
+confining bed pattern: 1
+
+data marker: 3 .25 0
+
+@ Grid Unit Array parameters
+grid unit:  1  2 1
+grid unit:  2  3 2
+grid unit:  3  4 3
+grid unit:  4  5 4
+grid unit:  5  6 5
+grid unit:  6  7 6
+grid unit:  7  8 1
+grid unit:  8  9 2
+grid unit:  9 10 3
+grid unit: 10 11 4
+grid unit: 11 12 5
+grid unit: 12 13 6

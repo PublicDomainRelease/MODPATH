@@ -1,9 +1,0 @@
-@================== MODPATH-PLOT Setup file <device.dat> ======================
-@
-@  This file is used to generate the menu of graphics output devices
-@
-@                                XGKS                        
-@
-@==============================================================================
-@
-   4 -1  'Monitor'                                      x11-c.set

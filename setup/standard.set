@@ -1,0 +1,75 @@
+@ This is the standard settings file for the PC version of MODPATH-PLOT
+@ All output devices use this settings file as the default.
+
+color cycle: 8   1 2 3 4 5 6 7 8
+
+@Color Table 
+color table: 0   0.0 0.0 0.0  'Black'
+color table: 1   1.0 1.0 1.0  'White'
+color table: 2   1.0 0.0 0.0  'Red'
+color table: 3   0.0 1.0 0.0  'Green'
+color table: 4   0.0 0.0 1.0  'Blue'
+color table: 5   0.5 0.1 0.7  'Violet'
+color table: 6   1.0 1.0 0.0  'Yellow' 
+color table: 7   1.0 0.6 0.0  'Orange'
+color table: 8   1.0 0.0 1.0  'Magenta'
+color table: 9   0.6 0.3 0.1  'Brown'
+color table: 10  0.0 1.0 1.0  'Cyan'  
+color table: 11  0.4 0.0 0.0  'Dark Red'  
+color table: 12  0.0 0.4 0.0  'Dark Green'
+color table: 13  0.0 0.0 0.4  'Dark Blue'  
+color table: 14  0.6 0.6 0.6  'Light Gray'
+color table: 15  0.3 0.3 0.3  'Dark Gray'
+
+color menu items: 15
+
+@ Item Color information for plot features
+item color:  1   14   @inactive grid boundary
+item color:  2   15   @interior grid lines
+item color:  3    1   @grid rectangle
+item color:  4    4   @inactive cell fill
+item color:  5   14   @quasi 3d fill
+item color:  6   14   @quasi 3d outline
+item color:  7    1   @title and scale
+item color:  8    2   @wells
+item color:  9    2   @drains
+item color: 10    2   @general head boundaries
+item color: 11    4   @rivers
+item color: 12    0   @solid fill grid unit outline
+item color: 13   10   @contour color
+
+inactive cell pattern: 1
+confining bed pattern: 1
+
+data marker: 3 .25 0
+
+@ Grid Unit Array parameters
+grid unit:  1 14 1
+grid unit:  2 11 2
+grid unit:  3 12 3
+grid unit:  4 13 4
+grid unit:  5  2 5
+grid unit:  6  3 6
+grid unit:  7  4 1
+grid unit:  8  5 2
+grid unit:  9  6 3
+grid unit: 10  7 4
+grid unit: 11  8 5
+grid unit: 12  9 6
+grid unit: 13 10 1
+grid unit: 14 11 2
+grid unit: 15 12 3
+
+@BUDGET TERMS FOR PLOTTING
+@Arguments are
+@ label in budget file (must be 16 characters in quotes)
+@ plot color
+@ plot symbol (plan view)
+@ view code (1 for all views, 0 for plan view only)
+@ IFACE code (0 for always plot unless IFACE>6, 1 for plot only when IFACE=0)
+BUDGET PLOT: '           WELLS' 2 1 1 1
+BUDGET PLOT: '          DRAINS' 2 1 1 1
+BUDGET PLOT: ' HEAD DEP BOUNDS' 2 1 1 1
+BUDGET PLOT: '   RIVER LEAKAGE' 4 0 0 0
+BUDGET PLOT: '  STREAM LEAKAGE' 4 0 0 0
+

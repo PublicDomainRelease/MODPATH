@@ -1,0 +1,14 @@
+#MODPATH SAMPLE PROBLEM:                                                       
+#   TRANSIENT FLOW EXAMPLE                                                     
+No options
+         0         1                                IBOUND layer  1
+         0         1                                IBOUND layer  2
+         0         1                                IBOUND layer  3
+         0         1                                IBOUND layer  4
+         0         1                                IBOUND layer  5
+    999.90  HNOFLO
+       -65 1.000E+00                             0  SHEAD layer  1
+       -65 1.000E+00                             0  SHEAD layer  2
+       -65 1.000E+00                             0  SHEAD layer  3
+       -65 1.000E+00                             0  SHEAD layer  4
+       -65 1.000E+00                             0  SHEAD layer  5

@@ -1,4 +1,4 @@
-@[MODPATH-PLOT Version 3.00 (V3, Release 2, 6-2000)]
+@[MODPATH-PLOT Version 3.00 (V3, Release 1, 9-94) ]
 @
 @-----------------------------------------------------------------------------
 @  File: plot-t3.rsp
@@ -12,23 +12,16 @@
  
 * ENTER THE NAME FILE:
 @RESPONSE: HELP LABEL = 5.2.1
-../data/demo-t3.mpn
+demo-t3.mpn
 * ENTER TITLE (80 CHARACTERS OR LESS):
 @RESPONSE: HELP LABEL = 2.1.40
-Source areas to wells in layers 1 and 4 under new steady state conditions.
+Source areas to wells in layers 1 and 4 under new steady state conditions
 * ENTER THE TYPE OF GRAPHICS OUTPUT DEVICE:
-*      1 = Monitor
-*          ------------------------------------
-*      2 = Black-and-White PostScript
-*      3 = Gray-Scale PostScript
-*      4 = Color PostScript
-*          ------------------------------------
-*      5 = HP-GL Graphics Plotter Output
-*          ------------------------------------
-*      6 = Computer Graphics Metafile (Binary CGM)
-*      7 = Computer Graphics Metafile (Clear Text CGM)
+*      1 = Windows Meta File
+*      2 = Postscript File
+*      3 = DXF File
 @RESPONSE: HELP LABEL = 4.20.1
-4
+1
 * A TIME STEP MUST BE SPECIFIED FOR COMPUTING THE ACTIVE GRID AND CONTOURS.
 * SELECT AN OPTION FOR SPECIFYING THE TIME STEP:
 *   1 = ENTER STRESS PERIOD AND TIME STEP DIRECTLY

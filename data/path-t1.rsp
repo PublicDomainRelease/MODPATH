@@ -1,11 +1,11 @@
-@[MODPATH-PLOT Version 3.00 (V3, Release 2, 6-2000)]
+@[MODPATH Version 3.00 (V3, Release 1, 9-94) ]
 @
 @-----------------------------------------------------------------------------
-@  File: path-t1.rsp
+@  File: plot-t1.rsp
 @
 @  Response file for transient flow sample problem: run 1
 @
-@  This file shows responses for a backward pathline analysis using two 
+@  This file shows responses for a backward pathline analysis using two
 @  particles that originate at the well cell in layer 1 at 1 year after the
 @  start of pumping in layer 1. Additional runs can be made by selecting a
 @  different reference time for releasing the particles.
@@ -13,7 +13,7 @@
 @
 * ENTER THE NAME FILE:
 @RESPONSE: HELP LABEL = 4.2.1
-../data/demo-t1.mpn
+demo-t1.mpn
 * DEFINE A REFERENCE TIME FOR RELEASING PARTICLES ...
 *   SELECT AN OPTION:
 *      1 = SPECIFY BY ENTERING A STRESS PERIOD AND TIME STEP
@@ -64,12 +64,12 @@ n
 @RESPONSE: HELP LABEL = 2.1.45
 n
 *  STARTING LOCATIONS WILL BE GENERATED FOR 3-D SUBREGIONS.
-* 
+*
 * SHOULD PARTICLES BE PLACED IN CONSTANT HEAD CELLS ?
 @RESPONSE: HELP LABEL = 2.1.46
 n
 *  ENTER DATA FOR SUBREGION  1 :
-* 
+*
 * DEFINE THE SUBREGION BY ENTERING THE MINIMUM AND MAXIMUM J,I,K COORDINATES.
 *   ENTER:  MINIMUM J, MAXIMUM J, MINIMUM I, MAXIMUM I, MINIMUM K, MAXIMUM K
 @RESPONSE: HELP LABEL = 2.1.14

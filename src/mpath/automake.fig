@@ -1,0 +1,8 @@
+NOQUITONERROR
+
+FILES=*.for
+COMPILE=@lf90  -chk -trace -nsav -stchk -winconsole -c %fi
+
+LINK=@lf90 @%rf -exe %ex -winconsole
+TARGET=mpath90r4_1.exe
+
