@@ -1,8 +1,8 @@
-NOQUITONERROR
+QUITONERROR
 
 FILES=*.for
-COMPILE=@lf90  -c -winconsole -chk %fi
+COMPILE=@lf95 -winconsole -c -nchk -pca -stchk -trace -w %fi
 
-LINK=@lf90 @%rf C:\INT\LIB\INTRES.OBJ -winconsole -offset 10000h -exe %ex  -Lib C:\INT\LIB\INTMWL90.LIB -LIB C:\INT\LIB\WINSPOOL.LIB -LIB C:\INT\LIB\SHORTL90.LIB
-TARGET=mplot90r4_1.exe
+LINK=@lf95 @%rf -winconsole -exe %ex \INT\RESOURCE\INTRES.OBJ -LIB \INT\LIB\SHORTL95.LIB -LIB \INT\LIB\INTMWL95.LIB
+TARGET=mplotr4_2.exe
 

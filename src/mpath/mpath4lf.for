@@ -1,3 +1,8 @@
+C  MODPATH release: Version 4.00 (V4, Release 2, 4-2001)
+C    Use flat binary files on personal computers
+C    Always write head into composite budget file even for confined cells
+C  MODPATH release: Version 4.00 (V4, Release 1, 12-2000)
+C Changes -- ADDQAR modified to set IBOUND=IBOUND*1000 for weak sinks
 C  MODPATH release: Version 4.00 (V4, Release 1, 2-2000)
 C Changes:
 C   Modifications were made to work with MODFLOW-2000.
@@ -62,7 +67,7 @@ C#LAHEY - END#
  
 C    SET VERSION NUMBER
 C
-      VER(1)='MODPATH Version 4.00 (V4, Release 1, 2-2000)'
+      VER(1)='MODPATH Version 4.00 (V4, Release 2, 4-2001)'
       PRGNAM=VER(1)
  
 C... SET NUMBER OF UNITS RESERVED BY MODPATH. USED TO DIMENSION THE ARRAY

@@ -1,8 +1,8 @@
-NOQUITONERROR
+QUITONERROR
 
-FILES=*.for
-COMPILE=@lf90  -chk -trace -nsav -stchk -winconsole -c %fi
+FILES=*.fOR
+COMPILE=@lf95 -c -winconsole -chk (e,s,u) -pca -stchk -trace -w %fi
 
-LINK=@lf90 @%rf -exe %ex -winconsole
-TARGET=mpath90r4_1.exe
+LINK=@lf95 @%rf -WINCONSOLE -exe %ex
+TARGET=Mpathr4_2.EXE
 

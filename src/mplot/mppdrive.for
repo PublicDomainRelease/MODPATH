@@ -972,7 +972,9 @@ C
       END IF
       WRITE(IULOG,9004) NPCI
 9004  FORMAT('NUMBER OF FOREGROUND COLORS =',I3)
-      IF(IDCUN.EQ.0) THEN
+      rxold=rxm
+      ryold=rym
+9999   IF(IDCUN.EQ.0) THEN
       WRITE (IULOG,*) 'DEVICE COORDINATES ARE IN METERS.'
       WRITE (IULOG,9006) RXM,RYM
 9006  FORMAT('SCREEN DIMENSIONS IN METERS:'/
@@ -1427,7 +1429,20 @@ C
       CALL SETTXT(IFONT,2,HGHT2,CHSPAC)
  
       CALL CLGKS(KND,IWAIT,ISEG,IBELL,RXM,RYM,IUSUM,NCOL,NROW,
-     1 IMIN,IMAX,JMIN,JMAX,XMN,XMX,YMN,YMX,IVIEW)
+     1 IMIN,IMAX,JMIN,JMAX,XMN,XMX,YMN,YMX,IVIEW,iredraw)
+          if(iredraw.ne.0) then
+             call igrareaclear
+             nxold=npixx
+             nyold=npixy
+             npixx=infoscreen(4)
+             npixy=infoscreen(5)
+             rxm=rxold*npixx/nxold
+             rym=ryold*npixy/nyold
+             rxold=rxm
+             ryold=rym
+             rewind(unit=iucbc)
+             go to 9999
+          end if
 C
       RETURN
       END

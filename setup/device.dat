@@ -1,4 +1,7 @@
-   3  1  'Windows Meta File'                    standard.set
-   6  1  'Postscript File'                      standard.set
-   2  1  'DXF'                                  standard.set
+   1  0  'Screen only'                          standard.set
+   3  0  'Screen & Windows Meta File'           standard.set
+   6  0  'Screen & Postscript File'             standard.set
+   2  0  'Screen & DXF'                         standard.set
+   4  0  'Screen and Windows Print Manager'     standard.set
+   5  0  'Screen and Windows Clipboard'         standard.set
 

@@ -147,14 +147,21 @@ C
  
 C***** SUBROUTINE *****
       SUBROUTINE CLGKS(KND,IWAIT,ISEG,IBELL,RXM,RYM,IU,NCOL,NROW,
-     1 IMIN,IMAX,JMIN,JMAX,XMN,XMX,YMN,YMX,IVIEW)
+     1 IMIN,IMAX,JMIN,JMAX,XMN,XMX,YMN,YMX,IVIEW,iredraw)
       COMMON /LOCATR/ MAXLC,NLCDEV,LOCNUM(2),MAXDR,LDRECL,LIAL(2),
      1        IAL(20),LRAL(2),RAL(20),LLSTRL(2),LSTRL(20),IPDREC(2)
 C
+      iredraw=0
       IF(IWAIT.EQ.1) THEN
         IF(IBELL.NE.0) CALL BEEP
-        CALL WAIT(KND,ISEG,RXM,RYM,IU,NCOL,NROW,IMIN,IMAX,JMIN,
+601     CALL WAIT(KND,ISEG,RXM,RYM,IU,NCOL,NROW,IMIN,IMAX,JMIN,
      1                  JMAX,XMN,XMX,YMN,YMX,IVIEW)
+        call igrhardcopy('S')
+        if(infoinput(67).ge.251 .and. infoinput(67).le.256) GO TO 601
+        if(infoinput(67).eq.259) then
+             iredraw=1
+             return
+        end if
       END IF
  
       CALL GDAWK(1)
@@ -214,7 +221,7 @@ C--- SET INTERACTIVE MARKER PARAMETERS
 C--- SET GKS CLIPPING TO "ON"
       ICLIP=1
 C--- OPEN GKS ERROR FILE
-      CALL OPNFIL (IUERR,'errors.gks',4,I7,IBATCH,3)
+      CALL OPNFIL (IUERR,'errors.gks',4,IOUT,IBATCH,3)
  
 C=======================================================================
 C

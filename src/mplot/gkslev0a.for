@@ -23,7 +23,8 @@ C***** SUBROUTINE *****
       SUBROUTINE WAIT(KND,ISEG,RXM,RYM,IU,NCOL,NROW,IMIN,IMAX,JMIN,
      1                  JMAX,XMN,XMX,YMN,YMX,IVIEW)
 C
-      IF(KND.LE.0) READ(*,*)
+C      IF(KND.LE.0) READ(*,*)
+      IF(KND.LE.0) CALL IGrPause('AP')
       RETURN
       END
  

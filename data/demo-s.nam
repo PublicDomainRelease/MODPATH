@@ -1,7 +1,7 @@
-LIST                  6 DEMO-S.LST
+LIST                  1 DEMO-S.LST
 DIS                   9 DEMO-S.DIS
-BAS6                   5 DEMO-S.BA6
-BCF6                  11 DEMO-S.BC6
+BAS6                  2 DEMO-S.BA6
+BCF6                 11 DEMO-S.BC6
 OC                   12 DEMO-S.OC
 RCH                  13 DEMO-S.RCH
 WEL                  14 DEMO-S.WEL

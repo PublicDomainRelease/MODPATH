@@ -24,15 +24,9 @@ C  IDRNUM = Required driver number :
 C       1 : WMF
 C       2 : PostScript
 C       3 : DXF
+C       4 ; Windows print manager
 C      13+: Reserved
 C
-C  ******************************************************************
-C  This routine should be called after IGrInit and before IGrHardCopy
-C  if you wish to select an alternative graphics hardcopy driver.
-C  e.g.
-C        CALL IGrInit(' ',800,600,16)
-C        CALL IGrHardCopySelect(1,2)
-C        CALL IGrHardCopy(' ')
 C  ******************************************************************
 C
       INTEGER  IHCDRV
@@ -77,7 +71,7 @@ C
 C  Compile and link this routine as you would any other code. Users of
 C  Microsoft Fortran 5.x under DOS should use the /NOE linker option.
 C
-      GOTO (100,200,300),IHCDRV
+      GOTO (100,200,300,400),IHCDRV
 C
 C  WMF
 C
@@ -91,17 +85,16 @@ C
 C
 C  DXF format
 C
-300     CALL XXDXF(IACTN)
+300   CALL XXDXF(IACTN)
+      RETURN
+C
+C  Windows Print Manager
+400   CALL XXWIN(IACTN)
       RETURN
 C
 C  CGM (Computer Graphics Metafile) format
 C
 C      CALL XXCGM(IACTN)
-C      RETURN
-C
-C  Windows Print Manager
-C
-C      CALL XXWIN(IACTN)
 C      RETURN
 C
 C

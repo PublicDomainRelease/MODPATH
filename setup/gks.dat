@@ -26,5 +26,11 @@ DEVICE:    6  15  90                      @ postscript file (landscape)
 @---------------------------------------- DXF
 DEVICE:    2   7  90
 
+@---------------------------------------- Screen only
+DEVICE:    1  15  90
 
- 
+@---------------------------------------- Windows Print Manager
+DEVICE:    4  15  90
+
+@---------------------------------------- Windows Clipboard
+DEVICE:    5  15  90

@@ -595,6 +595,7 @@ C     ------------------------------------------------------------------
       CHARACTER*80 CNTRL
       CHARACTER*80 FNAME
       DATA NUNOPN/91/
+      INCLUDE 'openspec.inc'
 C     ------------------------------------------------------------------
 C
 C1------READ ARRAY CONTROL RECORD AS CHARACTER DATA.
@@ -636,7 +637,7 @@ C3------FOR FREE FORMAT CONTROL RECORD, READ REMAINING FIELDS.
             FMTIN=CNTRL(ISTART:ISTOP)
             IF(ICLOSE.NE.0) THEN
                IF(FMTIN.EQ.'(BINARY)') THEN
-                  OPEN(UNIT=LOCAT,FILE=FNAME,FORM='UNFORMATTED')
+                  OPEN(UNIT=LOCAT,FILE=FNAME,FORM=FORM,ACCESS=ACCESS)
                ELSE
                   OPEN(UNIT=LOCAT,FILE=FNAME)
                END IF
@@ -825,6 +826,7 @@ C     ------------------------------------------------------------------
       CHARACTER*16 TEXT
       CHARACTER*80 FNAME
       DATA NUNOPN/91/
+      INCLUDE 'openspec.inc'
 C     ------------------------------------------------------------------
 C
 C1------READ ARRAY CONTROL RECORD AS CHARACTER DATA.
@@ -866,7 +868,7 @@ C3------FOR FREE FORMAT CONTROL RECORD, READ REMAINING FIELDS.
             FMTIN=CNTRL(ISTART:ISTOP)
             IF(ICLOSE.NE.0) THEN
                IF(FMTIN.EQ.'(BINARY)') THEN
-                  OPEN(UNIT=LOCAT,FILE=FNAME,FORM='UNFORMATTED')
+                  OPEN(UNIT=LOCAT,FILE=FNAME,FORM=FORM,ACCESS=ACCESS)
                ELSE
                   OPEN(UNIT=LOCAT,FILE=FNAME)
                END IF

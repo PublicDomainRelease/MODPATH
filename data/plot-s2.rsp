@@ -17,9 +17,12 @@ demo-s2.mpn
 @RESPONSE: HELP LABEL = 2.1.40
 Capture area of well as defined by backtracking from the well cell.
 * ENTER THE TYPE OF GRAPHICS OUTPUT DEVICE:
-*      1 = Windows Meta File
-*      2 = Postscript File
-*      3 = DXF File
+*      1 = Screen only
+*      2 = Screen & Windows Meta File
+*      3 = Screen & Postscript File
+*      4 = Screen & DXF
+*      5 = Screen and Windows Print Manager
+*      6 = Screen and Windows Clipboard
 @RESPONSE: HELP LABEL = 4.20.1
 1
 * WHAT IS THE ORIENTATION OF THE PLOT ?

@@ -1,6 +1,8 @@
 C  MODPATH release: Version 4.00 (V4, Release 1, 2-2000)
 C    Changes to work with MODFLOW-2000 -- IFACE values come from budget file
 C    rather than from MODFLOW stress files.
+C       Bug Fixes:
+C            1. ADDQAR -- added code to multiply IBOUND by 1000 for weak sinks
 C
 C MODPATH Version 3.00 (V3, Release 2, 5-99)
 C
@@ -610,6 +612,7 @@ C
 C***** SUBROUTINE *****
       SUBROUTINE HEADS(HEAD,BUFF,IUNIT,IBOUND,LAYCON,IPER,ISTP,
      1             HDRY,HNOFLO)
+C  Read heads for one time step
 C
       INCLUDE 'idat1.inc'
       DIMENSION HEAD(NCOL,NROW,NLAY),BUFF(NCOL,NROW,NLAY),
@@ -986,7 +989,7 @@ C     ------------------------------------------------------------------
       IFACE=0
       IF(NLST.GT.0) THEN
          DO 100 N=1,NLST
-         READ(IU,END=1000,ERR=1000) ICELL,(VAL(I),I=1,NVAL)
+         READ(IU,ERR=1000) ICELL,(VAL(I),I=1,NVAL)
          Q=VAL(1)
          K= (ICELL-1)/NRC + 1
          I= ( (ICELL - (K-1)*NRC)-1 )/NCOL + 1
@@ -1081,14 +1084,14 @@ C     ******************************************************************
 C     ------------------------------------------------------------------
       IF(NBTYPE.EQ.4) THEN
          NL=1
-         READ(IU,END=1000,ERR=1000) ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
+         READ(IU,ERR=1000) ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
       ELSE IF(NBTYPE.EQ.3) THEN
          NL=1
-         READ(IU,END=1000,ERR=1000) ((IBUFF(J,I,1),J=1,NCOL),I=1,NROW)
-         READ(IU,END=1000,ERR=1000) ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
+         READ(IU,ERR=1000) ((IBUFF(J,I,1),J=1,NCOL),I=1,NROW)
+         READ(IU,ERR=1000) ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
       ELSE
          NL=NLAY
-         READ(IU,END=1000,ERR=1000) BUFF
+         READ(IU,ERR=1000) BUFF
       END IF
 C
       DO 100 KK=1,NL
@@ -1098,6 +1101,8 @@ C
       IF(NBTYPE.EQ.3) K=IBUFF(J,I,1)
       IF(BUFF(J,I,K).NE.0.0) THEN
          IF(ITOP.EQ.0) THEN
+            IF(BUFF(J,I,K).LT.0.0.AND.ABS(IBOUND(J,I,K)).LT.1000)
+     1                      IBOUND(J,I,K)= 1000*IBOUND(J,I,K)
             QSS(J,I,K)=QSS(J,I,K) + BUFF(J,I,K)
          ELSE
             CALL FACTYP(K,1,J,I,K-1,NBD,IBOUND,NCOL,NROW,NLAY,J,I,K,6,
@@ -1105,6 +1110,8 @@ C
             IF(NBD.EQ.1) THEN
                QZ(J,I,K)=QZ(J,I,K) - BUFF(J,I,K)
             ELSE
+               IF(BUFF(J,I,K).LT.0.0.AND.ABS(IBOUND(J,I,K)).LT.1000)
+     1                      IBOUND(J,I,K)= 1000*IBOUND(J,I,K)
                QSS(J,I,K)=QSS(J,I,K) + BUFF(J,I,K)
             END IF
          END IF

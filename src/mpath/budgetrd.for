@@ -37,18 +37,23 @@ C
 C.....IF THE TIME STEP IS TOO EARLY, SKIP THE DATA AND TRY AGAIN.
       IF (TEXT.EQ.'EARLY DATA') THEN
          IF(NBTYPE.EQ.0 .OR. NBTYPE.EQ.1) THEN
-            READ(IU,END=30,ERR=50) BUFF
+C            READ(IU,END=30,ERR=50) BUFF
+            READ(IU,ERR=30) BUFF
          ELSE IF(NBTYPE.EQ.2 .OR. NBTYPE.EQ.5) THEN
             IF(NLST.GT.0) THEN
                DO 22 N=1,NLST
-               READ(IU,END=30,ERR=50) ICELL,(VAL(I),I=1,NVAL)
+C               READ(IU,END=30,ERR=50) ICELL,(VAL(I),I=1,NVAL)
+               READ(IU,ERR=30) ICELL,(VAL(I),I=1,NVAL)
 22             CONTINUE
             END IF
          ELSE IF(NBTYPE.EQ.4) THEN
-            READ(IU,END=30,ERR=50) ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
+C            READ(IU,END=30,ERR=50) ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
+            READ(IU,ERR=30) ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
          ELSE
-            READ(IU,END=30,ERR=50) ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
-            READ(IU,END=30,ERR=50) ((IBUFF(J,I,1),J=1,NCOL),I=1,NROW)
+C            READ(IU,END=30,ERR=50) ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
+C            READ(IU,END=30,ERR=50) ((IBUFF(J,I,1),J=1,NCOL),I=1,NROW)
+            READ(IU,ERR=30) ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
+            READ(IU,ERR=30) ((IBUFF(J,I,1),J=1,NCOL),I=1,NROW)
          END IF
          GO TO 20
       END IF
@@ -61,11 +66,13 @@ C  Depending on file type, read the budget data into BUFF.
 25    CONTINUE
       NRC=NROW*NCOL
       IF(NBTYPE.EQ.0 .OR. NBTYPE.EQ.1) THEN
-         READ(IU,END=30,ERR=50) BUFF
+C         READ(IU,END=30,ERR=50) BUFF
+         READ(IU,ERR=30) BUFF
       ELSE IF(NBTYPE.EQ.2 .OR. NBTYPE.EQ.5) THEN
          IF(NLST.GT.0) THEN
             DO 26 N=1,NLST
-            READ(IU,END=30,ERR=50) ICELL,(VAL(I),I=1,NVAL)
+C            READ(IU,END=30,ERR=50) ICELL,(VAL(I),I=1,NVAL)
+            READ(IU,ERR=30) ICELL,(VAL(I),I=1,NVAL)
             K= (ICELL-1)/NRC + 1
             I= ( (ICELL - (K-1)*NRC)-1 )/NCOL + 1
             J= ICELL - (K-1)*NRC - (I-1)*NCOL
@@ -73,10 +80,13 @@ C  Depending on file type, read the budget data into BUFF.
 26          CONTINUE
          END IF
       ELSE IF(NBTYPE.EQ.4) THEN
-         READ(IU,END=30,ERR=50) ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
+C         READ(IU,END=30,ERR=50) ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
+         READ(IU,ERR=30) ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
       ELSE
-         READ(IU,END=30,ERR=50) ((IBUFF(J,I,1),J=1,NCOL),I=1,NROW)
-         READ(IU,END=30,ERR=50) ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
+C         READ(IU,END=30,ERR=50) ((IBUFF(J,I,1),J=1,NCOL),I=1,NROW)
+C         READ(IU,END=30,ERR=50) ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
+         READ(IU,ERR=30) ((IBUFF(J,I,1),J=1,NCOL),I=1,NROW)
+         READ(IU,ERR=30) ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
          DO 28 I=1,NROW
          DO 28 J=1,NCOL
          IF(IBUFF(J,I,1).NE.1) THEN
@@ -109,13 +119,22 @@ C     If it matches the specified time, return information about the
 C        budget term.
 C     If it exceeds the time, rewind to the starting location
 C     ******************************************************************
+      CHARACTER*16 TXTSAV
+      SAVE IOLD,KS,KP,TXTSV,NC,NR,NLCODE
       CHARACTER*16 TEXT,CTMP(5)
+      DATA IOLD/0/
 C
-      READ(IU,END=50,ERR=1000) KS,KP,TEXT,NC,NR,NLCODE
+C      READ(IU,END=50,ERR=1000) KS,KP,TEXT,NC,NR,NLCODE
+      IF(IOLD.EQ.0) THEN
+         READ(IU,ERR=50) KS,KP,TXTSAV,NC,NR,NLCODE
+      END IF
+      TEXT=TXTSAV
       IF(KP.GT.KPER .OR. (KP.EQ.KPER .AND. KS.GT.KSTP)) THEN
-         BACKSPACE(IU)
+         IOLD=1
          TEXT='END DATA'
          RETURN
+      ELSE
+         IOLD=0
       END IF
       NL=NLCODE
       IF(NL.LT.0) NL=-NL
@@ -129,18 +148,22 @@ C
       NIFACE=0
       NLST=0
       IF(NLCODE.LT.0) THEN
-         READ(IU,END=50,ERR=1000) NBTYPE,DELT,PERTIM,TOTIM
+C         READ(IU,END=50,ERR=1000) NBTYPE,DELT,PERTIM,TOTIM
+         READ(IU,ERR=50) NBTYPE,DELT,PERTIM,TOTIM
          IF(NBTYPE.EQ.5) THEN
-            READ(IU,END=50,ERR=1000) NVAL
+C            READ(IU,END=50,ERR=1000) NVAL
+            READ(IU,ERR=50) NVAL
             IF(NVAL.GT.1) THEN
-               READ(IU,END=50,ERR=1000) (CTMP(I),I=1,NVAL-1)
+C               READ(IU,END=50,ERR=1000) (CTMP(I),I=1,NVAL-1)
+               READ(IU,ERR=50) (CTMP(I),I=1,NVAL-1)
                DO 10 I=1,NVAL-1
                IF(CTMP(I).EQ.'IFACE') NIFACE=I+1
 10             CONTINUE
             END IF
          END IF
          IF(NBTYPE.EQ.5 .OR. NBTYPE.EQ.2) THEN
-            READ(IU,END=50,ERR=1000) NLST
+C            READ(IU,END=50,ERR=1000) NLST
+            READ(IU,ERR=50) NLST
          END IF
       END IF
       IF(KP.LT.KPER) THEN

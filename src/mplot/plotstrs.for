@@ -42,13 +42,13 @@ C  Read a budget header and find out if it is point data
       END IF
       IF(NBTYPE.NE.2 .AND. NBTYPE.NE.5) THEN
          IF(NBTYPE.EQ.0 .OR. NBTYPE.EQ.1) THEN
-            READ(IUCBC,ERR=1000,END=1000) BUFF
+            READ(IUCBC,ERR=1000) BUFF
          ELSE IF(NBTYPE.EQ.3) THEN
-            READ(IUCBC,ERR=1000,END=1000)
+            READ(IUCBC,ERR=1000)
      1            ((IBUFF(J,I,1),J=1,NCOL),I=1,NROW)
             READ(IUCBC) ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
          ELSE
-            READ(IUCBC,ERR=1000,END=1000)
+            READ(IUCBC,ERR=1000)
      1            ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
          END IF
          IEND=0
@@ -68,7 +68,7 @@ C
       IF(NLST.GT.0) THEN
          NRC=NROW*NCOL
          DO 100 N=1,NLST
-            READ(IUCBC,ERR=1000,END=1000) ICELL,(VAL(J),J=1,NVAL)
+            READ(IUCBC,ERR=1000) ICELL,(VAL(J),J=1,NVAL)
             IF(NBD.EQ.0) GO TO 100
             K= (ICELL-1)/NRC + 1
             I= ( (ICELL - (K-1)*NRC)-1 )/NCOL + 1

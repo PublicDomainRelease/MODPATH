@@ -419,7 +419,7 @@ C     + + + FUNCTIONS + + +
 C
 C     + + + EXTERNALS + + +
 C      EXTERNAL   CKWKID, GETMON, SHINIT, GRINIT, GCLEAR, SCCLAL, GUNIT
-      EXTERNAL   CKWKID, GETMON, SHINIT, GRINIT, GCLEAR,  GUNIT
+      EXTERNAL   CKWKID, GETMON, ISCREENOPEN, GCLEAR,  GUNIT
       EXTERNAL   GHCSEL, GDEVIC, GCHJUS, GSTFNT, INFOGR
 C
 C     + + + OUTPUT FORMATS + + +
@@ -440,13 +440,12 @@ C
 C       work station is open.  activate the station
 C
 C       clear AIDE screen
-C   SCCLAL seems to be msiising from libraries  AWH 3-8-2000
+C   SCCLAL is apparently an AIDE-specific routine, which is not
+C   needed when using Interacter   AWH 3-8-2000
 C        CALL SCCLAL
 C       init Interactor graphics
-C  Use hardcopy devices only -- 3-10-2000 AWH
-C  2=DXF,3=WMF,6=Postscript
-        CALL SHINIT(' ')
-        CALL GRINIT('H',1280,700,16)
+C  2=DXF,3=WMF,6=Postscript,
+        CALL ISCREENOPEN(' ','P',640,480,16)
         IF (MONVEC(WKID).EQ.2) THEN
 C         output to DXF
           CALL GHCSEL (1,3)
@@ -460,6 +459,14 @@ C         output postscript file
           CALL GHCSEL (1,2)
           CALL IGrHardCopyOptions(7,0)
           CALL GDEVIC ('mplot.ps')
+        ELSE IF (MONVEC(WKID).EQ.4) THEN
+C         output to Windows print Manager
+          CALL GHCSEL (1,4)
+          CALL GDEVIC(' ')
+        ELSE IF (MONVEC(WKID).EQ.5) THEN
+C         output to clipboard -- windows metafile without a specific file
+          CALL GHCSEL (1,1)
+          CALL GDEVIC (' ')
         END IF
 C       get information for this workstation
         WRITE (99,*) 'INFOGR(7)  ',INFOGR(7)

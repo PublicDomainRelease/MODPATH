@@ -84,7 +84,13 @@ C
         DO 5 N=1,NPTCL
 5       WRITE(IUNTS,REC=N) IZERO
       END IF
- 
+
+      J=0
+      I=0
+      K=0
+      XP=0.
+      YP=0.
+      ZPL=0.
 10    CONTINUE
 C--- GET NEW POINT
       JM1=J
@@ -94,7 +100,7 @@ C--- GET NEW POINT
       YM1=YP
       ZPLM1=ZPL
       NSOLD=NSTEP
- 
+C
       CALL READPL(IU,IVER,ICMPCT,IP,XP,YP,ZPL,ZZ,TT,J,I,K,NSTEP,
      1            NROW,NCOL,TREF,IERR)
       IF(IFIRST.EQ.1) THEN
