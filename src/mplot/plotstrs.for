@@ -13,6 +13,8 @@ C***** SUBROUTINE *****
      1   XMN,XMX,YMN,YMX,ZXT,ZXB,NCOL,NROW,NLAY,IVIEW,NCLR,
      2   IUSUM,IPROJ,ISLICE,KPER,KSTP,NDIM1,NDIM2,IXYDIR,
      3   IEND,BUFF,IBUFF,IUCBC)
+      USE DOUBLEBUDGET, ONLY: IPREC,DBLBUFF
+      DOUBLE PRECISION VALD(20)
 C
       COMMON /BDPLT/NBDPLT,IBDCOL(20),IBDSYM(20),IBDVEW(20),IBDIFC(20)
       COMMON /CBDPLT/BDLABL(20)
@@ -26,7 +28,7 @@ C
      1ZXT(NDIM1,NDIM2),ZXB(NDIM1,NDIM2)
       DIMENSION XP(7),YP(7)
       CHARACTER*16 TEXT
-      DIMENSION VAL(6)
+      DIMENSION VAL(20)
 C     ------------------------------------------------------------------
       IF(NBDPLT.LT.1) THEN
          IEND=1
@@ -41,15 +43,29 @@ C  Read a budget header and find out if it is point data
          RETURN
       END IF
       IF(NBTYPE.NE.2 .AND. NBTYPE.NE.5) THEN
-         IF(NBTYPE.EQ.0 .OR. NBTYPE.EQ.1) THEN
-            READ(IUCBC,ERR=1000) BUFF
-         ELSE IF(NBTYPE.EQ.3) THEN
-            READ(IUCBC,ERR=1000)
-     1            ((IBUFF(J,I,1),J=1,NCOL),I=1,NROW)
-            READ(IUCBC) ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
-         ELSE
-            READ(IUCBC,ERR=1000)
-     1            ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
+C  Area data
+        IF(IPREC.EQ.2) THEN
+           IF(NBTYPE.EQ.0 .OR. NBTYPE.EQ.1) THEN
+              READ(IUCBC,ERR=1000) DBLBUFF
+           ELSE IF(NBTYPE.EQ.3) THEN
+              READ(IUCBC,ERR=1000)
+     1              ((IBUFF(J,I,1),J=1,NCOL),I=1,NROW)
+              READ(IUCBC) ((DBLBUFF(J,I,1),J=1,NCOL),I=1,NROW)
+           ELSE
+              READ(IUCBC,ERR=1000)
+     1              ((DBLBUFF(J,I,1),J=1,NCOL),I=1,NROW)
+           END IF
+        ELSE
+           IF(NBTYPE.EQ.0 .OR. NBTYPE.EQ.1) THEN
+              READ(IUCBC,ERR=1000) BUFF
+           ELSE IF(NBTYPE.EQ.3) THEN
+              READ(IUCBC,ERR=1000)
+     1              ((IBUFF(J,I,1),J=1,NCOL),I=1,NROW)
+              READ(IUCBC) ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
+           ELSE
+              READ(IUCBC,ERR=1000)
+     1              ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
+           END IF
          END IF
          IEND=0
          RETURN
@@ -68,7 +84,14 @@ C
       IF(NLST.GT.0) THEN
          NRC=NROW*NCOL
          DO 100 N=1,NLST
-            READ(IUCBC,ERR=1000) ICELL,(VAL(J),J=1,NVAL)
+            IF(IPREC.EQ.2) THEN
+              READ(IUCBC,ERR=1000) ICELL,(VALD(J),J=1,NVAL)
+              DO 60 J=1,NVAL
+              VAL(J)=VALD(J)
+60            CONTINUE
+            ELSE
+              READ(IUCBC,ERR=1000) ICELL,(VAL(J),J=1,NVAL)
+            END IF
             IF(NBD.EQ.0) GO TO 100
             K= (ICELL-1)/NRC + 1
             I= ( (ICELL - (K-1)*NRC)-1 )/NCOL + 1

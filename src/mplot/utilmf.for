@@ -997,6 +997,7 @@ C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
       CHARACTER*(*) LINE
       CHARACTER*20 RW,STRING
+      CHARACTER*4 CIN
 C     ------------------------------------------------------------------
 C
 C1------Set last char in LINE to blank and set ISTART and ISTOP to point
@@ -1099,9 +1100,14 @@ C
 C7C-----If output unit is 0; write a message to default output.
       ELSE
          IF(IN.GT.0) THEN
-            WRITE(*,201) IN,LINE(ISTART:ISTOP),STRING(1:L),LINE
+            WRITE(CIN,'(I4)') IN
+            CALL PUTSCR('FILE UNIT:'//CIN//' : ERROR CONVERTING "'//
+     1        LINE(ISTART:ISTOP)//'" TO '//STRING(1:L)//' IN LINE:')
+            CALL PUTSCR(LINE)
          ELSE
-            WRITE(*,202) LINE(ISTART:ISTOP),STRING(1:L),LINE
+            CALL PUTSCR('KEYBOARD INPUT : ERROR CONVERTING "'//
+     1        LINE(ISTART:ISTOP)//'" TO '//STRING(1:L)//' IN LINE:')
+            CALL PUTSCR(LINE)
          END IF
       END IF
 C

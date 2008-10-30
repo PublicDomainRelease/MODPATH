@@ -1,8 +1,0 @@
-QUITONERROR
-
-FILES=*.fOR
-COMPILE=@lf95 -c -winconsole -chk (e,s,u) -pca -stchk -trace -w %fi
-
-LINK=@lf95 @%rf -WINCONSOLE -exe %ex
-TARGET=Mpathr4_3.EXE
-

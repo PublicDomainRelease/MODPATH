@@ -5,7 +5,7 @@ BCF6                 11 DEMO-T.BC6
 OC                   12 DEMO-T.OC
 RCH                  13 DEMO-T.RCH
 WEL                  14 DEMO-T.WEL
-SIP                  15 DEMO-T.SIP
+PCG                  15 DEMO-T.PCG
 RIV                  16 DEMO-T.RIV
 DATA(BINARY)         32 DEMO-T.HED
 DATA(BINARY)         34 DEMO-T.BUD

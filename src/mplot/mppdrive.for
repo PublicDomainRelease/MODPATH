@@ -1,5 +1,10 @@
+C MODPATH-PLOT Version 5.0
+C   Changed to work with Winteracter.
+C   Supports files larger than 2 GB.
+C   Supports single and double precision binary files.
+C
 C MODPATH-PLOT Version 4.00 (V4, Release 3, 1-2002)
-C  Changes to work with MODFLOW-2000
+C   Changes to work with MODFLOW-2000
 C
 C MODPATH-PLOT Version 3.00 (V3, Release 2, 5-99)
 C Changes:
@@ -14,7 +19,15 @@ C***** SUBROUTINE *****
      2XLOC,YLOC,CLEV,BUFF,IUNAR,HNOFLO,HDRY,VER,CFGPTH,ZXT,ZXB,PARRAY,
      3ICB,HPREV,PERLEN,TIMX,NUMTS,IGZBUF,IBPZON,CDATA,IBRMAP,LAYCBD,
      4 ISSFLG)
+      USE DOUBLEBUDGET, ONLY: IPREC
 C
+C
+      USE WINTERACTER
+      INCLUDE 'mplotwnt.inc'
+      TYPE(WIN_MESSAGE)  :: MESSAGE
+      CHARACTER(LEN=2), PARAMETER :: NEWLIN = CHAR(13)//CHAR(10)
+      CHARACTER*200 COMMAND,OUTPUT
+      INCLUDE 'LKAGKS.INC'
 C
       DIMENSION LAYCBD(200)
       CHARACTER*(*) VER,CFGPTH
@@ -23,7 +36,9 @@ C
       CHARACTER*132 SFILE1,SFILE2
       CHARACTER*80 LINE,FNAMS
       CHARACTER*16 TEXT
+      CHARACTER*3 C1,C2,C3
 C
+      COMMON /BUDGETREWIND/iold
       COMMON /DRIVR/ NCOL,NROW,NLAY,NZDIM,NUNIT,NCBL,IGRID,IUMAIN,
      1 NLVMAX,NWAIT,IBATCH,IBYTES,ISS,NXDIM,NIGZ,NIUNAR,NPER,NPARY,
      2 MAXPTS
@@ -56,7 +71,14 @@ C
       CHARACTER*79 STRING
       DIMENSION LASF(13)
       DATA LASF/13*1/
- 
+
+      IPREC=0
+C  Clear counters for resize and expose events.
+      nresize=0
+      nexpose=0
+C  Initialize Iold, which indicates if a budget header has been saved in memory.  
+      iold=0
+C
       IUPTH=IUNAR(2)
       IUEPT=IUNAR(3)
       IUTIM=IUNAR(4)
@@ -148,15 +170,13 @@ C---READ IN LAYCON ARRAY
         IF(K.NE.1 .OR. LAYCON(K).NE.1) LAYCON(K)=3
       END IF
 15    CONTINUE
- 
- 
 C
       CALL MPRMPT('ENTER TITLE (80 CHARACTERS OR LESS):')
       CALL GETSTR(TITLE,0,'2.1.40')
 C--- PICK A GRAPHICS OUTPUT DEVICE AND SET COLOR DATA IF NECESSARY
       CALL DEVICE (MODEL,KND,NWAIT,IWAIT,SFILE1,IUDEV,IUSUM,IBATCH)
       CALL SETNGS(IUDEV,IUSUM,SFILE1,SFILE2)
- 
+C
 C-------------------------------------------------------------------------
       INDIS=IUNIT(1)
       CALL DIS2RP(INDIS,IUSUM,DELR,DELC,ZTOP,ZBOT,LAYCBD,NCON,
@@ -263,7 +283,7 @@ C
       CALL MPRMPT('  3 = DRAW ACTIVE GRID AND FULL GRID BOUNDARIES')
       CALL GETI(1,IOPTGR,3,1,3,'2.1.4')
       MES= 'DRAW INTERIOR GRID LINES ?'
-      CALL YESNO (MES,IOPTIL,'2.1.45')
+      CALL YESNOZ (MES,IOPTIL,'2.1.45')
 C
  
 C  IF NO GRID UNIT FILE WAS SPECIFIED, RESET ISGZ TO 0
@@ -279,7 +299,7 @@ C  OTHERWISE, FIND OUT ABOUT HOW TO DISPLAY GRID UNIT DATA
         CALL GETI(1,ISGZ,3,1,4,'2.1.45A')
         ISGZ=ISGZ-1
         MES= 'DISPLAY A LEGEND FOR THE GRID UNIT ARRAY DATA ?'
-        CALL YESNO (MES,LEGEND,'2.1.45B')
+        CALL YESNOZ (MES,LEGEND,'2.1.45B')
         IF(ISGZ.LT.2) LEGEND=0
       END IF
  
@@ -399,12 +419,12 @@ C
       IF (IDIR.EQ.0) THEN
       MES= 'DO YOU WANT TO SKIP OVER PATH LINES THAT DISCHARGE IN ZONE 1
      1 ?'
-      CALL YESNO (MES,ISKIP,'2.1.46')
+      CALL YESNOZ (MES,ISKIP,'2.1.46')
       END IF
       MES= 'DO YOU WANT TO PLOT POINTS AT SPECIFIED TIME INTERVALS ?'
-      CALL YESNO (MES,IPTS,'2.1.47')
+      CALL YESNOZ (MES,IPTS,'2.1.47')
       MES= 'DO YOU WANT TO STOP DRAWING PATH LINES AT A SPECIFIED TIME?'
-      CALL YESNO (MES,IANS,'2.1.48')
+      CALL YESNOZ (MES,IANS,'2.1.48')
       TMAX= 1.0E+30
       IF (IANS.EQ.1) THEN
       CALL MPRMPT(
@@ -436,7 +456,7 @@ C---BEGIN BLOCK 3 : ENDPOINT PLOT INFORMATION
       IF(ITYPE.EQ.3.OR.ITYPE.EQ.4) THEN
       MES= 'PLOT ONLY THOSE PARTICLES WHOSE FINAL LOCATIONS ARE IN A SPE
      1CIFIC ZONE ?'
-      CALL YESNO (MES,IANS,'2.1.49')
+      CALL YESNOZ (MES,IANS,'2.1.49')
       IF(IANS.EQ.1) THEN
       CALL MPRMPT('ENTER THE ZONE CODE:')
       CALL GETI(1,IPLOT,1,0,0,'2.1.15')
@@ -575,7 +595,7 @@ C---END BLOCK 7
 C
 C  READ MODPATH DATA SET
 C
-      IF(ISILNT.NE.1) WRITE(*,*) ' READING MODPATH-PLOT DATA FILES...'
+      IF(ISILNT.NE.1) CALL PUTSCR('READING MODPATH-PLOT DATA FILES...')
  
 C  SET VALUES OF NX AND ISLICE DEPENDING ON THE PLOT ORIENTATION
       IF(IVIEW.EQ.1) THEN
@@ -588,7 +608,12 @@ C  SET VALUES OF NX AND ISLICE DEPENDING ON THE PLOT ORIENTATION
         NX=NCOL
         ISLICE=IROWGD
       END IF
- 
+
+C
+      IUHED=0
+      IF(IUNIT(8).GT.0) IUHED= -IUNIT(8)      
+      IF(IUHED.LT.0 .AND.IPREC.EQ.0)
+     1        CALL HEADPRECISION(-IUHED,IUNAR(5),NCOL,NROW,NLAY)
  
       CALL DATIN (LAYCON,NCON,BUFF,IBUFF,HEAD,XMX,XMN,YMX,YMN,DELR,
      1DELC,DELZ,DELZCB,ZTOP,ZBOT,ZMN,ZMX,XLOC,YLOC,IBOUND,
@@ -598,12 +623,13 @@ C  SET VALUES OF NX AND ISLICE DEPENDING ON THE PLOT ORIENTATION
      5ITYPE,LMESS,NLMESS,NGUA,TLEGND,REFTIM,TBEGIN)
  
       IF(ISILNT.NE.1) THEN
-      WRITE(*,*) ' '
-      WRITE(*,9900) NCOL,NROW,NLAY
-9900  FORMAT
-     1(1X,'OVERALL GRID DIMENSIONS ARE: ',I3,' COLUMNS, ',I3,' ROWS,',
-     2I3,' LAYERS')
-      WRITE(*,*) ' '
+      CALL PUTSCR(' ')
+      WRITE(C1,'(I3)') NCOL
+      WRITE(C2,'(I3)') NROW
+      WRITE(C3,'(I3)') NLAY
+      CALL PUTSCR('OVERALL GRID DIMENSIONS ARE: '//C1//
+     1   ' COLUMNS, '//C2//' ROWS,'//C3//' LAYERS')
+      CALL PUTSCR(' ')
       END IF
  
  
@@ -753,7 +779,7 @@ C
       IF (ITYPE.LT.5) THEN
       MES= 'DO YOU WANT TO CHANGE ANY OF THE ZONE CODES IN THE IBOUND AR
      1RAY ?'
-      CALL YESNO (MES,IANS,'2.1.50')
+      CALL YESNOZ (MES,IANS,'2.1.50')
       IF (IANS.EQ.1) THEN
 40    CALL MPRMPT('WHAT TYPE OF CHANGE DO YOU WANT TO MAKE ?')
       CALL MPRMPT('   1 = CHANGE AN ENTIRE LAYER')
@@ -813,7 +839,7 @@ C
 60    CONTINUE
       END IF
       MES= 'DO YOU WANT TO CHANGE SOME MORE ZONE CODES ?'
-      CALL YESNO (MES,IANS,'2.1.51')
+      CALL YESNOZ (MES,IANS,'2.1.51')
       IF (IANS.EQ.1) GO TO 40
       END IF
       END IF
@@ -890,6 +916,8 @@ C
       ELSE IF(IUNIT(14).NE.0) THEN
       IUDD = IUNIT(14)
       END IF
+      IF(IUDD.LT.0 .AND. IPREC.EQ.0)
+     1           CALL HEADPRECISION(-IUDD,IUNAR(5),NCOL,NROW,NLAY)
       CALL CONINP(ICNTOR,NCOL,NROW,NLAY,JMIN,JMAX,IMIN,IMAX,HEAD,
      1  IBOUND,NLVMAX,NLEVS,KLABEL,NLABEL,LFIRST,CLEV,IUDD,
      2  IUNIT(11),IPER,ISTP,CDATA,IUSUM,IUCVAL,FNAMS(3),
@@ -957,6 +985,8 @@ C  OPEN LOG FILE
 C
 C  OPEN GKS
 C
+      CALL WindowOpenChild(ICOMWIN,MENUID=MPLOT_MENU,
+     1          TITLE='MODPAT-PLOT')
       CALL OPGKS(MODEL,KND,ICNECT,IULOG,ICOLA,IDCUN,RXM,RYM,
      1     NPIXX,NPIXY,IMDEV,ISEG,IBELL,IFONT,CHSPAC,
      2     IUNAR(14),VER,NPCI,IUSUM,CFGPTH)
@@ -973,19 +1003,20 @@ C
       END IF
       WRITE(IULOG,9004) NPCI
 9004  FORMAT('NUMBER OF FOREGROUND COLORS =',I3)
+C  Save RXM and RYM for redrawing at different scale
       rxold=rxm
       ryold=rym
-9999   IF(IDCUN.EQ.0) THEN
-      WRITE (IULOG,*) 'DEVICE COORDINATES ARE IN METERS.'
-      WRITE (IULOG,9006) RXM,RYM
-9006  FORMAT('SCREEN DIMENSIONS IN METERS:'/
-     1'  X DIMENSION =',F9.6,'  Y DIMENSION =',F9.6)
+9999  IF(IDCUN.EQ.0) THEN
+        WRITE (IULOG,*) 'DEVICE COORDINATES ARE IN METERS.'
+        WRITE (IULOG,9006) RXM,RYM
+9006    FORMAT('SCREEN DIMENSIONS IN METERS:'/
+     1  '  X DIMENSION =',F9.6,'  Y DIMENSION =',F9.6)
       ELSE IF (IDCUN.EQ.1) THEN
-      WRITE (IULOG,*) 'DEVICE COORDINATES ARE IN ARBITRARY SCREEN COORDI
-     1NATES.'
-      WRITE (IULOG,9007) RXM,RYM
-9007  FORMAT('SCREEN DIMENSIONS IN DEVICE COORDINATES:'/
-     1'  X DIMENSION =',F10.3,'   Y DIMENSION =',F10.3)
+        WRITE (IULOG,*) 'DEVICE COORDINATES ARE IN ARBITRARY SCREEN COOR
+     1DINATES.'
+        WRITE (IULOG,9007) RXM,RYM
+9007    FORMAT('SCREEN DIMENSIONS IN DEVICE COORDINATES:'/
+     1  '  X DIMENSION =',F10.3,'   Y DIMENSION =',F10.3)
       END IF
       WRITE (IULOG,9008) NPIXX,NPIXY
 9008  FORMAT(I7,' PIXELS IN X DIRECTION'/
@@ -993,13 +1024,13 @@ C
       CNVICH=39.3701
 C IF DEVICE COORDINATES ARE IN METERS, CONVERT PAGE SIZE TO INCHES
       IF(IDCUN.EQ.0) THEN
-      PLONG=RXM*CNVICH
-      PSHORT=RYM*CNVICH
+        PLONG=RXM*CNVICH
+        PSHORT=RYM*CNVICH
 C OTHERWISE, SET PAGE DIMENSIONS TO THEIR DIMENSIONS IN THE
 C DEVICE COORDINATES RETURNED BY THE GKS QUERY.
       ELSE
-      PLONG=RXM
-      PSHORT=RYM
+        PLONG=RXM
+        PSHORT=RYM
       END IF
 C  IF DEVICE HAS COLOR, DEFINE COLORS
       IF (ICOLA.EQ.1) THEN
@@ -1037,8 +1068,12 @@ C
       IF(ICYCL(N).NE.0.AND.ICYCL(N).GT.NPCI) ICYCL(N)=1
 70    CONTINUE
       IF(NCLR.GT.NPCI) NCLR=1
- 
- 
+C
+C  clear screen in order to set background color -- originally this gets
+C  set to 0, but something after opgks sets it to black without actually
+C  clearing the screen
+      CALL IGrAreaClear()
+C
 C  DETERMINE THE SIZE OF THE PLOT, AND SET SCALING FACTORS.
       IF(IVIEW.EQ.1) THEN
         XMIN1=XMIN
@@ -1123,7 +1158,9 @@ C
 C
       PX=PL
       PY=PS
-      IF(IBRDR.NE.0.OR.KND.LE.0) THEN
+C  Draw page border
+C      IF(IBRDR.NE.0.OR.KND.LE.0) THEN
+      IF(IBRDR.NE.0) THEN
       XBRDR(1)=XLL
       YBRDR(1)=YBB
       XBRDR(2)=XRR
@@ -1323,6 +1360,8 @@ C---BEGIN BLOCK 11 : PLOT RIVERS, WELLS, AND RELATED FEATURES
 C
 C  Read Budget headers until we get to the correct time step
       IUCBC=IUNIT(7)
+      IF(IUCBC.LT.0 .AND. IPREC.EQ.0)
+     1        CALL BUDGETPRECISION(-IUCBC,NCOL,NROW,NLAY,BUFF,IUNAR(5))
       IF(ISSFLG(IPER).EQ.0) THEN 
          CALL RDBUDG(BUFF,TEXT,NCOL,NROW,NLAY,IUCBC,IUSUM,IPER,ISTP,
      1           IBUFF)
@@ -1428,22 +1467,46 @@ C  CLOSE GKS
 C
       HGHT2=HGHT/PSCFAC
       CALL SETTXT(IFONT,2,HGHT2,CHSPAC)
- 
-      CALL CLGKS(KND,IWAIT,ISEG,IBELL,RXM,RYM,IUSUM,NCOL,NROW,
-     1 IMIN,IMAX,JMIN,JMAX,XMN,XMX,YMN,YMX,IVIEW,iredraw)
-          if(iredraw.ne.0) then
-             call igrareaclear
-             nxold=npixx
-             nyold=npixy
-             npixx=infoscreen(4)
-             npixy=infoscreen(5)
-             rxm=rxold*npixx/nxold
-             rym=ryold*npixy/nyold
-             rxold=rxm
-             ryold=rym
-             rewind(unit=iucbc)
-             go to 9999
-          end if
 C
-      RETURN
+C
+C  Wait for window messages
+9998  CALL WMessage(IMTYPE,MESSAGE)
+C
+      IF(IMTYPE.EQ.MenuSelect) THEN
+         IF(MESSAGE%VALUE1.EQ.ID_EXIT) THEN
+            CALL CLGKS(KND,IWAIT,ISEG,IBELL)
+            CALL WindowClose()
+            RETURN
+         END IF
+      ELSE IF((IMTYPE .EQ. Expose) .OR. (IMTYPE .EQ. Resize)) THEN
+          if(IMTYPE.EQ. Expose) nexpose=nexpose+1
+          if(IMTYPE.EQ. Resize) nresize=nresize+1
+C Ignore the first resize event, which always occurs immediately after the
+C plot is first drawn.
+          if(nresize.eq.1 .and. nexpose.eq.0) go to 9998
+          call igrhardcopy('S')
+          call igrareaclear
+          rnxold=npixx
+          rnyold=npixy
+          npixx=WInfoWindow(WindowWidth)
+          npixy=WInfoWindow(WindowHeight)
+          rnpixx=npixx
+          rnpixy=npixy
+          rxm=rxold*rnpixx/rnxold
+          rym=ryold*rnpixy/rnyold
+          rxold=rxm
+          ryold=rym
+          rewind(unit=iucbc)
+C  Clear budget header memory flag, because budget file has been rewound.
+          iold=0
+          go to 9999
+C
+      ELSE IF(IMTYPE.EQ.CloseRequest) THEN
+         CALL CLGKS(KND,IWAIT,ISEG,IBELL)
+         CALL WindowClose()
+         RETURN
+C
+      END IF
+
+      GO TO 9998
       END

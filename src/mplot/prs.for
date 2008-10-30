@@ -13,7 +13,7 @@ C     CPFILE
 C     GETI
 C     GETR
 C     GETSTR
-C     YESNO
+C     YESNOC
 C     PUTSTR
 C     GPARAM
 C     SPARAM
@@ -23,11 +23,15 @@ C     LIMR
 C     STRIP
 C     GETST2
 C     ISHELP
+C     ABORT
 C***********************
  
 C***** SUBROUTINE *****
       SUBROUTINE KIS(IU1,IU2,IUHELP,IUSHLP,I7,RSPFIL,PHELP,PSHELP,
      1                BANNER,NBAN,PRGNAM)
+      USE WINTERACTER
+      INCLUDE 'mplotwnt.inc'
+      COMMON /COMMANDWINDOW/ICOMWIN
       COMMON/KEYINP/ KEYBD,IECHOF,IECHOS,IUNIT1,IUNIT2,IQBAT,IUNIT3,
      1               IUNIT4
       CHARACTER*132 FNAME,SFILE1,SFILE2,ARG
@@ -38,8 +42,22 @@ C***** SUBROUTINE *****
       LOGICAL*4 EX
       COMMON /SETFIL/ SFILE1,SFILE2
       SAVE /KEYINP/
- 
+      CHARACTER*200 COMMAND,OUTPUT
+      CHARACTER(LEN=2), PARAMETER :: NEWLIN = CHAR(13)//CHAR(10)
 C
+      CALL WInitialise(' ')
+      CALL WindowOpen(HideWindow)
+      CALL WindowOpenChild(ICOMWIN,TITLE='MODPATH-PLOT Command Window')
+      npixx=WInfoWindow(WindowWidth)
+      CALL WindowSizePos(WIDTH=npixx*2/3)
+      CALL WEditFile(' ',Modeless,0,
+     1    ViewOnly+WordWrap+NoFileNewOpen+CommandHistory,
+     2    SystemFixed)
+      CALL WEditPrompt('Response:')
+C  Go to bottom of text window
+      DO 2 I=1,50
+      CALL PUTSCR(' ')
+    2 CONTINUE
 C
       CALL SPARAM(1,1)
       CALL SPARAM(2,0)
@@ -110,7 +128,7 @@ C
       IF(BANNER(1).NE.' ' .AND. NBAN.EQ.1 .AND. IQBAT.NE.1) THEN
       DO 10 N=1,NBAN
       CALL CHOP(BANNER(N),L)
-      WRITE(*,'(1X,A)') BANNER(N)(1:L)
+      CALL PUTSCR(BANNER(N)(1:L))
 10    CONTINUE
       END IF
 C
@@ -157,17 +175,18 @@ C
       END IF
 C
       RETURN
-200   WRITE(*,*) 'ERROR OPENING RESPONSE FILE. STOP.'
-      STOP
+200   CALL PUTSCR('ERROR OPENING RESPONSE FILE. STOP.')
+      CALL ABORT
 250   CALL CHOP(RSPFIL,L)
-      WRITE(*,1100) RSPFIL(1:L)
-      STOP
-1100  FORMAT(' THERE MAY BE A PROBLEM WITH FILE ',A/
-     1' DELETE THIS FILE AND TRY AGAIN.')
+      CALL PUTSCR('THERE MAY BE A PROBLEM WITH FILE '//RSPFIL(1:L)//
+     1    ' DELETE THIS FILE AND TRY AGAIN')
+      CALL ABORT
       END
  
 C***** SUBROUTINE *****
       SUBROUTINE MPRMPT(STRING)
+      USE WINTERACTER
+      CHARACTER(LEN=2), PARAMETER :: NEWLIN = CHAR(13)//CHAR(10)
       COMMON/KEYINP/ KEYBD,IECHOF,IECHOS,IUNIT1,IUNIT2,IQBAT,IUNIT3,
      1               IUNIT4
       CHARACTER*2 PREFIX
@@ -181,7 +200,8 @@ C***** SUBROUTINE *****
       WRITE(IUNIT1,'(A2,A)') PREFIX,STRING(1:LNG)
       END IF
       IF(IECHOS.NE.0) THEN
-      WRITE(*,'(1X,A)') STRING(1:LNG)
+      IENDBUF = WInfoEditor(1,2) + 1
+      CALL WEditPutTextPart(STRING(1:LNG)//NEWLIN,IENDBUF)
       END IF
  
       RETURN
@@ -189,6 +209,8 @@ C***** SUBROUTINE *****
  
 C***** SUBROUTINE *****
       SUBROUTINE PUTSCR(STRING)
+      USE WINTERACTER
+      CHARACTER(LEN=2), PARAMETER :: NEWLIN = CHAR(13)//CHAR(10)
       COMMON/KEYINP/ KEYBD,IECHOF,IECHOS,IUNIT1,IUNIT2,IQBAT,IUNIT3,
      1               IUNIT4
       CHARACTER*(*) STRING
@@ -197,13 +219,16 @@ C***** SUBROUTINE *****
       IF(IQBAT.NE.1) THEN
       CALL CHOP(STRING,LNG)
       IF(LNG.LT.1) LNG=1
-      WRITE(*,'(1X,A)') STRING(1:LNG)
+      IENDBUF = WInfoEditor(1,2) + 1
+      CALL WindowSelect(1)
+      CALL WEditPutTextPart(STRING(1:LNG)//NEWLIN,IENDBUF)
       END IF
       RETURN
       END
  
 C***** SUBROUTINE *****
       SUBROUTINE CPFILE(FNAME,IU1,IU2)
+      USE WINTERACTER
       CHARACTER*(*) FNAME
       CHARACTER*80 STRING
 C
@@ -222,13 +247,15 @@ C
       CLOSE(IU1)
       REWIND(IU2)
       RETURN
-100   WRITE(*,*) 'THE FOLLOWING FILE DOES NOT EXIST:'
-      WRITE(*,'(1X,A)') FNAME
-      STOP
+100   CALL PUTSCR('THIS FILE DOES NOT EXIST: '//FNAME)
+      CALL ABORT
       END
  
 C***** SUBROUTINE *****
       SUBROUTINE GETI(NDIM,IARRAY,LIMITS,MINVAL,MAXVAL,HELP)
+      USE WINTERACTER
+      TYPE(WIN_MESSAGE)   :: MESSAGE
+      INCLUDE 'mplotwnt.inc'
       COMMON/KEYINP/ KEYBD,IECHOF,IECHOS,IUNIT1,IUNIT2,IQBAT,IUNIT3,
      1               IUNIT4
       DIMENSION IDA(20)
@@ -239,6 +266,7 @@ C***** SUBROUTINE *****
       CHARACTER*3 QUERY
       CHARACTER*(*) HELP
       SAVE /KEYINP/
+      CHARACTER*3 CIDA
  
 C
       KHELP=1
@@ -320,9 +348,20 @@ C... INTERACTIVE INPUT
         CALL ISHELP(HELP,IUNIT3,1)
         KHELP=KHELP+1
         END IF
-C Uncomment the following "write(*,*)" to fix bug in Lahey version 4
-C        WRITE(*,*)
-        READ(*,'(A)') LINE
+    7   CALL WMessage(IMTYPE,MESSAGE)
+        IF(IMTYPE.EQ.CloseRequest) THEN
+          CALL WindowClose
+          STOP
+        ELSE IF(IMTYPE.EQ.MenuSelect) THEN
+          IF(MESSAGE%VALUE1.EQ.ID_EXIT) THEN
+            CALL WindowClose
+            STOP
+          END IF
+        END IF
+        IF(IMTYPE.NE.EditorCommand) GO TO 7
+        CALL WEditGetCommand(LINE)
+        CALL PUTSCR(LINE)
+        CALL WEditPutCommand('')
         IF(LINE.EQ.'?' .OR. LINE.EQ.'??') THEN
           IF(IUNIT3.LE.0) THEN
             CALL GETHLP(HELP,0,IUNIT3)
@@ -350,8 +389,8 @@ C        WRITE(*,*)
         IBAD=0
         IF(N.EQ.1 .AND. LINE(1:1).EQ.COMMA) IBAD=1
         IF(LINE(80:80).NE.' ' .OR. IBAD.EQ.1) THEN
-          WRITE(*,*) ' Illegal data entry. Enter the last line again:'
-          WRITE(*,*)
+          CALL PUTSCR('Illegal data entry. Enter the last line again:')
+          CALL PUTSCR(' ')
           GO TO 5
         END IF
 C... CHECK TO SEE IF THERE IS A RANGE OF VALID RESPONSES OR DISABLED
@@ -359,8 +398,9 @@ C    CHOICES. THIS OPTION IS USED ONLY FOR SINGLE NUMBER RESPONSES
         IF(NDA.GT.0 .AND. NDIM.EQ.1) THEN
           DO 30 NN=1,NDAMAX
           IF(IARRAY(1).EQ.IDA(NN)) THEN
-            WRITE(*,1000) IDA(NN)
-1000  FORMAT(1X,'Choice',i3,' is not available. Choose again.')
+            WRITE(CIDA,'(I3)') IDA(NN)
+            CALL PUTSCR('Choice'//CIDA//
+     1        ' is not available. Choose again.')
             GO TO 5
           END IF
 30        CONTINUE
@@ -385,21 +425,24 @@ C    CHOICES. THIS OPTION IS USED ONLY FOR SINGLE NUMBER RESPONSES
         END IF
 C
       RETURN
-100   WRITE(*,*)' ROUTINE (GETI) : ERROR READING RESPONSE FILE. STOP.'
-      WRITE(*,'(A)') HELP
-      STOP
-200   WRITE(*,*)' ROUTINE (GETI) : ERROR READING RESPONSE FILE. '
-      WRITE(*,*)'                  VALUE OUT OF SPECIFIED RANGE. STOP.'
-      WRITE(*,'(A)') HELP
-      STOP
-400   WRITE(*,*)
-     1' ROUTINE <GETI> : INVALID ATTEMPT TO WRITE RESPONSE FILE. STOP.'
-      WRITE(*,'(A)') HELP
-      STOP
+100   CALL PUTSCR('ROUTINE (GETI) : ERROR READING RESPONSE FILE. STOP.')
+      CALL PUTSCR(HELP)
+      CALL ABORT
+200   CALL PUTSCR('ROUTINE (GETI) : ERROR READING RESPONSE FILE. ')
+      CALL PUTSCR('               VALUE OUT OF SPECIFIED RANGE. STOP.')
+      CALL PUTSCR(HELP)
+      CALL ABORT
+400   CALL PUTSCR(
+     1'ROUTINE <GETI> : INVALID ATTEMPT TO WRITE RESPONSE FILE. STOP.')
+      CALL PUTSCR(HELP)
+      CALL ABORT
       END
  
 C***** SUBROUTINE *****
       SUBROUTINE GETR(NDIM,RARRAY,LIMITS,VALMIN,VALMAX,HELP)
+      USE WINTERACTER
+      TYPE(WIN_MESSAGE)   :: MESSAGE
+      INCLUDE 'mplotwnt.inc'
       COMMON/KEYINP/ KEYBD,IECHOF,IECHOS,IUNIT1,IUNIT2,IQBAT,IUNIT3,
      1               IUNIT4
       DIMENSION RARRAY(NDIM)
@@ -468,9 +511,20 @@ C... INTERACTIVE INPUT
         CALL ISHELP(HELP,IUNIT3,1)
         KHELP=KHELP+1
         END IF
-C Uncomment the following "write(*,*)" to fix bug in Lahey version 4
-C        WRITE(*,*)
-        READ(*,'(A)') LINE
+    7   CALL WMessage(IMTYPE,MESSAGE)
+        IF(IMTYPE.EQ.CloseRequest) THEN
+          CALL WindowClose
+          STOP
+        ELSE IF(IMTYPE.EQ.MenuSelect) THEN
+          IF(MESSAGE%VALUE1.EQ.ID_EXIT) THEN
+            CALL WindowClose
+            STOP
+          END IF
+        END IF
+        IF(IMTYPE.NE.EditorCommand) GO TO 7
+        CALL WEditGetCommand(LINE)
+        CALL PUTSCR(LINE)
+        CALL WEditPutCommand('')
         IF(LINE.EQ.'?' .OR. LINE.EQ.'??') THEN
           IF(IUNIT3.LE.0) THEN
             CALL GETHLP(HELP,0,IUNIT3)
@@ -498,8 +552,8 @@ C        WRITE(*,*)
         IBAD=0
         IF(N.EQ.1 .AND. LINE(1:1).EQ.COMMA) IBAD=1
         IF(LINE(80:80).NE.' ' .OR. IBAD.EQ.1) THEN
-          WRITE(*,*) ' Illegal data entry. Enter the last line again:'
-          WRITE(*,*)
+          CALL PUTSCR('Illegal data entry. Enter the last line again:')
+          CALL PUTSCR(' ')
           GO TO 5
         END IF
 C... CHECK TO SEE IF THERE IS A RANGE OF VALID RESPONSES
@@ -524,21 +578,24 @@ C    THIS OPTION IS USED ONLY FOR SINGLE NUMBER RESPONSES
         END IF
 C
       RETURN
-100   WRITE(*,*) 'ROUTINE (GETR) : ERROR READING RESPONSE FILE. STOP.'
-      WRITE(*,'(A)') HELP
-      STOP
-200   WRITE(*,*)' ROUTINE (GETR) : ERROR READING RESPONSE FILE. STOP.'
-      WRITE(*,*)'                  VALUE OUT OF SPECIFIED RANGE. STOP.'
-      WRITE(*,'(A)') HELP
-      STOP
-400   WRITE(*,*)
-     1' ROUTINE <GETR> : INVALID ATTEMPT TO WRITE RESPONSE FILE. STOP.'
-      WRITE(*,'(A)') HELP
-      STOP
+100   CALL PUTSCR('ROUTINE (GETR) : ERROR READING RESPONSE FILE. STOP.')
+      CALL PUTSCR(HELP)
+      CALL ABORT
+200   CALL PUTSCR('ROUTINE (GETR) : ERROR READING RESPONSE FILE. STOP.')
+      CALL PUTSCR('                VALUE OUT OF SPECIFIED RANGE. STOP.')
+      CALL PUTSCR(HELP)
+      CALL ABORT
+400   CALL PUTSCR(
+     1'ROUTINE <GETR> : INVALID ATTEMPT TO WRITE RESPONSE FILE. STOP.')
+      CALL PUTSCR(HELP)
+      CALL ABORT
       END
  
 C***** SUBROUTINE *****
       SUBROUTINE GETSTR(STRING,NOECHO,HELP)
+      USE WINTERACTER
+      INCLUDE 'mplotwnt.inc'
+      TYPE(WIN_MESSAGE)   :: MESSAGE
       COMMON/KEYINP/ KEYBD,IECHOF,IECHOS,IUNIT1,IUNIT2,IQBAT,IUNIT3,
      1               IUNIT4
       CHARACTER*(*) STRING,HELP
@@ -588,9 +645,20 @@ C... INTERACTIVE INPUT
         CALL ISHELP(HELP,IUNIT3,1)
         KHELP=KHELP+1
         END IF
-C Uncomment the following "write(*,*)" to fix bug in Lahey version 4
-C        WRITE(*,*)
-        READ(*,'(A)',ERR=100) STRING
+    7   CALL WMessage(IMTYPE,MESSAGE)
+        IF(IMTYPE.EQ.CloseRequest) THEN
+          CALL WindowClose
+          STOP
+        ELSE IF(IMTYPE.EQ.MenuSelect) THEN
+          IF(MESSAGE%VALUE1.EQ.ID_EXIT) THEN
+            CALL WindowClose
+            STOP
+          END IF
+        END IF
+        IF(IMTYPE.NE.EditorCommand) GO TO 7
+        CALL WEditGetCommand(STRING)
+        CALL PUTSCR(STRING)
+        CALL WEditPutCommand('')
         IF(STRING.EQ.'?' .OR. STRING.EQ.'??') THEN
           IF(IUNIT3.LE.0) THEN
             CALL GETHLP(HELP,0,IUNIT3)
@@ -618,17 +686,18 @@ C        WRITE(*,*)
           END IF
 C
       RETURN
-100   WRITE(*,*) 'ROUTINE (GETSTR) : ERROR READING RESPONSE FILE. STOP.'
-      WRITE(*,'(A)') HELP
-      STOP
-400   WRITE(*,*)
-     1' ROUTINE <GETSTR> : INVALID ATTEMPT TO WRITE RESPONSE FILE. STOP'
-      WRITE(*,'(A)') HELP
-      STOP
+100   CALL PUTSCR(
+     1    'ROUTINE (GETSTR) : ERROR READING RESPONSE FILE. STOP.')
+      CALL PUTSCR(HELP)
+      CALL ABORT
+400   CALL PUTSCR(
+     1'ROUTINE <GETSTR> : INVALID ATTEMPT TO WRITE RESPONSE FILE. STOP')
+      CALL PUTSCR(HELP)
+      CALL ABORT
       END
  
 C***** SUBROUTINE *****
-      SUBROUTINE YESNO(MES,IANS,HELP)
+      SUBROUTINE YESNOZ(MES,IANS,HELP)
 C
       CHARACTER*(*) MES,HELP
       CHARACTER*80 STRING
@@ -642,8 +711,8 @@ C--- SAVE OLD ECHO FLAG FOR SCRIPT FILE
       IF(STRING.EQ.'N') IANS=0
  
       IF(IANS.LT.0 .OR. IANS.GT.1) THEN
-      WRITE(*,*) 'ERROR READING YES/NO INPUT. STOP.'
-      STOP
+      CALL PUTSCR('ERROR READING YES/NO INPUT. STOP.')
+      CALL ABORT
       END IF
  
       IF(IANS.EQ.1) CALL PUTSTR('y')
@@ -735,7 +804,7 @@ C***** SUBROUTINE *****
  
 C
       IF(IU.LT.0 .OR. NHELP.EQ.0) THEN
-        WRITE(*,*) 'No help available.'
+        CALL PUTSCR('No help available.')
         RETURN
       END IF
  
@@ -752,10 +821,10 @@ C
           DO 20 K=1,NL1
           READ(IU,'(A)',END=200) MES
           CALL CHOP(MES,LMES)
-          WRITE(*,'(1X,A)') MES(1:LMES)
+          CALL PUTSCR(MES(1:LMES))
 20        CONTINUE
           CALL ISHELP(HELP,IUNIT3,2)
-          WRITE(*,*) ' --> ENTER A RESPONSE:'
+          CALL PUTSCR('--> ENTER A RESPONSE:')
           RETURN
  
         ELSE IF(LINE(IWSTRT:IWLAST).EQ.HELP .AND. NHELP.EQ.2) THEN
@@ -769,9 +838,9 @@ C
           DO 40 K=1,NL2
           READ(IU,'(A)',END=200) MES
           CALL CHOP(MES,LMES)
-          WRITE(*,'(1X,A)') MES(1:LMES)
+          CALL PUTSCR(MES(1:LMES))
 40        CONTINUE
-          WRITE(*,*) ' --> ENTER A RESPONSE:'
+          CALL PUTSCR('--> ENTER A RESPONSE:')
           RETURN
         END IF
       ELSE
@@ -780,7 +849,7 @@ C
       GO TO 10
  
 200   RETURN
-100   WRITE(*,*) 'No help available for this item.'
+100   CALL PUTSCR('No help available for this item.')
       RETURN
       END
  
@@ -788,20 +857,23 @@ C***** SUBROUTINE *****
       SUBROUTINE LIMI(LIMITS,IVAL,MINVAL,MAXVAL,ISTAT)
       CHARACTER*80 TEXT
       CHARACTER*4 TO
+      CHARACTER*7 CM,CM2
 C
       ISTAT=0
           IF(LIMITS.EQ.1) THEN
             IF(IVAL .LT. MINVAL) THEN
               TEXT='Enter a value > or ='
               CALL CHOP(TEXT,LTEXT)
-              WRITE(*,'(1X,A,I7)') TEXT(1:LTEXT),MINVAL
+              WRITE(CM,'(I7)') MINVAL
+              CALL PUTSCR(TEXT(1:LTEXT)//CM)
               ISTAT=1
             END IF
           ELSE IF(LIMITS.EQ.2) THEN
             IF(IVAL .GT. MAXVAL) THEN
               TEXT='Enter a value < or ='
               CALL CHOP(TEXT,LTEXT)
-              WRITE(*,'(1X,A,I7)') TEXT(1:LTEXT),MAXVAL
+              WRITE(CM,'(I7)') MAXVAL
+              CALL PUTSCR(TEXT(1:LTEXT)//CM)
               ISTAT=1
             END IF
           ELSE IF(LIMITS.EQ.3) THEN
@@ -809,7 +881,9 @@ C
               TO=' to '
               TEXT='Enter a value in the range '
               CALL CHOP(TEXT,LTEXT)
-              WRITE(*,'(1X,A,I7,A3,I7)') TEXT(1:LTEXT),MINVAL,TO,MAXVAL
+              WRITE(CM,'(I7)') MINVAL
+              WRITE(CM2,'(I7)') MAXVAL
+              CALL PUTSCR(TEXT(1:LTEXT)//CM//TO//CM2)
               ISTAT=1
             END IF
           END IF
@@ -821,20 +895,23 @@ C***** SUBROUTINE *****
       SUBROUTINE LIMR(LIMITS,VAL,VALMIN,VALMAX,ISTAT)
       CHARACTER*80 TEXT
       CHARACTER*4 TO
+      CHARACTER*13 CM,CM2
 C
       ISTAT=0
           IF(LIMITS.EQ.1) THEN
             IF(VAL .LT. VALMIN) THEN
               TEXT='Enter a value > or ='
               CALL CHOP(TEXT,LTEXT)
-              WRITE(*,'(1X,A,G13.6)') TEXT(1:LTEXT),VALMIN
+              WRITE(CM,'(G13.6)') VALMIN
+              CALL PUTSCR(TEXT(1:LTEXT)//CM)
               ISTAT=1
             END IF
           ELSE IF(LIMITS.EQ.2) THEN
             IF(VAL .GT. VALMAX) THEN
               TEXT='Enter a value < or ='
               CALL CHOP(TEXT,LTEXT)
-              WRITE(*,'(1X,A,G13.6)') TEXT(1:LTEXT),VALMAX
+              WRITE(CM,'(G13.6)') VALMAX
+              CALL PUTSCR(TEXT(1:LTEXT)//CM)
               ISTAT=1
             END IF
           ELSE IF(LIMITS.EQ.3) THEN
@@ -842,8 +919,9 @@ C
               TO=' to '
               TEXT='Enter a value in the range '
               CALL CHOP(TEXT,LTEXT)
-              WRITE(*,'(1X,A,G13.6,A3,G13.6)')
-     1          TEXT(1:LTEXT),VALMIN,TO,VALMAX
+              WRITE(CM,'(G13.6)') VALMIN
+              WRITE(CM2,'(G13.6)') VALMAX
+              CALL PUTSCR(TEXT(1:LTEXT)//CM//TO//CM2)
               ISTAT=1
             END IF
           END IF
@@ -887,17 +965,21 @@ C    INTERACTIVE INPUT (IGNORE QUERY SIGNAL IF THERE ARE NO PROMPTS)
             IF(NN.NE.0) MES(N)(NN:LENMES)= ' '
             CALL CHOP(MES(N),LMES)
             IF(LMES.LT.1) LMES=1
-            WRITE(*,'(1X,A)') MES(N)(1:LMES)
+            CALL PUTSCR(MES(N)(1:LMES))
 3         CONTINUE
         END IF
 C
       RETURN
-100   WRITE(*,*)' ROUTINE <STRIP> : ERROR READING RESPONSE FILE. STOP.'
-      STOP
+100   CALL PUTSCR(
+     1     'ROUTINE <STRIP> : ERROR READING RESPONSE FILE. STOP.')
+      CALL ABORT
       END
  
 C***** SUBROUTINE *****
       SUBROUTINE GETST2(STRING,NOECHO,HELP,ANS1,ANS2)
+      USE WINTERACTER
+      INCLUDE 'mplotwnt.inc'
+      TYPE(WIN_MESSAGE)   :: MESSAGE
       COMMON/KEYINP/ KEYBD,IECHOF,IECHOS,IUNIT1,IUNIT2,IQBAT,IUNIT3,
      1               IUNIT4
       CHARACTER*(*) STRING,HELP,ANS1,ANS2
@@ -956,9 +1038,20 @@ C... INTERACTIVE INPUT
         CALL ISHELP(HELP,IUNIT3,1)
         KHELP=KHELP+1
         END IF
-C Uncomment the following "write(*,*)" to fix bug in Lahey version 4
-C        WRITE(*,*)
-        READ(*,'(A)',ERR=100) STRING
+    7   CALL WMessage(IMTYPE,MESSAGE)
+        IF(IMTYPE.EQ.CloseRequest) THEN
+          CALL WindowClose
+          STOP
+        ELSE IF(IMTYPE.EQ.MenuSelect) THEN
+          IF(MESSAGE%VALUE1.EQ.ID_EXIT) THEN
+            CALL WindowClose
+            STOP
+          END IF
+        END IF
+        IF(IMTYPE.NE.EditorCommand) GO TO 7
+        CALL WEditGetCommand(STRING)
+        CALL PUTSCR(STRING)
+        CALL WEditPutCommand('')
         CALL UPCASE(STRING)
         IF(STRING.EQ.'?' .OR. STRING.EQ.'??') THEN
           IF(IUNIT3.LE.0) THEN
@@ -982,8 +1075,7 @@ C        WRITE(*,*)
         END IF
  
         IF(STRING.NE.ANS1 .AND. STRING.NE.ANS2) THEN
-          WRITE(*,'(1X,A5,1X,A,1X,A2,1X,A,1X,A1)')
-     1       ENTER,ANS1,OR,ANS2,COLON
+          CALL PUTSCR(ENTER//' '//ANS1//' '//OR//' '//ANS2//' '//COLON)
           GO TO 5
         END IF
  
@@ -994,14 +1086,15 @@ C        WRITE(*,*)
         END IF
 C
       RETURN
-100   WRITE(*,*) 'ROUTINE (GETST2) : ERROR READING RESPONSE FILE. STOP.'
-      STOP
-400   WRITE(*,*)
-     1' ROUTINE <GETST2> : INVALID ATTEMPT TO WRITE RESPONSE FILE. STOP'
-      STOP
-500   WRITE(*,*)
-     1' ROUTINE (GETST2) : INVALID CHARACTER RESPONSE. STOP.'
-      STOP
+100   CALL PUTSCR(
+     1     'ROUTINE (GETST2) : ERROR READING RESPONSE FILE. STOP.')
+      CALL ABORT
+400   CALL PUTSCR(
+     1'ROUTINE <GETST2> : INVALID ATTEMPT TO WRITE RESPONSE FILE. STOP')
+      CALL ABORT
+500   CALL PUTSCR(
+     1'ROUTINE (GETST2) : INVALID CHARACTER RESPONSE. STOP.')
+      CALL ABORT
       END
  
 C***** SUBROUTINE *****
@@ -1024,9 +1117,9 @@ C
           CALL URWORD(LINE,ICOL,IWSTRT,IWLAST,2,NL1,RDUMMY,-1,0)
           CALL URWORD(LINE,ICOL,IWSTRT,IWLAST,2,NL2,RDUMMY,-1,0)
           IF(NL1.GT.0 .AND. NH.EQ.1) THEN
-            WRITE(*,*) ' [ ? = Help ]'
+            CALL PUTSCR('[ ? = Help ]')
           ELSE IF(NL2.GT.0 .AND. NH.EQ.2) THEN
-            WRITE(*,*) ' [ ?? = More Help ]'
+            CALL PUTSCR('[ ?? = More Help ]')
           END IF
           RETURN
         END IF
@@ -1038,4 +1131,20 @@ C
 100   CONTINUE
       REWIND(IU)
       RETURN
+      END
+      SUBROUTINE ABORT
+      USE WINTERACTER
+      COMMON /COMMANDWINDOW/ICOMWIN
+C
+      CALL WindowRaise(ICOMWIN)
+      CALL WMessageBox(OKOnly,StopIcon,CommonOK,
+     1 'Aborting due to error displayed in MODPATH-PLOT Command Window',
+     2  'ABORT')
+      CALL WindowClose
+      STOP
+      END
+      SUBROUTINE ABORT2
+      USE WINTERACTER
+      CALL WindowClose
+      STOP
       END

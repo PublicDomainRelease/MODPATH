@@ -1,8 +1,0 @@
-QUITONERROR
-
-FILES=*.for
-COMPILE=@lf95 -winconsole -c -nchk -pca -stchk -trace -w %fi
-
-LINK=@lf95 @%rf -winconsole -exe %ex C:\INT\RESOURCE\INTRES.OBJ -LIB C:\INT\LIB\SHORTL95.LIB -LIB C:\INT\LIB\INTMWL95.LIB
-TARGET=mplotr4_3.exe
-

@@ -5,7 +5,7 @@ C***** SUBROUTINES *****
 C  SEGMNT
 C  WAIT
 C***********************
- 
+C
 C***** SUBROUTINE *****
       SUBROUTINE SEGMNT(NSEG,IOPT)
 C
@@ -18,13 +18,11 @@ C--- LEVEL 0A GKS DOES NOT SUPPORT SEGMENTS, SO THIS ROUTINE DOES NOTHING
       RETURN
       END
 C-----END OF ROUTINE----------------------------------------------------
- 
+C
 C***** SUBROUTINE *****
-      SUBROUTINE WAIT(KND,ISEG,RXM,RYM,IU,NCOL,NROW,IMIN,IMAX,JMIN,
-     1                  JMAX,XMN,XMX,YMN,YMX,IVIEW)
+      SUBROUTINE WAIT(KND)
 C
 C      IF(KND.LE.0) READ(*,*)
-      IF(KND.LE.0) CALL IGrPause('AP')
       RETURN
       END
- 
+C

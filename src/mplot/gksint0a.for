@@ -39,7 +39,7 @@ C             of clipping rectangle it is not drawn.
 C
 C   GFA    -- added crude clipping for filled polygons. If polygon is entirely
 C             within clipping rectangle, it is drawn and filled. If part of polygon lies outside
-C             rectangle, it's outline is drawn and clipped but it is not filled at all. 
+C             rectangle, it's outline is drawn and clipped but it is not filled at all.
 C             This is not really a satisfactory solution, but it generally is
 C             more acceptable than filling beyond the clipping rectangle. For polygons
 C             that are not filled, it is a complete implementation of GKS clipping.
@@ -74,7 +74,7 @@ C   GQLN   -- was dummy routine. now returns actual line style
 C   GQCHUP -- was dummy routine, now returns actual x & y vector components
 C   GQTXAL -- was dummy routine, now returns actual x & y text alignment flags
 C   GQTXCI -- was dummy routine, now returns actual color index number for text
-C   GQCR   -- was dummy routine, now returns current RGB settings for specified 
+C   GQCR   -- was dummy routine, now returns current RGB settings for specified
 C             color index.
 C
 C********************************************************************************
@@ -146,7 +146,7 @@ C               black,white,red,  green,blue, cyan, magen,yello,
       DATA LCLR/  0,  216,  40,   104,  168,  136,  200,  56,
      #           72,  248,  184,  232,  24,   88,   120,  152/
 C               orang,brown,viole,grey, ltred,ltgrn,ltblu,x
-
+C
 C*DWP* added local arrays R, G, and B to hold initial RGB values
 C
       DATA R     /0.00, 1.00, 0.70, 1.00, 1.00, 0.00, 0.00, 0.00,
@@ -235,7 +235,7 @@ C
         YDMINV(I) = 0.0
         YDMAXV(I) = 0.0
 110   CONTINUE
-
+C
 C*DWP* added code to set RGB values in arrays clrred, clrgrn, and clrblu
 C
 C     set standard dos color type, current color table, and
@@ -374,13 +374,13 @@ C     set horizontal text alignment to left
 C
 C     set vertical text alignment to base
       TXALGV = GABASE
- 
+C
 c     set x-component of character up vector
       CHARUX=0.0
- 
+C
 c     set y-component of character up vector
       CHARUY=1.0
- 
+C
 C
 C     set text color
       TXCOLI = BRIGHTWHITE
@@ -415,12 +415,10 @@ C     + + + LOCAL VARIABLES + + +
       INTEGER    ERRIND
 C
 C     + + + FUNCTIONS + + +
-      INTEGER      INFOGR
+      INTEGER FUNCTION     InfoGrScreen
 C
 C     + + + EXTERNALS + + +
-C      EXTERNAL   CKWKID, GETMON, SHINIT, GRINIT, GCLEAR, SCCLAL, GUNIT
-      EXTERNAL   CKWKID, GETMON, ISCREENOPEN, GCLEAR,  GUNIT
-      EXTERNAL   GHCSEL, GDEVIC, GCHJUS, GSTFNT, INFOGR
+      EXTERNAL   CKWKID, GETMON
 C
 C     + + + OUTPUT FORMATS + + +
  2000 FORMAT(/,' ERR:XXX Workstation number=',I5, ' not open. Cannot',
@@ -438,51 +436,21 @@ C
 C
       IF (WSSTAT(WKID).EQ.1) THEN
 C       work station is open.  activate the station
-C
-C       clear AIDE screen
-C   SCCLAL is apparently an AIDE-specific routine, which is not
-C   needed when using Interacter   AWH 3-8-2000
-C        CALL SCCLAL
-C       init Interactor graphics
-C  2=DXF,3=WMF,6=Postscript,
-        CALL ISCREENOPEN(' ','P',640,480,16)
-        IF (MONVEC(WKID).EQ.2) THEN
-C         output to DXF
-          CALL GHCSEL (1,3)
-          CALL GDEVIC ('mplot.dxf')
-        ELSE IF (MONVEC(WKID).EQ.3) THEN
-C         output to Windows Metafile
-          CALL GHCSEL (1,1)
-          CALL GDEVIC ('mplot.wmf')
-        ELSE IF (MONVEC(WKID).EQ.6) THEN
-C         output postscript file
-          CALL GHCSEL (1,2)
-          CALL IGrHardCopyOptions(7,0)
-          CALL GDEVIC ('mplot.ps')
-        ELSE IF (MONVEC(WKID).EQ.4) THEN
-C         output to Windows print Manager
-          CALL GHCSEL (1,4)
-          CALL GDEVIC(' ')
-        ELSE IF (MONVEC(WKID).EQ.5) THEN
-C         output to clipboard -- windows metafile without a specific file
-          CALL GHCSEL (1,1)
-          CALL GDEVIC (' ')
-        END IF
 C       get information for this workstation
-        WRITE (99,*) 'INFOGR(7)  ',INFOGR(7)
-        WRITE (99,*) 'INFOGR(30) ',INFOGR(30)
-        WRITE (99,*) 'INFOGR(31) ',INFOGR(31)
-        CALL GETMON(MONVEC(WKID), STDERR,
+        WRITE (99,*) 'InfoGrScreen(7)  ',InfoGrScreen(7)
+        WRITE (99,*) 'InfoGrScreen(30) ',InfoGrScreen(30)
+        WRITE (99,*) 'InfoGrScreen(31) ',InfoGrScreen(31)
+        CALL GETMON(MONVEC(WKID),
      O              ERRIND, MONWID(WKID), MONHGT(WKID),
      #              MONLX(WKID), MONLY(WKID), IFRVEC(WKID),
      #              IBKVEC(WKID))
 C
-C       clear Interactor graphics screen
-        CALL GCLEAR
+C       clear Winteracter graphics screen
+        CALL IGrAreaClear
 C       set interactor area based on graphics device width/height
-        CALL GUNIT (0.0,0.0,MONWID(WKID),MONHGT(WKID))
+        CALL IGrUnits (0.0,0.0,MONWID(WKID),MONHGT(WKID))
 C       use left justification for text
-        CALL GCHJUS ('L')
+        CALL IGrCharJustify ('L')
 C       set default character font and precision
         CALL GSTFNT(1,1)
 C
@@ -495,6 +463,7 @@ C       set state values for GKS and workstation to indicate that
 C       the work station is open and activated.
         GKSOPN = 3
         WSSTAT(WKID) = 2
+C
       ELSE
 C       problem
         WRITE(STDERR,2000) WKID
@@ -519,23 +488,23 @@ C     + + + LOCAL VARIABLES + + +
       INTEGER    IERR
 C
 C     + + + FUNCTIONS + + +
-      INTEGER    INFOER
+      INTEGER FUNCTION   InfoError
 C
 C     + + + EXTERNALS + + +
-      EXTERNAL   GCHSET,INFOER
+      EXTERNAL   IGrCharSet,InfoError
 C
 C     + + + END SPECIFICATIONS + + +
 C
       IF (FONT .LE. 1) THEN
-        CALL GCHSET ('simplexr.chr')
+        CALL IGrCharSet ('simplexr.chr')
       ELSE IF (FONT .EQ. 2) THEN
-        CALL GCHSET ('duplexr.chr')
+        CALL IGrCharSet ('duplexr.chr')
       ELSE IF (FONT .EQ. 3) THEN
-        CALL GCHSET ('triplexr.chr')
+        CALL IGrCharSet ('triplexr.chr')
       ELSE IF (FONT .EQ. 4) THEN
-        CALL GCHSET ('complexr.chr')
+        CALL IGrCharSet ('complexr.chr')
       END IF
-      IERR= INFOER(1)
+      IERR= InfoError(1)
       IF (IERR.EQ.1 .OR. IERR.EQ.2) THEN
 C       could not open character set
         WRITE (99,*) 'ERR:XXX GSTFNT could not open character set',FONT
@@ -550,26 +519,21 @@ C
 C
 C
       SUBROUTINE   GETMON
-     I                   (MONID, STDERR,
+     I                   (MONID,
      O                    ERRIND, WIDTH, HEIGHT, PIXELX,
      #                    PIXELY, FOREC, BACKC)
+      USE WINTERACTER
+      INCLUDE 'lkagks.inc'
 C
 C     + + + PURPOSE + + +
 C     get information for the given monitor id
 C
 C     + + + DUMMY ARGUMENTS + + +
-      INTEGER   MONID, PIXELX, PIXELY, FOREC, BACKC,
-     #          STDERR, ERRIND
+      INTEGER   MONID, PIXELX, PIXELY, FOREC, BACKC, ERRIND
       REAL      WIDTH, HEIGHT
 C
 C     + + + ARGUMENT DEFINITIONS + + +
 C     ???
-C
-C     + + + FUNCTIONS + + +
-      INTEGER   INFOSC
-C
-C     + + + EXTERNALS + + +
-      EXTERNAL  INFOSC
 C
 C     + + + OUTPUT FORMATS + + +
  2000 FORMAT(/,' ERR:XXX Monitor type=',I5,' is unknown.')
@@ -583,35 +547,59 @@ C
 C       monitor type unknown
         WRITE(STDERR,2000) MONID
         ERRIND = -1
-      ELSE IF (MONID.EQ.2) THEN
-C       laser jet - landscape
-        WIDTH  = 10.5
-        HEIGHT = 8.0
-        PIXELX = 3150
-        PIXELY = 2400
-        WRITE(STDERR,*) 'GETMON:laser',PIXELX,PIXELY,WIDTH,HEIGHT
-      ELSE IF (MONID.EQ.3) THEN
-C       plotter
-        WIDTH  = 10.5
-        HEIGHT = 7.5
-        PIXELX = 3360
-        PIXELY = 2400
-        WRITE(STDERR,*) 'GETMON:plotter',PIXELX,PIXELY,WIDTH,HEIGHT
-      ELSE IF (MONID.EQ.4 .OR. MONID.EQ.6) THEN
-C       postscript - landscape
-        WIDTH  = 10.5
-        HEIGHT = 7.5
-        PIXELX = 3360
-        PIXELY = 2400
-        WRITE(STDERR,*) 'GETMON:postscript',PIXELX,PIXELY,WIDTH,HEIGHT
-      ELSE
-C     ok monitor
-        WIDTH = 10.5
-        HEIGHT = 8.0
-        PIXELX = INFOSC(4)
-        PIXELY = INFOSC(5)
-        WRITE(STDERR,*) 'GETMON:monitor',PIXELX,PIXELY,WIDTH,HEIGHT
       END IF
+C  Regardless of actual device, setup device coordinates based on the display.
+C  (When activating an additional hard copy device, specify that the aspect
+C   ratio is 10 to 8 so that the aspect ratio for the display and display are
+C   the same.)
+      WIDTH  = 10.0
+      HEIGHT = 8.0
+      PIXELX = WInfoWindow(WindowWidth)
+      PIXELY = WInfoWindow(WindowHeight)
+      WRITE(STDERR,*) 'GETMON:monitor',PIXELX,PIXELY,WIDTH,HEIGHT
+C
+C  Now activate the hard copy device if there is one
+C  This code for selecting hard copy output is specific to Winteracter.
+C  2=DXF,3=WMF,6=Postscript,4=print manager, 5=clipboard
+        ID=1
+        IF (MONVEC(ID).EQ.2) THEN
+C         output to DXF
+          CALL IGrHardCopySelect (1,8)
+          CALL IGrHardCopyOptions(1,720)
+          CALL IGrHardCopyOptions(2,576)
+          CALL IGrHardCopy ('mplot.dxf')
+        ELSE IF (MONVEC(ID).EQ.3) THEN
+C         output to Windows Metafile
+          CALL IGrHardCopySelect (1,11)
+          CALL IGrHardCopyOptions(1,720)
+          CALL IGrHardCopyOptions(2,576)
+          CALL IGrHardCopyOptions(6,2)
+          CALL IGrHardCopy ('mplot.wmf')
+        ELSE IF (MONVEC(ID).EQ.6) THEN
+C         output postscript file
+          CALL IGrHardCopySelect (1,2)
+          CALL IGrHardCopyOptions(1,720)
+          CALL IGrHardCopyOptions(2,576)
+          CALL IGrHardCopyOptions(6,2)
+          CALL IGrHardCopyOptions(7,0)
+          CALL IGrHardCopy ('mplot.ps')
+        ELSE IF (MONVEC(ID).EQ.4) THEN
+C         output to Windows print Manager
+          CALL IGrHardCopySelect (1,10)
+          CALL IGrHardCopyOptions(1,720)
+          CALL IGrHardCopyOptions(2,576)
+          CALL IGrHardCopyOptions(3,36)
+          CALL IGrHardCopyOptions(4,18)
+          CALL IGrHardCopyOptions(6,2)
+          CALL IGrHardCopy(' ')
+        ELSE IF (MONVEC(ID).EQ.5) THEN
+C         output to clipboard -- windows metafile without a specific file
+          CALL IGrHardCopySelect (1,11)
+          CALL IGrHardCopyOptions(1,720)
+          CALL IGrHardCopyOptions(2,576)
+          CALL IGrHardCopyOptions(6,2)
+          CALL IGrHardCopy (' ')
+        END IF
 C
       RETURN
       END
@@ -635,16 +623,14 @@ C     + + + COMMON BLOCKS + + +
       INCLUDE 'lkagks.inc'
 C
 C     + + + EXTERNAL + + +
-      EXTERNAL   CKWKID, GRQUIT, SHQUIT, GPAGE
+      EXTERNAL   CKWKID, IGrEndPage
 C
 C     + + + END SPECIFICATIONS + + +
 C
       CALL CKWKID(WKID)
 C
 C     shut down Interactor graphics
-      CALL GPAGE (' ')
-      CALL GRQUIT
-      CALL SHQUIT(' ')
+      CALL IGrEndPage (' ')
 C     set the state value for GKS and WORKSTATION
       GKSOPN = 1
       WSSTAT(WKID) = 0
@@ -698,7 +684,7 @@ C     + + + COMMON BLOCKS + + +
       INCLUDE 'lkagks.inc'
 C
 C     + + + EXTERNALS + + +
-      EXTERNAL   CKWKID, GCLEAR
+      EXTERNAL   CKWKID, IGrAreaClear
 C
 C     + + + END SPECIFICATIONS + + +
 C
@@ -707,7 +693,7 @@ C
       CALL CKWKID(WKID)
 C
 C     clear Interactor graphics screen
-      CALL GCLEAR
+      CALL IGrAreaClear
 C
       RETURN
       END
@@ -806,8 +792,9 @@ C     + + + FUNCTIONS + + +
       REAL      XNTOXD, YNTOYD, XWTOXV, YWTOYV
 C
 C     + + + EXTERNALS + + +
-      EXTERNAL  XWTOXV, YNTOYD, XNTOXD, YWTOYV, LINWID, GCOLN, GLITYP
-      EXTERNAL  GMOVEA, GLINEA
+      EXTERNAL  XWTOXV, YNTOYD, XNTOXD, YWTOYV, LINWID, IGrColourN,
+     * IGrLineType
+      EXTERNAL  IGrMoveTo, IGrLineTo
 C
 C     + + + END SPECIFICATIONS + + +
 C
@@ -815,7 +802,7 @@ C     WRITE(99,*) 'gpl:',N,GLTYPE,LCOLOR
 C     WRITE(99,*) '    ',PX(1),PX(N),PY(1),PY(N)
 C
       CALL LINWID(0,PLWID)
-      CALL GCOLN(LCOLOR)
+      CALL IGrColourN(LCOLOR)
 C
 C     do simple approach first,  add optional clipping second.
       XL = PX(1)
@@ -825,9 +812,9 @@ C     scale from world to device
       YL = YNTOYD(YWTOYV(YL))
 C
 C     set line type
-      CALL GLITYP (GLTYPE)
+      CALL IGrLineType (GLTYPE)
 C     move to the initial point
-      CALL GMOVEA (XL,YL)
+      CALL IGrMoveTo (XL,YL)
 C     find out if clipping is on
       CALL GQCLIP(IERR,CLIP,CLRECT)
 C     if clipping is not on, just plot the polyline
@@ -837,7 +824,7 @@ C     if clipping is not on, just plot the polyline
           YR = PY(I)
           XR = XNTOXD(XWTOXV(XR))
           YR = YNTOYD(YWTOYV(YR))
-          CALL GLINEA (XR,YR)
+          CALL IGrLineTo (XR,YR)
  100    CONTINUE
 C
 C     else if clipping is on, go through the clipping filter
@@ -857,7 +844,7 @@ C     before drawing polyline segments
 C
 C... both points inside clipping rectangle
         IF(LOC1.EQ.0 .AND. LOC2.EQ.0) THEN
-          CALL GLINEA (XR,YR)
+          CALL IGrLineTo (XR,YR)
 C
 C... first point inside, second point outside
         ELSE IF(LOC1.EQ.0 .AND. LOC2.NE.0) THEN
@@ -865,7 +852,7 @@ C... first point inside, second point outside
           IF(IERR.EQ.0) THEN
             XRINT= XNTOXD(XWTOXV(XNEW(2)))
             YRINT= YNTOYD(YWTOYV(YNEW(2)))
-            CALL GLINEA (XRINT,YRINT)
+            CALL IGrLineTo (XRINT,YRINT)
           END IF
 C
 C... first point outside, second point inside
@@ -874,8 +861,8 @@ C... first point outside, second point inside
           IF(IERR.EQ.0) THEN
             XRINT= XNTOXD(XWTOXV(XNEW(1)))
             YRINT= YNTOYD(YWTOYV(YNEW(1)))
-            CALL GMOVEA (XRINT,YRINT)
-            CALL GLINEA (XR,YR)
+            CALL IGrMoveTo (XRINT,YRINT)
+            CALL IGrLineTo (XR,YR)
           END IF
 C
 C... both points outside (line still may pass through rectangle)
@@ -886,8 +873,8 @@ C... both points outside (line still may pass through rectangle)
             YRINT= YNTOYD(YWTOYV(YNEW(1)))
             XR= XNTOXD(XWTOXV(XNEW(2)))
             YR= YNTOYD(YWTOYV(YNEW(2)))
-            CALL GMOVEA (XRINT,YRINT)
-            CALL GLINEA (XR,YR)
+            CALL IGrMoveTo (XRINT,YRINT)
+            CALL IGrLineTo (XR,YR)
           END IF
         END IF
 C
@@ -1450,7 +1437,7 @@ C
         EFLAG = 1
         RETURN
       END IF
- 
+C
 C     ONLY ONE WORKSTATION CAN BE OPEN AND IT MUST BE WKID=1.
       IF (DEVCOD.NE.MONVEC(WKID)) THEN
         WRITE(STDERR,2010) DEVCOD, MONVEC(WKID)
@@ -1458,7 +1445,7 @@ C     ONLY ONE WORKSTATION CAN BE OPEN AND IT MUST BE WKID=1.
         EFLAG = 1
         RETURN
       END IF
- 
+C
 C     UNITS ARE NOT METERS- THEY ARE INCHES
       DCUNIT = 1
       RX  = MONWID(WKID)
@@ -1577,7 +1564,7 @@ C     + + + ARGUMENT DEFINITIONS + + +
 C     ???
 C
       INTEGER N, ERRIND
- 
+C
 C     + + + COMMON BLOCKS + + +
       INCLUDE 'lkagks.inc'
 C
@@ -1590,7 +1577,7 @@ C
 C     + + + END SPECIFICATIONS + + +
 C
       CALL CKTNR(TNR)
- 
+C
 C     inquire to GKS to get the current (selected) transformation number
       CALL GQCNTN(ERRIND,N)
 C
@@ -1606,7 +1593,7 @@ C     the scalar min/max variables
         YWMIN=YWMINV(TNR)
         YWMAX=YWMAXV(TNR)
       END IF
- 
+C
 C     attempt to set the scale factors
       IF (ABS(XVMINV(TNR)).GT.1.0E-30 .OR.
      1    ABS(XVMAXV(TNR)).GT.1.0E-30) THEN
@@ -1654,7 +1641,7 @@ C
 C     + + + END SPECIFICATIONS + + +
 C
       CALL CKTNR(TNR)
- 
+C
 C     inquire to GKS to get the current (selected) transformation number
       CALL GQCNTN(ERRIND,N)
 C
@@ -1838,7 +1825,7 @@ C
       YVMAX = YVMAXV(TNR)
       MXWXV = MXWXVV(TNR)
       MYWYV = MYWYVV(TNR)
- 
+C
       IF (ABS(MXWXV).LT.1.0E-30) THEN
         WRITE(STDERR,2000) TNR
         EFLAG = 1
@@ -1943,7 +1930,7 @@ C     + + + COMMON BLOCKS + + +
       INCLUDE 'lkagks.inc'
 C
 C     + + + END SPECIFICATIONS + + +
- 
+C
       YWTOYV = YVMIN + MYWYV*(YW - YWMIN)
 C
       RETURN
@@ -1967,7 +1954,7 @@ C     + + + COMMON BLOCKS + + +
       INCLUDE 'lkagks.inc'
 C
 C     + + + END SPECIFICATIONS + + +
- 
+C
       YVTOYW = YWMIN + (YV - YVMIN)/MYWYV
 C
       RETURN
@@ -1991,7 +1978,7 @@ C     + + + COMMON BLOCKS + + +
       INCLUDE 'lkagks.inc'
 C
 C     + + + END SPECIFICATIONS + + +
- 
+C
       YNTOYD = YDMIN + MYNYD*(YN - YNMIN)
 C
       RETURN
@@ -2039,7 +2026,7 @@ C     + + + COMMON BLOCKS + + +
       INCLUDE 'lkagks.inc'
 C
 C     + + + END SPECIFICATIONS + + +
- 
+C
       YDTOYN = YNMIN + (YD - YDMIN)/MYNYD
 C
       RETURN
@@ -2072,14 +2059,15 @@ C     + + + LOCAL VARIABLES + ++
      $          XDL, YDL, XDR, YDR, D, CLRECT(4)
 C
 C     + + + EXTERNALS + + +
-      EXTERNAL  XWTOXV, YWTOYV, XNTOXD, YNTOYD, GCOLN, GMRKRA, GCHSIZ
+      EXTERNAL  XWTOXV, YWTOYV, XNTOXD, YNTOYD, IGrColourN, IGrMarker,
+     * IGrCharSize
 C
 C     + + + END SPECIFICATIONS + + +
 C
 C     set the foreground color for the marker
-      CALL GCOLN (MCOLOR)
+      CALL IGrColourN (MCOLOR)
 C     set marker size
-      CALL GCHSIZ(MARKH,MARKH)
+      CALL IGrCharSize(MARKH,MARKH)
 C
       XDL = XNTOXD(XWTOXV(PX(1)))
       YDL = YNTOYD(YWTOYV(PY(1)))
@@ -2090,7 +2078,7 @@ C     clipping is on.
       CALL GQCLIP(IERR,CLIP,CLRECT)
       IF(CLIP.EQ.GCLIP .AND. IERR.EQ.0)
      *   CALL INRECT(PX(1),PY(1),CLRECT,LOC)
-      IF(LOC.EQ.0) CALL GMRKRA (XDL,YDL,MTYPE)
+      IF(LOC.EQ.0) CALL IGrMarker (XDL,YDL,MTYPE)
 C
       DO 100 I=2,N
 C     check for clipping
@@ -2098,7 +2086,7 @@ C     check for clipping
       CALL GQCLIP(IERR,CLIP,CLRECT)
       IF(CLIP.EQ.GCLIP .AND. IERR.EQ.0)
      *   CALL INRECT(PX(I),PY(I),CLRECT,LOC)
- 
+C
 C     draw markerS unless marker is to be clipped
       IF(LOC.EQ.0) THEN
 C       scale to the ndc
@@ -2113,14 +2101,14 @@ C         find square of straightline distance from last point marked
 C           mark the point- it is more than twice the marker height
 C           away from the center of the previous marker
 C           draw the marker
-            CALL GMRKRA (XDR,YDR,MTYPE)
+            CALL IGrMarker (XDR,YDR,MTYPE)
 C           UPDATE THE LAST POINT MARKED
             XDL = XDR
             YDL = YDR
           END IF
         ELSE
 C         mark every point
-          CALL GMRKRA (XDR,YDR,MTYPE)
+          CALL IGrMarker (XDR,YDR,MTYPE)
         END IF
       END IF
  100  CONTINUE
@@ -2166,7 +2154,7 @@ C
         WRITE(STDERR,2000)
         LTYP = FULL
       END IF
- 
+C
       LTYPE(WKID,PLI) =  LTYP
       LWIDTH(WKID,PLI) = LWID
       ARPLCI(WKID,PLI) = COLI
@@ -2265,7 +2253,7 @@ C      CALL CKCI(CI)
       IF(IGREEN.LT.0) IGREEN=0
       IF(IBLUE.GT.255) IBLUE=255
       IF(IBLUE.LT.0) IBLUE=0
-      CALL GPARGB(N,IRED,IGREEN,IBLUE)
+      CALL IGrPaletteRGB(N,IRED,IGREEN,IBLUE)
 C
       RETURN
       END
@@ -2354,7 +2342,7 @@ C     horizontal.  we will convert to device units here
 C     remember only one work station can be open at a time
 C     in this simple version of GKS.  Therefore conversion to
 C     device co-ordinates is always possible!
- 
+C
 C     the information I have on GKS does not make clear which
 C     of the two world values are to be used for character
 C     height!  I assume that the vertical, y, direction is always
@@ -2408,7 +2396,7 @@ C
 C     + + + END SPECIFICATIONS + + +
       CHARUX = CHUX
       CHARUY = CHUY
- 
+C
 C     CONVERT TO NDC CO-ORDINATES AND THEN DETERMINE THE ANGLE.
       DXV    = MXWXV*DBLE(CHARUX)
       DYV    = MYWYV*DBLE(CHARUY)
@@ -2686,7 +2674,8 @@ C     + + + INTRINSICS + + +
 C
 C     + + + EXTERNALS + + +
       EXTERNAL   XWTOXV, YNTOYD, XNTOXD, YWTOYV, STRSIZ
-      EXTERNAL   GCOLN, GCHSIZ, GCHROT, GCHOUA, GLITYP
+      EXTERNAL   IGrColourN, IGrCharSize, IGrCharRotate, IGrCharOut,
+     * IGrLineType
 C
 C     + + + END SPECIFICATIONS + + +
 C
@@ -2701,7 +2690,7 @@ C     rectangle, do not draw the text.
         CALL INRECT(PX,PY,CLRECT,LOC)
         IF(LOC.NE.0) RETURN
       END IF
- 
+C
       XD = XNTOXD(XWTOXV(PX))
       YD = YNTOYD(YWTOYV(PY))
 C
@@ -2720,16 +2709,16 @@ C         set string so point is in the right
       END IF
 C
 C     set color, size, and rotation
-      CALL GCOLN (TXCOLI)
-      CALL GCHSIZ (CHARHD,CHARHD)
-      CALL GCHROT (TXANGL)
+      CALL IGrColourN (TXCOLI)
+      CALL IGrCharSize (CHARHD,CHARHD)
+      CALL IGrCharRotate (TXANGL)
 C     set line type to solid
-      CALL GLITYP (0)
+      CALL IGrLineType (0)
 C     output the text
 C     WRITE(99,*) 'gtx:',XD,YD,CHARS
-      CALL GCHOUA (XD,YD,CHARS)
+      CALL IGrCharOut (XD,YD,CHARS)
 C     set line type to user spec
-      CALL GLITYP (GLTYPE)
+      CALL IGrLineType (GLTYPE)
 C
       RETURN
       END
@@ -3289,7 +3278,7 @@ C
       ELSE
         FINTSA(WKID,FAI) = INTS
       END IF
- 
+C
       FSINDA(WKID,FAI) = STYLI
       FCOLIA(WKID,FAI) = COLI
 C
@@ -3364,8 +3353,9 @@ C     + + + LOCAL VARIABLES + + +
       REAL XWTOXV, YWTOYV, XNTOXD, YNTOYD, CLRECT(4)
 C
 C     + + + EXTERNALS + + +
-      EXTERNAL XWTOXV, YWTOYV, XNTOXD, YNTOYD, GFILL, POLY, GCOLN
- 
+      EXTERNAL XWTOXV, YWTOYV, XNTOXD, YNTOYD, IGrFillPattern, POLY,
+     * IGrColourN
+C
 C     + + + INTRINSICS + + +
       INTRINSIC  ABS
 C
@@ -3377,7 +3367,7 @@ C     + + + END SPECIFICATIONS + + +
 C
 C     set the color
 C
-      CALL GCOLN(FCOLI)
+      CALL IGrColourN(FCOLI)
 C
 C     convert the world co-ordinates to device co-ordinates using
 C     the work space
@@ -3397,7 +3387,7 @@ C     just draw the outline of the clipped polygon using the GPL routine.
 200     CONTINUE
 250     CONTINUE
       END IF
- 
+C
       DO 100 I=1,N
         XWORK(I) = XNTOXD(XWTOXV(PX(I)))
         YWORK(I) = YNTOYD(YWTOYV(PY(I)))
@@ -3417,25 +3407,25 @@ C
 C     set fill style before drawing polygon
       IF (FSTYLE .EQ. 1) THEN
 C       solid
-        CALL GFILL (4,2,3)
+        CALL IGrFillPattern (4,2,3)
       ELSE IF (FSINDX .EQ. -1) THEN
 C       horizontal
-        CALL GFILL (1,2,3)
+        CALL IGrFillPattern (1,2,3)
       ELSE IF (FSINDX .EQ. -2) THEN
 C       vertical
-        CALL GFILL (1,2,4)
+        CALL IGrFillPattern (1,2,4)
       ELSE IF (FSINDX .EQ. -3) THEN
 C       diagonal
-        CALL GFILL (1,2,2)
+        CALL IGrFillPattern (1,2,2)
       ELSE IF (FSINDX .EQ. -4) THEN
 C       right diagonal
-        CALL GFILL (1,2,1)
+        CALL IGrFillPattern (1,2,1)
       ELSE IF (FSINDX .EQ. -5) THEN
 C       box
-        CALL GFILL (2,2,3)
+        CALL IGrFillPattern (2,2,3)
       ELSE IF (FSINDX .EQ. -6) THEN
 C       diag box
-        CALL GFILL (2,2,1)
+        CALL IGrFillPattern (2,2,1)
       END IF
 C     draw polygonal shape using the current color and the width for
 C     polylines.  interior style does not redraw the outline.
@@ -3470,12 +3460,12 @@ C     X      - array of x values for points being plotted
 C     Y      - array of y values for points being plotted
 C
 C     + + + EXTERNALS + + +
-      EXTERNAL   GPOLYA
+      EXTERNAL   IGrPolygonSimple
 C
 C     + + + END SPECIFICATIONS + + +
 C
 C     move to the initial point and draw the polygon
-      CALL GPOLYA (X,Y,N)
+      CALL IGrPolygonSimple (X,Y,N)
 C
       RETURN
       END
@@ -3496,7 +3486,7 @@ c      INTEGER IA(IL), LSA(NS)
 c      REAL RA(RL)
 c      CHARACTER*(*) CA(NS)
 c      CHARACTER*80 DR(IDIL)
- 
+C
       INTEGER IA(1), LSA(1)
       REAL RA(1)
       CHARACTER*(*) CA(1)
@@ -3785,7 +3775,7 @@ C
 C     + + + END SPECIFICATIONS + + +
 C
 C     wtype meaning not clear. input anyway, ignore for now
- 
+C
       IF (GKSOPN.EQ.0) THEN
         ERRIND = 8
       ELSE
@@ -3956,7 +3946,7 @@ C     + + + PARAMETERS + + +
 C
 C     + + + COMMON BLOCKS + + +
       INCLUDE 'lkagks.inc'
- 
+C
 C     + + + END SPECIFICATIONS + + +
 C
       ERRIND = 0
@@ -4031,7 +4021,7 @@ C           found color in table
         WRITE(STDERR,2000)
         ERRIND = 1
       END IF
- 
+C
       RETURN
       END
 C
@@ -4139,7 +4129,7 @@ C
 C
       RETURN
       END
- 
+C
 C***************************************************************************
 C
 C   The following routines originally in GKSINTX.FOR were modified by DWP:
@@ -4212,8 +4202,8 @@ C
      O                   (ERRIND,COLI)
 C
 C     + + + PURPOSE + + +
-C     inquire text color index 
-
+C     inquire text color index
+C
 C     + + + DUMMY ARGUMENTS + ++
       INTEGER   ERRIND,COLI
 C
@@ -4369,7 +4359,7 @@ C     inquire colour representation (DOES NOT WORK)
 C
 C
       INCLUDE 'lkagks.inc'
-
+C
 C     + + + DUMMY ARGUMENTS + + +
       INTEGER   WKID,COLI,TYPE,ERRIND
       REAL      CR,CG,CB
@@ -4455,8 +4445,8 @@ C
       RETURN
       END
 C
- 
- 
+C
+C
 C**********************************************************************
 C    The following new GKS routines were added to deal with clipping:
 C
@@ -4464,7 +4454,7 @@ C    GQCLIP  -- retrieves clipping on/off indicator and the current
 C               clipping rectangle
 C
 C*********************************************************************
- 
+C
       SUBROUTINE   GQCLIP
      O                   (ERRIND,CLIP,CLRECT)
 C
@@ -4503,7 +4493,7 @@ C     get the clipping rectangle for the current transformation
       IF(IERR.NE.0) ERRIND=2
       RETURN
       END
- 
+C
 C**********************************************************************
 C    The following computational routines were added to implement polyline
 C    clipping and crude text, marker, and polygon fill clipping.
@@ -4516,7 +4506,7 @@ C                sides of the clipping rectangle
 C    HSIDE    -- find potential intersection points along horizontal
 C                sides of the clipping rectangle
 C**********************************************************************
- 
+C
       SUBROUTINE   INRECT
      I                   (X,Y,RECT,
      O                    LOC)
@@ -4592,7 +4582,7 @@ C
       END IF
       RETURN
       END
- 
+C
       SUBROUTINE   XYINT
      I                  (LOC1,LOC2,RECT,X,Y,
      O                   XNEW,YNEW,ERRIND)
@@ -4610,7 +4600,7 @@ C
 C     + + + LOCAL VARIABLES + + +
       REAL XIV, XIH, XI, YI
       INTEGER L, IERR1, IERR2
- 
+C
 C     + + + END SPECIFICATIONS + + +
 C
       XMIN=RECT(1)
@@ -4761,7 +4751,7 @@ C
 C
       RETURN
       END
- 
+C
       SUBROUTINE   VSIDE
      I                  (XS,YMIN,YMAX,X,Y,
      O                   XI,YI,IERR)
@@ -4815,7 +4805,7 @@ C     vertical.
       END IF
       RETURN
       END
- 
+C
       SUBROUTINE   HSIDE
      I                  (YS,XMIN,XMAX,X,Y,
      O                   XI,YI,IERR)
@@ -4870,5 +4860,5 @@ C     vertical.
 C
       RETURN
       END
- 
- 
+C
+C

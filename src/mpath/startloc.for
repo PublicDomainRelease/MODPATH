@@ -149,7 +149,9 @@ C----------------------------------
 C
 C==> COORDINATE IS LOCAL. USE SPECIFIED K INDEX
       IF(KCODE.LT.2) THEN
-        IF(K.LT.1 .OR. K.GT.NLAY) THEN
+C  MPATH version 5.0 -- Fix IF statement so DRAPE option works
+C        IF(K.LT.1 .OR. K.GT.NLAY) THEN
+        IF(K.LT.0 .OR. K.GT.NLAY) THEN
           K=0
           RETURN
         END IF

@@ -1,3 +1,10 @@
+C  MODPATH release: Version 5.0 -- Based on version 4, release 3.
+C        Modifications were made to track particles outside of the grid
+C        as required for performing parameter estimation based on travel
+C        time.
+C        Automatically detects single and double precision head and
+C        budget files.
+C        Allows files larger than 2 GB to be read.
 C  MODPATH release: Version 4.00 (V4, Release 3, 7-2003)
 C    In FLOWDATA.FOR, fixed ADDQAR to put ET and RCH into proper layer when
 C       usining compact budget and the layer is not 1
@@ -35,44 +42,46 @@ C     SYSLF.FOR
 C   For detailed descriptions of the changes, see the version notes
 C   that are recorded at the beginning of each of those module files
 C Previous release: MODPATH Version 3.00 (V3, Release 1, 9-94)
+      MODULE MPATHADV
+        REAL,    SAVE,   DIMENSION(:),  POINTER      ::VXE
+        REAL,    SAVE,   DIMENSION(:),  POINTER      ::VYE
+        REAL,    SAVE,   DIMENSION(:),  POINTER      ::VZE
+        REAL,    SAVE,   DIMENSION(:),  POINTER      ::TOTE
+        REAL,    SAVE,   DIMENSION(:),  POINTER      ::XLCE
+        REAL,    SAVE,   DIMENSION(:),  POINTER      ::YLCE
+        REAL,    SAVE,   DIMENSION(:),  POINTER      ::ZLCE
+      END MODULE
 C***********************************************************************
 C                       MODPATH Main Program
 C***********************************************************************
+      USE DOUBLEBUDGET, ONLY: IPREC
       CHARACTER*20 RSPFIL
       CHARACTER*25 CUNIT(25)
       CHARACTER*80 VER(1),FHELP,FSHELP,PRGNAM,FNAMS
       CHARACTER*132 FILDIR,PHELP,PSHELP
-      INTEGER MAXSIZ
+      COMMON /MAXSIZ/ DMAXSIZ
+      DOUBLE PRECISION DMAXSIZ
 C
-C----- REDIMENSION ARRAY "A" BY CHANGING THE NEXT TWO STATEMENTS ----
-C----- MAKE SURE THAT LENA IS SET EQUAL TO THE LENGTH OF THE A ARRAY ---
-C#STANDARD - BEGIN#  SET A FIXED DIMENSION FOR ARRAY "A"
-c      COMMON A(8000000)
-c      PARAMETER(LENA=8000000)
-C#STANDARD - END#
-C
-C#LAHEY - BEGIN#  ALLOCATE MEMORY FOR ARRAY "A" DYNAMICALLY
+C  ALLOCATE MEMORY FOR ARRAY "A" DYNAMICALLY
       DIMENSION A(:)
       ALLOCATABLE :: A
-      PARAMETER(LENA=50000000)
-C#LAHEY - END#
- 
+C 
 C-----------------------------------------------------------------------
       INCLUDE 'idat1.inc'
       COMMON/FILDIR/ FILDIR
       COMMON /DFNAMS/ FNAMS(6)
       DIMENSION IUNIT(25),IUNAR(25)
-      COMMON /MAXSIZ/ MAXSIZ
       DIMENSION LAYCBD(200)
 C-----------------------------------------------------------------------
- 
+C  Specify undefined precision of binary files initially.
+      IPREC=0
 C#LAHEY - BEGIN#  SET CARRIAGE CONTROL SO THAT PROMPTS DISPLAY PROPERLY
       OPEN(UNIT=*,CARRIAGECONTROL='LIST')
 C#LAHEY - END#
  
 C    SET VERSION NUMBER
 C
-      VER(1)='MODPATH Version 4.00 (V4, Release 3, 7-2003)'
+      VER(1)='MODPATH 5.0'
       PRGNAM=VER(1)
  
 C... SET NUMBER OF UNITS RESERVED BY MODPATH. USED TO DIMENSION THE ARRAY
@@ -87,7 +96,7 @@ C
       MAXPTS=500000
  
 C... SET DEFAULT MAXIMUM SIZE OF THE DIRECT ACCESS COMPOSITE DATA FILE
-      MAXSIZ= 15000000
+      DMAXSIZ= 150000000.
  
 C... SET DEFAULT NAME OF RESPONSE FILE
       RSPFIL='mpath.rsp'
@@ -199,7 +208,7 @@ C-----------------------------------------------------------------------
 C
 C  DEFINE FILE CONNECTION CHARACTER STRINGS
 C
-      NUNIT=17
+      NUNIT=18
       DO 1 N=1,NUNIT
       CUNIT(N)=' '
       IUNIT(N)=0
@@ -216,6 +225,7 @@ C
       CUNIT(15)='ENDPOINT'
       CUNIT(16)='PATHLINE'
       CUNIT(17)='TIME-SERIES'
+      CUNIT(18)='ADVOBS'
 C
 C  OPEN THE DATA FILES CONTAINING THE BASIC INFORMATION ABOUT THE FLOW
 C  SYSTEM. ALSO OPEN STANDARD OUTPUT AND SCRATCH FILES.
@@ -234,16 +244,13 @@ C  SPECIFIED IN THE NAME FILE
 C
 C  ALLOCATE SPACE FOR ARRAYS
 C
-      CALL SPACE(LENA,LCQX,LCQY,LCQZ,LCPOR,LCIBOU,LCXMAX,LCDX,LCYMAX,
+      CALL SPACE(LCQX,LCQY,LCQZ,LCPOR,LCIBOU,LCXMAX,LCDX,LCYMAX,
      1LCDY,LCZBOT,LCZTOP,LCHEAD,LCBUFF,LCLAYC,LCNCON,LCIBUF,
      2LCXLC,LCQSS,LCYLC,LCZLC,LCZLL,LCTOT,LCJLC,LCILC,LCKLC,
      4LCQSTO,
      5LCINI,LCPERL,LCNTS,LCTMX,LCIBST,IUNIT,HDRY,HNOFLO,
      6MAXPTS,ISUM,LAYCBD,LCISSFLG)
-C
-C#LAHEY - BEGIN#  ALLOCATE MEMORY TO ARRAY "A"
       ALLOCATE (A(ISUM))
-C#LAHEY - END#
  
 C
 C  EXECUTE TRACKING PROGRAM

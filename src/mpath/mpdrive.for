@@ -15,6 +15,9 @@ C***** SUBROUTINE *****
      4INILOC,PERLEN,NUMTS,TIMX,IBSTRT,HDRY,
      5HNOFLO,VER,LAYCBD,ISSFLG)
 C
+C
+      USE MPATHADV
+C
       INCLUDE 'idat1.inc'
       COMMON /IDAT2/ IRCHTP,IEVTTP,NRCHOP,NEVTOP
 
@@ -98,6 +101,20 @@ C
       IF(NPRT.EQ.0) THEN
         WRITE(I7,*) 'NUMBER OF PARTICLES = 0. RUN STOPPED.'
         STOP
+      END IF
+C
+      IF(MODE.EQ.2 .AND. IUNIT(18).GT.0) THEN
+         ALLOCATE(VXE(NPRT),VYE(NPRT),VZE(NPRT),TOTE(NPRT))
+         ALLOCATE(XLCE(NPRT),YLCE(NPRT),ZLCE(NPRT))
+         DO 43 N=1,NPRT
+         VXE(N)=0.
+         VYE(N)=0.
+         VZE(N)=0.
+         tote(N)=0.
+         xlce(N)=0.
+         ylce(N)=0.
+         zlce(N)=0.
+ 43      CONTINUE
       END IF
 C
 C
@@ -235,12 +252,17 @@ C  TO BE RELEASED.
       END IF
  
 C  IF PARTICLE HAS DISCHARGED, SKIP TO THE NEXT PARTICLE
-      IF(TOT(N).GE.0.0E+0) GO TO 70
+c      IF(TOT(N).GE.0.0E+0) GO TO 70
+      IF(TOT(N).GE.0.0E+0) then
+        idsch=0
+        GO TO 69
+      end if
  
 C  IF PARTICLE IS UNRELEASED, SKIP TO THE NEXT PARTICLE
       IF(TOT(N).EQ.-1.0E+30) THEN
         IF(IPSTAT.EQ.1) IEND=IEND+1
-        GO TO 70
+c        GO TO 70
+        GO TO 69
       END IF
  
 C  IF IT GETS THIS FAR, THEN THERE IS AT LEAST 1 ACTIVE PARTICLE TO TRACK
@@ -256,7 +278,7 @@ C
      1JLC(N),ILC(N),KLC(N),XLC(N),YLC(N),ZLC(N),ZLLC(N),IBOUND,LAYCON,
      2ZBOT,ZTOP,XMAX,YMAX,QX,QY,QZ,DELC,DELR,POR,HEAD,NCON,NCOL,NROW,
      3NLAY,NLPOR,NZDIM,NCP1,NRP1,NLP1,ISNK,IREV,FRAC,IZSTOP,I2,
-     4I7,QSS,QSTO,INILOC,NPART,ISS,ICASE,HDRY,NSTEP,ICMPCT)
+     4I7,QSS,QSTO,INILOC,NPART,ISS,ICASE,HDRY,NSTEP,ICMPCT,IUNIT(18))
  
 C  ASSIGN TIME OF TRAVEL TO TOT ARRAY IF PARTICLE HAS DISCHARGED
 C
@@ -266,20 +288,21 @@ C  IDSCH =  0 -- PARTICLE HAS DISCHARGED NORMALLY
 C  IDSCH =  1 -- PARTICLE HAS NOT DISCHARGED
 C
       IF(IDSCH.LE.0) THEN
-      TOT(N)=TIME
-      READ(I5,REC=N) XSTRT,YSTRT,ZLSTRT,IPCODE,TRLEAS,NDUMMY
-      IF(IDSCH.EQ.0) IPCODE=  1 + (10*NSTEP)
-      IF(IDSCH.EQ.-1) IPCODE= -1
-      IF(IDSCH.EQ.-2) IPCODE= 2 + (10*NSTEP)
-      WRITE(I5,REC=N) XSTRT,YSTRT,ZLSTRT,IPCODE,TRLEAS,NDUMMY
+        TOT(N)=TIME
+        READ(I5,REC=N) XSTRT,YSTRT,ZLSTRT,IPCODE,TRLEAS,NDUMMY
+        IF(IDSCH.EQ.0) IPCODE=  1 + (10*NSTEP)
+        IF(IDSCH.EQ.-1) IPCODE= -1
+        IF(IDSCH.EQ.-2) IPCODE= 2 + (10*NSTEP)
+        WRITE(I5,REC=N) XSTRT,YSTRT,ZLSTRT,IPCODE,TRLEAS,NDUMMY
       ELSE
-      IEND=IEND+1
+        IEND=IEND+1
       END IF
 C
 C  DON'T WRITE RESULTS IN TIMESERIES FILE FOR TIME=TMAX IF PARTICLE
 C  DISCHARGED AT TIME < TMAX.
 C
-      IF(IDSCH.LE.0.AND.TIME.LT.TMAX) GO TO 70
+c      IF(IDSCH.LE.0.AND.TIME.LT.TMAX) GO TO 70
+      IF(IDSCH.LE.0.AND.TIME.LT.TMAX) GO TO 69
 C
 C  WRITE RESULTS TO TIMESERIES FILE
 C
@@ -288,7 +311,34 @@ C
      1   YLC(N),ZLC(N),ZLLC(N),TMAX,NSTEP,NROW,NCOL)
       END IF
 C
+C  Interpolate outside the grid if using ADVOBS
+69      if(MODE.EQ.2 .and. idsch.EQ.0 .AND. IUNIT(18).GT.0) THEN
+          if(tote(N).EQ.0.) then
+            tote(N)=tot(N)
+            xlce(N)=xlc(N)
+            ylce(N)=ylc(N)
+            zlce(N)=zlc(N)
+          end if
+          XLCe(N)=XLCe(N)+VXE(N)*(TMAX-TOTE(N))
+          YLCe(N)=YLCe(N)+VYE(N)*(TMAX-TOTE(N))
+          ZLCe(N)=ZLCe(N)+VZE(N)*(TMAX-TOTE(N))
+          TOTE(N)=TMAX
+        end if
+C  Write ADVOBS file if conditions are met.
+        if(mode.eq.2 .AND. icase.gt.1 .AND. TOT(N).NE.-1.E30 .AND.
+     1     IUNIT(18).GT.0 .AND. KOUNT.LE. MAXSTP)
+     2       CALL ADVOBSOT(N,IDSCH,TIME,TOT(N),XLCE(N),YLCE(N),
+     3          ZLCE(N),TOTE(N),VXE(N),VYE(N),VZE(N),
+     4          XLC(N),YLC(N),ZLC(N),IUNIT(18))
 70    CONTINUE
+C
+C  Keep going until all time steps are completed when
+C    (1) the mode is Time Series (MODE=2),
+C    (2) there are 0 active particles (IEND=0), and
+C    (3) ADVOBS is active (IUNIT(18)>0).
+         if(mode.eq.2 .and. iend.eq.0 .and. iunit(18).gt.0) then
+           if(kount.lt.maxstp) iend=1
+         end if
 C
       IF(IEND.EQ.0) GO TO 71
         IF(ISTOP.LT.0) THEN
@@ -572,3 +622,18 @@ C
 6000  FORMAT(A4,A,A2)
       RETURN
       END
+      SUBROUTINE ADVOBSOT(N,IDSCH,TIME,TOT,XLCE,YLCE,ZLCE,TOTE,
+     1             VXE,VYE,VZE,XLC,YLC,ZLC,I18)
+C  Write data into ADVOBS file
+C
+      IF(TOT.GE.0.) THEN
+C  Write projected data -- TOT is greater than 0 only after particle discharges.
+        WRITE(I18,68) N,IDSCH,XLCE,YLCE,ZLCE,TOTE,VXE,VYE,VZE
+68      FORMAT(1X,I5,I3,1P,3E14.6,5X,E14.6,5X,3E14.6)
+      ELSE
+C  Write non-projected data.
+        WRITE(I18,68) N,IDSCH,XLC,YLC,ZLC,TIME,VXE,VYE,VZE
+       END IF
+      RETURN
+      END
+      

@@ -52,6 +52,7 @@ C... BEGIN BLOCK 1
       FILDIR= ' '
       OPEN(IU,FILE='mpsearch',STATUS='OLD',ERR=15)
       READ(IU,'(A)',END=10) FILDIR
+      FILDIR=ADJUSTL(FILDIR)
 10    CONTINUE
       CLOSE(IU)
 15    CONTINUE
@@ -98,10 +99,10 @@ c      RETURN
 C... END BLOCK 1
 C
 C... BEGIN BLOCK 2
-C      ARG=' '
-C      N=IARGC()
-C      IF(N.GT.0) CALL GETARG(1,ARG)
-C      RETURN
+      ARG=' '
+      N=IARGC()
+      IF(N.GT.0) CALL GETARG(1,ARG)
+      RETURN
 C... END BLOCK 2
 C
 C... BEGIN BLOCK 3
@@ -113,11 +114,11 @@ C100   RETURN
 C... END BLOCK 3
 C
 C... BEGIN BLOCK 4
-      ARG=' '
-      LINE=' '
-      CALL GETCL(LINE)
-      NCHAR=INDEX(LINE,' ')
-      IF(NCHAR.GT.1) ARG=LINE(1:(NCHAR-1))
-      RETURN
+C      ARG=' '
+C      LINE=' '
+C      CALL GETCL(LINE)
+C      NCHAR=INDEX(LINE,' ')
+C      IF(NCHAR.GT.1) ARG=LINE(1:(NCHAR-1))
+C      RETURN
 C
       END

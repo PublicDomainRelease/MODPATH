@@ -67,7 +67,8 @@ C***** SUBROUTINE *****
 C
       INCLUDE 'idat1.inc'
       COMMON /IDAT2/ IRCHTP,IEVTTP,NRCHOP,NEVTOP
-      COMMON /MAXSIZ/ MAXSIZ
+      COMMON /MAXSIZ/ DMAXSIZ
+      DOUBLE PRECISION DMAXSIZ
 C
       DIMENSION HEAD(NCOL,NROW,NLAY),QX(NCP1,NROW,NLAY),
      1 QY(NCOL,NRP1,NLAY),QZ(NCOL,NROW,NLP1),BUFF(NCOL,NROW,NLAY),
@@ -112,7 +113,7 @@ C
 C
       IF(INHQ.EQ.2) THEN
         OPEN(UNIT=I10,FILE=FNAME,ERR=5100,STATUS='OLD',ACCESS='DIRECT',
-     1       FORM='UNFORMATTED',RECL=LREC)
+     1       FORM='BINARY',RECL=LREC)
       END IF
  
 C... LOOP THROUGH AND READ MODFLOW BUDGET FILE FOR STEADY STATE OR AN
@@ -153,7 +154,7 @@ C  Main data file input item 10C.
          END IF
  
          IF(INHQ.EQ.3) THEN
-           CALL CBFSIZ(NFSV,NLSV,LAYCON,NROW,NCOL,NLAY,MAXSIZ,
+           CALL CBFSIZ(NFSV,NLSV,LAYCON,NROW,NCOL,NLAY,DMAXSIZ,
      1              IERR)
            IF(IERR.NE.0) THEN
              WRITE(I7,*)
@@ -163,7 +164,7 @@ C  Main data file input item 10C.
              STOP
            END IF
            OPEN(UNIT=I10,FILE=FNAME,ERR=5000,STATUS='UNKNOWN',
-     1       ACCESS='DIRECT',FORM='UNFORMATTED',RECL=LREC)
+     1       ACCESS='DIRECT',FORM='BINARY',RECL=LREC)
          END IF
  
          DO 150 IPER=1,MAXPER
@@ -259,9 +260,10 @@ C
       DIMENSION QX(NCP1,NROW,NLAY),QY(NCOL,NRP1,NLAY),
      1QZ(NCOL,NROW,NLP1),QSS(NCOL,NROW,NLAY),QSTO(NCOL,NROW,NLAY),
      2HEAD(NCOL,NROW,NLAY),LAYCON(NLAY),IBOUND(NCOL,NROW,NLAY)
-      COMMON /MAXSIZ/ MAXSIZ
+      COMMON /MAXSIZ/ DMAXSIZ
+      DOUBLE PRECISION DMAXSIZ,DBYTES
 C
-      INTEGER KKPER,KKSTP,NNSTP,LAYER,MAXSIZ
+      INTEGER KKPER,KKSTP,NNSTP,LAYER
       KKPER=KPER
       KKSTP=KSTP
       NNSTP=NSTPS
@@ -272,17 +274,18 @@ C
       NRPTS= (6*NROW*NLAY) + (NROW*NHLAY) + NROW + NLAY
       NREC= 1 + (NSTEP-1)*(NRPTS+1)
       NCHECK= NREC + NRPTS + 1
- 
-      NBYTES= 4*(NCOL+1)*NCHECK
-      IF(NBYTES.GT.MAXSIZ) THEN
-      WRITE(*,6000) MAXSIZ
-      WRITE(I7,6000) MAXSIZ
-6000  FORMAT(1X,'COMPOSITE BUDGET FILE WILL EXCEED SIZE LIMIT OF ',I10,
-     1' BYTES.'/
-     21X,'SPECIFY A LARGER VALUE FOR <MAXSIZ> IN THE MAIN DATA FILE,'/
-     31X,'OR, INCREASE DEFAULT VALUE OF <MAXSIZ> IN MAIN PROGRAM'/)
-      CLOSE(IU)
-      STOP
+
+C  Check that size of composite budget file is less than or equal to DMAXSIZ.
+      DBYTES= 4.D0*(DBLE(NCOL)+1.D0)*DBLE(NCHECK)
+      IF(DBYTES.GT.DMAXSIZ) THEN
+        WRITE(*,6000) DMAXSIZ
+        WRITE(I7,6000) DMAXSIZ
+6000    FORMAT(1X,'COMPOSITE BUDGET FILE WILL EXCEED SIZE LIMIT OF ',
+     1  F25.0,' BYTES.'/
+     2  1X,'SPECIFY A LARGER VALUE FOR <MAXSIZ> IN THE MAIN DATA FILE,'/
+     3  1X,'OR, INCREASE DEFAULT VALUE OF <MAXSIZ> IN MAIN PROGRAM'/)
+        CLOSE(IU)
+        STOP
       END IF
 C
 C... WRITE TIME STEP HEADER
@@ -475,6 +478,7 @@ C***** SUBROUTINE *****
       SUBROUTINE FLOWS (QX,QY,QZ,BUFF,IUNIT,IBOUND,IBUFF,QSTO,
      1 DELR,DELC,NCOL,NROW,NLAY,NCP1,NRP1,NLP1,NUNIT,QSS,I7,
      2 KPER,KSTP,IRCHTP,IEVTTP,ISSFLG)
+      USE DOUBLEBUDGET, ONLY: IPREC
 C
       DIMENSION DELC(NROW),DELR(NCOL),QX(NCP1,NROW,NLAY),
      1 QY(NCOL,NRP1,NLAY),QZ(NCOL,NROW,NLP1),BUFF(NCOL,NROW,NLAY),
@@ -498,6 +502,7 @@ C
 C
 C  READ STORAGE IF STRESS PERIOD IS TRANSIENT
 C
+      IF(IPREC.EQ.0) CALL BUDGETPRECISION(IUCBC,NCOL,NROW,NLAY,BUFF,I7)
       IF(ISSFLG(KPER).EQ.0) THEN
          CALL RDBUDG (QSTO,TEXT,NCOL,NROW,NLAY,IUCBC,I7,KPER,KSTP,
      1           IBUFF)
@@ -616,6 +621,7 @@ C***** SUBROUTINE *****
      1             HDRY,HNOFLO)
 C  Read heads for one time step
 C
+      USE DOUBLEBUDGET, ONLY: IPREC
       INCLUDE 'idat1.inc'
       DIMENSION HEAD(NCOL,NROW,NLAY),BUFF(NCOL,NROW,NLAY),
      1    IUNIT(NUNIT),IBOUND(NCOL,NROW,NLAY),LAYCON(NLAY)
@@ -645,6 +651,8 @@ C
 C
 C  read heads if there is a file unit for heads
       IF (IUHED.NE.0) THEN
+         IF(IUHED.LT.0 .AND. IPREC.EQ.0)
+     1             CALL HEADPRECISION(-IUHED,I7,NCOL,NROW,NLAY)
 C
          WRITE(I7,*) ' '
          write(i7,*) ' ---------------'
@@ -904,9 +912,10 @@ C
       END
  
 C***** SUBROUTINE *****
-      SUBROUTINE CBFSIZ(NFSV,NLSV,LAYCON,NROW,NCOL,NLAY,MAXSIZ,
+      SUBROUTINE CBFSIZ(NFSV,NLSV,LAYCON,NROW,NCOL,NLAY,DMAXSIZ,
      1                  IERR)
       DIMENSION LAYCON(NLAY)
+      DOUBLE PRECISION DMAXSIZ,DBYTES
  
       IERR=0
  
@@ -918,17 +927,22 @@ C***** SUBROUTINE *****
  
       NRPTS= (6*NROW*NLAY) + (NROW*NHLAY) + NROW + NLAY
       NREC= (1 + (1+NRPTS)*NSTEPS)
-      NBYTES= 4*(NCOL+1)*NREC
- 
-      IF(NBYTES.LE.MAXSIZ) THEN
+C
+C  Check if MAXSIZ will be exceeded.
+      DBYTES= 4.D0*(DBLE(NCOL)+1.D0)*DBLE(NREC)
+      IF(DBYTES.LE.DMAXSIZ) THEN
         RETURN
       ELSE
-        SIZKB= FLOAT(NBYTES)/1024.0
+        SIZKB= DBYTES/1024.0D0
         SIZMB= SIZKB/1024.0
         IF(SIZKB.LT.500.0) THEN
-          WRITE(*,1000) NBYTES,SIZKB
+          WRITE(*,1000) DBYTES,SIZKB
+1000  FORMAT(1X,'THIS RUN WILL GENERATE A COMPOSITE BUDGET FILE THAT CON
+     1TAINS:'/1X,F25.0,' BYTES  (',F8.2,' Kb)')
         ELSE
-          WRITE(*,1100) NBYTES,SIZMB
+          WRITE(*,1100) DBYTES,SIZMB
+1100  FORMAT(1X,'THIS RUN WILL GENERATE A COMPOSITE BUDGET FILE THAT CON
+     1TAINS:'/1X,F25.0,' BYTES  (',F8.2,' Mb)')
         END IF
         write(*,*) ' '
         WRITE(*,*) ' YOU CAN CONTINUE OR STOP NOW.'
@@ -937,15 +951,11 @@ C***** SUBROUTINE *****
         WRITE(*,*) '      2 = STOP NOW, DO NOT GENERATE THE FILE'
         READ(*,*) IANS
         IF(IANS.EQ.1) THEN
-          MAXSIZ=NBYTES
+          DMAXSIZ=DBYTES
         ELSE
           IERR=1
         END IF
       END IF
-1000  FORMAT(1X,'THIS RUN WILL GENERATE A COMPOSITE BUDGET FILE THAT CON
-     1TAINS:'/1X,I10,' BYTES  (',F8.2,' Kb)')
-1100  FORMAT(1X,'THIS RUN WILL GENERATE A COMPOSITE BUDGET FILE THAT CON
-     1TAINS:'/1X,I10,' BYTES  (',F8.2,' Mb)')
       RETURN
       END
  
@@ -980,18 +990,27 @@ C***** SUBROUTINE *****
 C     ******************************************************************
 C     Add a list budget term to QSS or QX, QY, and QZ
 C     ******************************************************************
+      USE DOUBLEBUDGET, ONLY: IPREC
+      DOUBLE PRECISION VALD(20)
       INCLUDE 'idat1.inc'
       DIMENSION QSS(NCOL,NROW,NLAY),QX(NCP1,NROW,NLAY),
      1 QY(NCOL,NRP1,NLAY),QZ(NCOL,NROW,NLP1),DELR(NCOL),DELC(NROW),
      2 IBOUND(NCOL,NROW,NLAY)
-      DIMENSION VAL(6)
+      DIMENSION VAL(20)
       CHARACTER*(*) TEXT
 C     ------------------------------------------------------------------
       NRC=NROW*NCOL
       IFACE=0
       IF(NLST.GT.0) THEN
          DO 100 N=1,NLST
-         READ(IU,ERR=1000) ICELL,(VAL(I),I=1,NVAL)
+         IF(IPREC.EQ.2) THEN
+           READ(IU,ERR=1000) ICELL,(VALD(I),I=1,NVAL)
+           DO 10 I=1,NVAL
+           VAL(I)=VALD(I)
+10         CONTINUE
+         ELSE
+           READ(IU,ERR=1000) ICELL,(VAL(I),I=1,NVAL)
+         END IF
          Q=VAL(1)
          K= (ICELL-1)/NRC + 1
          I= ( (ICELL - (K-1)*NRC)-1 )/NCOL + 1
@@ -1079,21 +1098,47 @@ C
 C     ******************************************************************
 C     Add an array budget term to QSS or QZ
 C     ******************************************************************
+      USE DOUBLEBUDGET, ONLY: IPREC,DBLBUFF
       INCLUDE 'idat1.inc'
       DIMENSION QSS(NCOL,NROW,NLAY),QZ(NCOL,NROW,NLP1),
      1 IBOUND(NCOL,NROW,NLAY),BUFF(NCOL,NROW,NLAY),IBUFF(NCOL,NROW,NLAY)
       CHARACTER*(*) TEXT
 C     ------------------------------------------------------------------
-      IF(NBTYPE.EQ.4) THEN
-         NL=1
-         READ(IU,ERR=1000) ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
-      ELSE IF(NBTYPE.EQ.3) THEN
-         NL=1
-         READ(IU,ERR=1000) ((IBUFF(J,I,1),J=1,NCOL),I=1,NROW)
-         READ(IU,ERR=1000) ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
+      IF(IPREC.EQ.2) THEN
+C  Double precision
+        IF(NBTYPE.EQ.4) THEN
+           NL=1
+           READ(IU,ERR=1000) ((DBLBUFF(J,I,1),J=1,NCOL),I=1,NROW)
+           DO 20 I=1,NROW
+           DO 20 J=1,NCOL
+           BUFF(J,I,1)=DBLBUFF(J,I,1)
+20         CONTINUE
+        ELSE IF(NBTYPE.EQ.3) THEN
+           NL=1
+           READ(IU,ERR=1000) ((IBUFF(J,I,1),J=1,NCOL),I=1,NROW)
+           READ(IU,ERR=1000) ((DBLBUFF(J,I,1),J=1,NCOL),I=1,NROW)
+           DO 30 I=1,NROW
+           DO 30 J=1,NCOL
+           BUFF(J,I,1)=DBLBUFF(J,I,1)
+30         CONTINUE
+        ELSE
+           NL=NLAY
+           READ(IU,ERR=1000) DBLBUFF
+           BUFF=DBLBUFF
+        END IF
       ELSE
-         NL=NLAY
-         READ(IU,ERR=1000) BUFF
+C  Single precision
+        IF(NBTYPE.EQ.4) THEN
+           NL=1
+           READ(IU,ERR=1000) ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
+        ELSE IF(NBTYPE.EQ.3) THEN
+           NL=1
+           READ(IU,ERR=1000) ((IBUFF(J,I,1),J=1,NCOL),I=1,NROW)
+           READ(IU,ERR=1000) ((BUFF(J,I,1),J=1,NCOL),I=1,NROW)
+        ELSE
+           NL=NLAY
+           READ(IU,ERR=1000) BUFF
+        END IF
       END IF
 C
       DO 100 KK=1,NL

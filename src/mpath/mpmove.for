@@ -16,7 +16,7 @@ C***** SUBROUTINE *****
      1IDSCH,JP,IP,KP,XP,YP,ZP,ZLOC,IBOUND,LAYCON,ZBOT,ZTOP,XMAX,YMAX,
      2QX,QY,QZ,DELC,DELR,POR,HEAD,NCON,NCOL,NROW,NLAY,NLPOR,NZDIM,
      3NCP1,NRP1,NLP1,ISNK,IREV,FRAC,IZSTOP,I2,I7,QSS,QSTO,INILOC,
-     4NPART,ISS,ICASE,HDRY,NSTEP,ICMPCT)
+     4NPART,ISS,ICASE,HDRY,NSTEP,ICMPCT,I18)
 C
       DIMENSION IBOUND(NCOL,NROW,NLAY),ZTOP(NZDIM),ZBOT(NZDIM),
      1LAYCON(NLAY),XMAX(NCOL),YMAX(NROW),NCON(NLAY),QSS(NCOL,NROW,NLAY),
@@ -243,6 +243,9 @@ C    WAY OUT
           IF(IZSYES.EQ.1) THEN
             IDSCH= -2
           ELSE
+            IF(MODE.EQ.2 .AND. I18.GT.0) CALL VELSINK(IPART,
+     1           VX1,VX2,VY1,VY2,VZ1,VZ2,
+     2           XP,YP,ZP,XMN,YMN,ZMN,XMX,YMX,ZMX)
             IDSCH=0
           END IF
           RETURN
@@ -257,6 +260,9 @@ C... IF TRACKING IS BACKWARD AND CELL HAS A NET INTERNAL SOURCE, STOP PARTICLE.
             IF(IZSYES.EQ.1) THEN
               IDSCH= -2
             ELSE
+              IF(MODE.EQ.2 .AND. I18.GT.0) CALL VELSINK(IPART,
+     1           VX1,VX2,VY1,VY2,VZ1,VZ2,
+     2           XP,YP,ZP,XMN,YMN,ZMN,XMX,YMX,ZMX)
               IDSCH=0
             END IF
             RETURN
@@ -266,6 +272,9 @@ C... IF TRACKING IS FORWARD AND CELL HAS A NET INTERNAL SINK, STOP PARTICLE
             IF(IZSYES.EQ.1) THEN
               IDSCH= -2
             ELSE
+              IF(MODE.EQ.2 .AND. I18.GT.0) CALL VELSINK(IPART,
+     1           VX1,VX2,VY1,VY2,VZ1,VZ2,
+     2           XP,YP,ZP,XMN,YMN,ZMN,XMX,YMX,ZMX)
               IDSCH=0
             END IF
             RETURN
@@ -348,9 +357,12 @@ C
         IF(IZSYES.EQ.1) THEN
           IDSCH= -2
         ELSE
+          IF(MODE.EQ.2 .AND. I18.GT.0) CALL VELSINK(IPART,
+     1           VX1,VX2,VY1,VY2,VZ1,VZ2,
+     2           XP,YP,ZP,XMN,YMN,ZMN,XMX,YMX,ZMX)
           IDSCH=0
         END IF
-      RETURN
+        RETURN
       END IF
 C
 80    CONTINUE
@@ -390,6 +402,8 @@ C
       ZP=ZNEW
       TIME=TIME+DT
 C
+C  Change the location pointer if there is a new location.
+C
       ZLOC= (ZP-ZMN)/(ZMX-ZMN)
       IF(ZLOC.GT.1.0) ZLOC=1.0
       IF(ZLOC.LT.0.0) ZLOC=0.0
@@ -415,13 +429,16 @@ C
       IF(IBND.EQ.0.OR.HED.EQ.HDRY) IEXIT=1
 100   CONTINUE
       IF(IEXIT.EQ.1) THEN
-      IDSCH=0
-      JP=JOLD
-      IP=IOLD
-      KP=KOLD
-      IF(MODE.EQ.1) CALL WRITPL(I2,ICMPCT,IPART,XP,YP,ZLOC,ZP,TIME,
+           IF(MODE.EQ.2 .AND. I18.GT.0) CALL VELEXI(IPART,
+     1       VX1,VX2,VY1,VY2,VZ1,VZ2,
+     2       XP,YP,ZP,XMN,YMN,ZMN,XMX,YMX,ZMX)
+        IDSCH=0
+        JP=JOLD
+        IP=IOLD
+        KP=KOLD
+        IF(MODE.EQ.1) CALL WRITPL(I2,ICMPCT,IPART,XP,YP,ZLOC,ZP,TIME,
      1                          JP,IP,KP,NSTEP,NROW,NCOL)
-      RETURN
+        RETURN
       END IF
 C
 C  SWITCH ZLOC FROM 0 TO 1 OR 1 TO 0 IF PARTICLE CHANGES LAYERS
@@ -621,5 +638,39 @@ C***** SUBROUTINE *****
         IF(IB.GE.1000) IB=IB/1000
         IF(IB.EQ.IZSTOP) IZSYES=1
         END IF
+      RETURN
+      END
+      SUBROUTINE VELEXI(N,VX1,VX2,VY1,VY2,VZ1,VZ2,
+     2           XP,YP,ZP,XMN,YMN,ZMN,XMX,YMX,ZMX)
+C  Compute exit velocitiy (VXE,VYE,VZE) when a particle flows out of an
+C  active cell into a no-flow cell.  This can happen when a discharge
+C  term is specified on a cell face adjacent to a no-flow cell.
+C  The particle location XP,YP,ZP is on the face between the prior
+C  active cell and a no-flow cell to which movement is tracked.
+C  VX1,VX2,VY1,VY2,VZ1,VZ2 are velocities for the prior cell faces.
+C
+      USE MPATHADV
+C
+      VXE(N)=VX1+(VX2-VX1)*(XP-XMN)/(XMX-XMN)
+      VYE(N)=VY1+(VY2-VY1)*(YP-YMN)/(YMX-YMN)
+      VZE(N)=VZ1+(VZ2-VZ1)*(ZP-ZMN)/(ZMX-ZMN)
+C
+      RETURN
+      END
+      SUBROUTINE VELSINK(N,VX1,VX2,VY1,VY2,VZ1,VZ2,
+     2             XP,YP,ZP,XMN,YMN,ZMN,XMX,YMX,ZMX)
+C  Compute exit velocity (VXE,VYE,VZE) for internal sinks.  This can
+C  happen when a discharge is specified without specifying the face.
+C    Unless the particle starts out in the discharging cell, the
+C    particle location XP,YP,ZP is on the face between cells
+C    JP,IP,KP and JOLD,IOLD,KOLD.  VX1,VX2,VY1,VY2,VZ1,VZ2 are
+C    velocities for the discharging cell faces.
+C
+      USE MPATHADV
+C
+      VXE(N)=VX1+(VX2-VX1)*(XP-XMN)/(XMX-XMN)
+      VYE(N)=VY1+(VY2-VY1)*(YP-YMN)/(YMX-YMN)
+      VZE(N)=VZ1+(VZ2-VZ1)*(ZP-ZMN)/(ZMX-ZMN)
+C
       RETURN
       END
