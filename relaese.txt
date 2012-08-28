@@ -1,0 +1,32 @@
+RELEASE.TXT
+
+                           MODPATH Version 6 Release Notes
+
+     This file describes changes introduced into MODPATH version 6 with 
+each official release; these changes may substantially affect users. 
+
+NOTE: Any use of trade, product or firm names is for descriptive purposes 
+      only and does not imply endorsement by the U.S. Government.
+      
+o Version 6.0.01  8/24/2012
+
+This version is the first release available to the public. It includes the 
+following changes to version 6.0.00 that was previously released internally to USGS employees:
+
+1. The simulation file was not read correctly in previous versions when a stop zone value greater than zero was specified. The file is now read correctly for those cases and is consistent with the published documentation.
+
+2. An error in subroutine ADDSOURCESINK was fixed. The error caused an internal sink/source to be added to the wrong grid cell. The error did not cause an error in particle paths or travel times, but could have mistakenly tagged cells as source/sink cells and thereby caused them to have apparent volumetric budget errors. In addition, if the stop at weak sink/source option was used, particles could have been stopped prematurely in the affected cells.
+
+3. An error in subroutine ADDCELLFLOW was fixed. The error caused flows not to be assigned to faces in some cases when IFACE was specified as 2, 3, or 5. 
+
+4. An error in subroutine UPDATEIBOUND was fixed. The error caused no-flow and dry cells to be improperly reset to active (IBOUND = 1) under certain conditions. The problem occurred when a double-precision MODPATH executable was used to compare equality of HNOFLO and HDRY with head values read from a single-precision MODFLOW head output file. Because the conversion of single-precision head to double-precision head is not exact in most cases, the equality comparison sometimes incorrectly indicated inequality instead of equality. The fix involved checking to see if the absolute value of the difference between the head and HNOFLO or HDRY is within a specified small tolerance. If so, the values are considered equal and the cell is flagged as inactive (IBOUND = 0).
+
+
+o Version 6.0.00  7/16/2012
+
+This version is the initial internal release for USGS employees.
+
+
+
+
+

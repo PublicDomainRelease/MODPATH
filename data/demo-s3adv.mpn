@@ -1,7 +1,0 @@
-MAIN                 70 DEMO-S.MP
-DIS                   9 demo-s.dis
-HEAD(BINARY)          1 DEMO-S.HED
-BUDGET                2 DEMO-S.BUD
-ENDPOINT              3 ENDPOINT-ADV.S3
-TIME-SERIES           4 timesers-adv.s3
-ADVOBS                5 adv.s3
