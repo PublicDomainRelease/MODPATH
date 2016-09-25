@@ -1,0 +1,20 @@
+example_1.mpnam
+example_1b.mplist
+1 1 1 1 1 0
+example_1b.endpoint7
+2
+1050 1060
+1 
+0.0
+2
+2 
+0 
+CONSTANT 1
+CONSTANT 1
+CONSTANT 2
+1 
+1 
+PG1
+1
+0.0
+external example_1b.sloc

@@ -1,0 +1,26 @@
+example_1.mpnam
+example_1a.mplist
+4 1 1 1 1 1
+example_1a.endpoint7
+example_1a.pathline7
+example_1a.timeseries7
+example_1a.trace
+1 12
+2
+1050 1060
+1 Reference Time Option
+0.0
+2 Stopping Time Option
+1 Time Point Option
+500  1000.
+2 Zone Data Option
+0 Stop Zone
+CONSTANT 1
+CONSTANT 1
+CONSTANT 2
+1 Retardation Factor Option
+1 Particle Group Count
+PG1
+1
+0.0
+external example_1a.sloc

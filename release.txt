@@ -1,0 +1,43 @@
+RELEASE.TXT
+
+                           MODPATH Version 7 Release Notes
+
+     This file describes changes introduced into MODPATH version 7 with 
+each official release; these changes may substantially affect users. 
+
+NOTE: Any use of trade, product or firm names is for descriptive purposes 
+      only and does not imply endorsement by the U.S. Government.
+      
+
+o Version 7.1.000  September 26, 2016
+
+This version is the initial public release.
+
+Users should be aware of the following limitations of this version related to 
+particle tracking with unstructured grids:
+
+1. MODPATH supports rectangular-based quad-refined unstructured grids that have 
+   refinement both horizontally as well as vertically from layer to layer. However,
+   the maximum refinement level contrast between adjacent grid cells must not 
+   be greater than 1. That means that any grid cell can be connected to either 0, 1,
+   or 2 grid cells across any adjacent horizontal face, or 0, 1, or 4 grid cells
+   across the top or bottom face. These types of unstructured grids commonly are
+   referred to as smoothed quadtree or quadpatch grid.
+   
+2. MODFLOW-USG simulations intended for use with MODPATH-7 should always use ghost 
+   nodes to minimize the effects of flow oscillations from cell to cell. 
+   
+3. Although ghost nodes greatly reduce flow oscillations, significant flow oscillations
+   often are present in the vertical direction in the immediate vicinity of internal
+   sources and sinks even when ghost nodes are used. At the present time, we recommend
+   that the same plan view unstructured grid be used for all model layers to avoid
+   the problem with vertical flow oscillations.
+   
+4. For unstructured grid simulations based on MODFLOW-USG, this version of MODPATH currently 
+   is restricted to grids that have square grid cells in plan view. Particle tracking
+   simulations based on traditional structured grid MODFLOW simulations are not affected 
+   by this limitation.
+
+
+
+

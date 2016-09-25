@@ -1,0 +1,23 @@
+example_2.mpnam
+example_2a.mplist
+4 2 1 1 1 0
+example_2a.endpoint7
+example_2a.pathline7
+example_2a.timeseries7
+0
+1
+0.0
+2
+1
+500  1000.
+2
+0
+CONSTANT 1
+CONSTANT 1
+CONSTANT 2
+1
+1
+PG1
+1
+0.0
+EXTERNAL example_2a.sloc

@@ -1,0 +1,192 @@
+
+MODPATH Version 7.1.000    (September 26, 2016)         
+
+MODPATH name file data
+----------------------
+   MPBAS File: example_2.mpbas
+ MPUGRID File: example_2.mpugrid
+    TDIS File: example_2.tdis
+    HEAD File: example_2.hed
+  BUDGET File: example_2.bud
+
+Grid data
+---------
+Grid file type: MODPATH unstructured rectangular grid file.
+ # Quadpatch grid
+ # x_offset = 0
+ # y_offset = 0
+ # rotation_angle = 0
+Cell count =       1953
+Layer count =     3
+Base grid row count =    21
+Base grid column count =    20
+Potential connection Count =      10350
+
+
+
+           BaseDX                  
+ READING ON UNIT  101 WITH FORMAT: (FREE)              
+   500.00       500.00       500.00       500.00       500.00       500.00       500.00       500.00       500.00       500.00    
+   500.00       500.00       500.00       500.00       500.00       500.00       500.00       500.00       500.00       500.00    
+
+
+
+           BaseDY                  
+ READING ON UNIT  101 WITH FORMAT: (FREE)              
+   500.00       500.00       500.00       500.00       500.00       500.00       500.00       500.00       500.00       500.00    
+   500.00       500.00       500.00       500.00       500.00       500.00       500.00       500.00       500.00       500.00    
+   500.00    
+
+Cells per model layer:
+   Layer    1 cell count =        651
+   Layer    2 cell count =        651
+   Layer    3 cell count =        651
+Time discretization file type: MODPATH time discretization file.
+ Stress period count =          1
+ 
+ Time discretization file data
+ -----------------------------
+ Period length:    10000.00000 Time step count:         1 Time step multiplier:        1.00000 Stress period type:SS
+ 
+ The budget file was opened successfully.
+ 
+ MODPATH basic data file data
+ ----------------------------
+ Aquifer head is set to  1.00000E+30 at all no-flow cells (IBOUND=0).
+ Aquifer head is set to  1.00000E+20 at all dry cells.
+ 
+ 
+ Default stress package boundary face options (IFACE):
+   RECHARGE will be assigned to face  6
+   ET will be assigned to face  6
+ 
+ Layer type (LAYTYP)
+  1 0 0
+
+           BOUNDARY ARRAY =         1 FOR LAYER    1
+
+           BOUNDARY ARRAY =         1 FOR LAYER    2
+
+           BOUNDARY ARRAY =         1 FOR LAYER    3
+
+                 POROSITY =  0.100000    
+
+                 POROSITY =  0.100000    
+
+                 POROSITY =  0.100000    
+ 
+ MODPATH simulation file data
+ ----------------------------
+Endpoint Analysis (Simulation type = 1)
+Backward tracking (Tracking direction = 2)
+Let particles pass through weak sink cells (Weak sink option = 1)
+Let particles pass through weak source cells for backtracking simulations (Weak source option = 1)
+Reference time =   0.0000000E+00
+Extend initial or final steady-state time step and continue tracking (Stopping time option =  2)
+
+A zone array will be read.
+Particles will be allowed to pass through all zones. StopZone =     0
+
+               ZONE ARRAY =         1 FOR LAYER    1
+
+               ZONE ARRAY =         1 FOR LAYER    2
+
+               ZONE ARRAY =         2 FOR LAYER    3
+
+The retardation factor for all cells = 1
+
+Number of particle groups =     1
+Particle group    1 contains        416 particles.
+Total number of particles =        416
+ 
+ 
+ Budget File Data
+ ----------------
+    Budget file type:  Unstructured grid
+  Budget file format:  Compact
+    Budget precision:  Single
+
+The simulation will be run with stoptime =   0.1000000E+31
+ 
+ 
+ Run particle tracking simulation ...
+ 
+ ----------------------------------------------------------------------------------------------
+Processing Time Step     1 Period     1.  Time =  1.00000E+04                                                                         (Cumulative step =      1)
+ ----------------------------------------------------------------------------------------------
+ 
+ Volumetric water balance summary:
+ 
+       1953 cells had errors less than or equal to    0.01 percent
+          0 cells had errors between     0.01 and     0.10 percent
+          0 cells had errors between     0.10 and     1.00 percent
+          0 cells had errors between     1.00 and    10.00 percent
+          0 cells had errors between    10.00 and    50.00 percent
+          0 cells had errors between    50.00 and   100.00 percent
+          0 cells had errors greater than   100.00 percent
+ 
+ A maximum error of  0.13104E-03 percent occurred in cell       1681
+ 
+ -------------------------------------
+       Cell      1681
+ -------------------------------------
+ Layer, Ibound, IboundTS, Zone, LayerType:          3         1         1         2         0
+ DX, DY, MinX, MinY:      0.5000000E+03  0.5000000E+03  0.6500000E+04  0.5000000E+04
+ Bottom, Top, Head:       0.0000000E+00  0.2000000E+03  0.3303113E+03
+ Porosity, Retardation:   0.1000000E+00  0.1000000E+01
+ 
+ Volumetric Face Flows (L**3/T):
+                                sub-face 1               sub-face 2               sub-face 3               sub-face 4
+ Left   (face 1):   -0.100511437988281E+04
+ Right  (face 2):    0.555204833984375E+03
+ Front  (face 3):    0.738561462402344E+03
+ Back   (face 4):   -0.545697265625000E+03
+ Bottom (face 5):    0.000000000000000E+00
+ Top    (face 6):   -0.276062530517578E+03
+ 
+ Water balance components:
+ Inflow (L**3/T)
+      Total face inflow =    0.156032125854492E+04
+          Source inflow =    0.000000000000000E+00
+         Storage inflow =    0.000000000000000E+00
+                           -----------------------
+                Inflow  =    0.156032125854492E+04
+ 
+ Outflow (L**3/T)
+     Total face outflow =    0.156031921386719E+04
+           Sink outflow =    0.000000000000000E+00
+        Storage outflow =    0.000000000000000E+00
+                           -----------------------
+                 Ouflow =    0.156031921386719E+04
+ 
+       Inflow - Outflow =    0.204467773437500E-02
+ 
+    Percent discrepancy =    0.131042185246964E-03
+ 
+ Face velocities (Backward tracking. Velocity components has been reversed to represent backward tracking.)
+ SubCell ( 1,  1)
+ DX, DY, DZ:   0.5000000E+03  0.5000000E+03  0.2000000E+03
+                       Face Velocity (L/T)     Connection
+ Left   (face 1):    0.100511437988281E+00           1680
+ Right  (face 2):   -0.555204833984375E-01           1682
+ Front  (face 3):   -0.738561462402344E-01           1752
+ Back   (face 4):    0.545697265625000E-01           1562
+ Bottom (face 5):    0.000000000000000E+00              0
+ Top    (face 6):    0.110425012207031E-01           1030
+ 
+
+Particle Summary:
+         0 particles are pending release.
+         0 particles remain active.
+       416 particles terminated at boundary faces.
+         0 particles terminated at weak sink cells.
+         0 particles terminated at weak source cells.
+         0 particles terminated at strong source/sink cells or other cells with no potential exit face.
+         0 particles terminated in cells with a specified zone number.
+         0 particles were stranded in inactive or dry cells.
+         0 particles were unreleased.
+         0 particles have an unknown status.
+ 
+
+Normal termination.                                                        
+ Elapsed time =     0.47000E-01 seconds

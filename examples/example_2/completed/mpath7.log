@@ -1,0 +1,23 @@
+Get the name of the MODPATH simulation file.
+Read the first two records of the simulation file to get mpnamFile and mplistFile ...
+Allocate rectangular unstructured grid component.
+Allocate time discretization data component ...
+Read rectangular unstructured grid data.
+Read time discretization data component ...
+Allocate budget reader component.
+Open budget file in budget reader.
+Allocate head reader component.
+Open head file in head reader component.
+Allocate MODPATH basic data component.
+Read MODPATH basic data component.
+Read the remainder of the MODPATH simulation data component.
+Allocate particle tracking engine component.
+Compute range of time steps. Prepare for time step loop                                                                             
+Begin TIME_STEP_LOOP
+Compute TSMAX                                                                                                                       
+Begin TRACKING_INTERVAL_LOOP
+Exit TRACKING_INTERVAL_LOOP
+Exit TIME_STEP_LOOP
+Write endpoint file.
+Begin memory deallocation.
+Memory deallocation complete.

@@ -1,0 +1,116 @@
+        public TrackParticleResult TrackParticle(int particleID, ParticleLocation location, TrackCellOptions options, double maximumTrackingTime, double[] timeSeriesPoints)
+        {
+            // Initialize local variables
+            List<ParticleLocation> pLoc = new List<ParticleLocation>();
+            List<ParticleLocation> tsLoc = new List<ParticleLocation>();
+
+            // Initialize a result instance
+            TrackParticleResult result = new TrackParticleResult();
+            result.ParticleID = particleID;
+
+            // Make a copy loc of the input location, then add it to the pLoc list
+            ParticleLocation loc = new ParticleLocation(location);
+            pLoc.Add(loc);
+
+            // Create and initialize trackCell
+            TrackCell trackCell = new TrackCell(this.GetCellData(loc.CellNumber), options);
+
+            // Track the particle through the grid until a stopping condition is encountered.
+            // The stopping condition is indicated by setting continueLoop = false and/or loc = null;
+            bool continueLoop = true;
+            bool isTimeSeriesPoint = false;
+            bool isMaximumTime = false;
+            while (continueLoop)
+            {
+                // Check to see if the particle has moved to another cell. If so, load the new cell data.
+                if (trackCell.CellData.NodeNumber != loc.CellNumber)
+                { 
+                    trackCell.InitializeCellData(this.GetCellData(loc.CellNumber), options); 
+                }
+
+                // Find the next stopping time value (tmax), then track the particle through the cell starting at location loc. 
+                int timeIndex = FindTimeIndex(timeSeriesPoints, loc.TrackingTime, maximumTrackingTime);
+                double stopTime = maximumTrackingTime;
+                isTimeSeriesPoint = false;
+                if (timeIndex > -1)
+                { 
+                    stopTime = timeSeriesPoints[timeIndex];
+                    isTimeSeriesPoint = true;
+                }
+                isMaximumTime = (stopTime == maximumTrackingTime);
+
+                // Start with the particle at location "loc" and track it through the cell until it reaches
+                // an exit face or the tracking time reaches the value specified by stopTime.
+                TrackCellResult tcResult = trackCell.ExecuteTracking(loc, stopTime);
+                
+                // Reset loc to null
+                loc = null;
+
+                // Check the Status returned in the result to find out what to do next
+                switch (tcResult.Status)
+                {
+                    case TrackCellStatus.ReachedBoundaryFace:
+                        if (tcResult.TrackingPoints.Count > 1)
+                        {
+                            for (int n = 1; n < tcResult.TrackingPoints.Count; n++)
+                            {
+                                pLoc.Add(tcResult.TrackingPoints[n]);
+                            }
+                        }
+
+                        loc = this.FindNextLocation(tcResult);
+                        if (loc == null || DebugMode)
+                        {
+                            continueLoop = false;
+                            result.Status = TrackCellStatus.ReachedBoundaryFace;
+                        }
+                        break;
+                    case TrackCellStatus.ReachedMaximumTime:
+                        if (tcResult.TrackingPoints.Count > 1)
+                        {
+                            for (int n = 1; n < tcResult.TrackingPoints.Count; n++)
+                            {
+                                pLoc.Add(tcResult.TrackingPoints[n]);
+                            }
+                            if (isTimeSeriesPoint)
+                            { tsLoc.Add(tcResult.TrackingPoints[tcResult.TrackingPoints.Count - 1]); }
+                        }
+
+                        loc = new ParticleLocation(tcResult.TrackingPoints[tcResult.TrackingPoints.Count - 1]);
+                        if (isMaximumTime)
+                        {
+                            continueLoop = false;
+                            result.Status = TrackCellStatus.ReachedMaximumTime;
+                        }
+
+                        break;
+                    case TrackCellStatus.NoExitPossible:
+                    case TrackCellStatus.StopZoneCell:
+                    case TrackCellStatus.WeakSinkCell:
+                    case TrackCellStatus.WeakSourceCell:
+                        pLoc.Add(new ParticleLocation(tcResult.TrackingPoints[0]));
+                        continueLoop = false;
+                        result.Status = tcResult.Status;
+                        loc = null;
+                        break;
+                    default:
+                        continueLoop = false;
+                        result.Status = TrackCellStatus.Undefined;
+                        loc = null;
+                        break;
+                }
+
+                // Go to the top of the loop. If continueLoop = true, then make another pass with
+                // the next starting location. Otherwise, exit the loop and prepare to return
+                // the result.
+            }
+
+            // Generate global coordinates and finish initializing the result data
+            ParticleCoordinates pCoords = CreateParticleCoordinates(pLoc);
+            ParticleCoordinates tsCoords = CreateParticleCoordinates(tsLoc);
+            ParticlePath particlePath = new ParticlePath(pCoords, tsCoords);
+            result.ParticlePath = particlePath;
+            result.NextLocation = loc;
+            
+            return result;
+        }

@@ -1,0 +1,868 @@
+ Particle group:          1
+ Particle ID:         12
+ 
+ ----- Call TrackCell: Cell       223,  Stress period     1,  Time step     1
+ Exit status =  1  (Reached stopping time)   
+ Particle locations: Local X, Local Y, Local Z, Tracking time
+        223    0.500000000000000E+00    0.500000000000000E+00    0.100000000000000E+01    0.000000000000000E+00         1
+        223    0.811030420265990E+00    0.505235971010548E+00    0.602626102251667E+00    0.100000000000000E+04         1
+ 
+ Layer, Ibound, IboundTS, Zone, LayerType:          1         1         1         1         1
+ DX, DY, MinX, MinY:      0.5000000E+03  0.5000000E+03  0.1000000E+04  0.4500000E+04
+ Bottom, Top, Head:       0.2200000E+03  0.4000000E+03  0.3388613E+03
+ Porosity, Retardation:   0.1000000E+00  0.1000000E+01
+ 
+ Volumetric Face Flows (L**3/T):
+                                sub-face 1               sub-face 2               sub-face 3               sub-face 4
+ Left   (face 1):    0.691573303222656E+03
+ Right  (face 2):    0.104819738769531E+04
+ Front  (face 3):    0.230899143218994E+02
+ Back   (face 4):    0.810631275177002E+01
+ Bottom (face 5):   -0.908306396484375E+03
+ Top    (face 6):   -0.125000000000000E+04
+ 
+ Water balance components:
+ Inflow (L**3/T)
+      Total face inflow =    0.196466321754456E+04
+          Source inflow =    0.000000000000000E+00
+         Storage inflow =    0.000000000000000E+00
+                           -----------------------
+                Inflow  =    0.196466321754456E+04
+ 
+ Outflow (L**3/T)
+     Total face outflow =    0.196461009693146E+04
+           Sink outflow =    0.000000000000000E+00
+        Storage outflow =    0.000000000000000E+00
+                           -----------------------
+                 Ouflow =    0.196461009693146E+04
+ 
+       Inflow - Outflow =    0.531206130981445E-01
+ 
+    Percent discrepancy =    0.270383904842865E-02
+ 
+ Face velocities (Forward tracking)
+ SubCell ( 1,  1)
+ DX, DY, DZ:   0.5000000E+03  0.5000000E+03  0.1188613E+03
+                       Face Velocity (L/T)     Connection
+ Left   (face 1):    0.116366469945153E+00            222
+ Right  (face 2):    0.176373248133559E+00            224
+ Front  (face 3):    0.388518730907461E-02            243
+ Back   (face 4):    0.136399568172914E-02            203
+ Bottom (face 5):   -0.363322558593750E-01            643
+ Top    (face 6):   -0.500000000000000E-01              0
+ 
+ 
+ ----- Call TrackCell: Cell       223,  Stress period     1,  Time step     1
+ Exit status =  2  (Exit at cell face)       
+ Particle locations: Local X, Local Y, Local Z, Tracking time
+        223    0.811030420265990E+00    0.505235971010548E+00    0.602626102251667E+00    0.100000000000000E+04         1
+        223    0.100000000000000E+01    0.508123822794966E+00    0.401477368838824E+00    0.155370596187267E+04         1
+ 
+ Layer, Ibound, IboundTS, Zone, LayerType:          1         1         1         1         1
+ DX, DY, MinX, MinY:      0.5000000E+03  0.5000000E+03  0.1000000E+04  0.4500000E+04
+ Bottom, Top, Head:       0.2200000E+03  0.4000000E+03  0.3388613E+03
+ Porosity, Retardation:   0.1000000E+00  0.1000000E+01
+ 
+ Volumetric Face Flows (L**3/T):
+                                sub-face 1               sub-face 2               sub-face 3               sub-face 4
+ Left   (face 1):    0.691573303222656E+03
+ Right  (face 2):    0.104819738769531E+04
+ Front  (face 3):    0.230899143218994E+02
+ Back   (face 4):    0.810631275177002E+01
+ Bottom (face 5):   -0.908306396484375E+03
+ Top    (face 6):   -0.125000000000000E+04
+ 
+ Water balance components:
+ Inflow (L**3/T)
+      Total face inflow =    0.196466321754456E+04
+          Source inflow =    0.000000000000000E+00
+         Storage inflow =    0.000000000000000E+00
+                           -----------------------
+                Inflow  =    0.196466321754456E+04
+ 
+ Outflow (L**3/T)
+     Total face outflow =    0.196461009693146E+04
+           Sink outflow =    0.000000000000000E+00
+        Storage outflow =    0.000000000000000E+00
+                           -----------------------
+                 Ouflow =    0.196461009693146E+04
+ 
+       Inflow - Outflow =    0.531206130981445E-01
+ 
+    Percent discrepancy =    0.270383904842865E-02
+ 
+ Face velocities (Forward tracking)
+ SubCell ( 1,  1)
+ DX, DY, DZ:   0.5000000E+03  0.5000000E+03  0.1188613E+03
+                       Face Velocity (L/T)     Connection
+ Left   (face 1):    0.116366469945153E+00            222
+ Right  (face 2):    0.176373248133559E+00            224
+ Front  (face 3):    0.388518730907461E-02            243
+ Back   (face 4):    0.136399568172914E-02            203
+ Bottom (face 5):   -0.363322558593750E-01            643
+ Top    (face 6):   -0.500000000000000E-01              0
+ 
+ 
+ ----- Call TrackCell: Cell       224,  Stress period     1,  Time step     1
+ Exit status =  1  (Reached stopping time)   
+ Particle locations: Local X, Local Y, Local Z, Tracking time
+        224    0.000000000000000E+00    0.508123822794966E+00    0.401477368838824E+00    0.155370596187267E+04         1
+        224    0.162129600226588E+00    0.510854214613026E+00    0.249241334707162E+00    0.200000000000000E+04         1
+ 
+ Layer, Ibound, IboundTS, Zone, LayerType:          1         1         1         1         1
+ DX, DY, MinX, MinY:      0.5000000E+03  0.5000000E+03  0.1500000E+04  0.4500000E+04
+ Bottom, Top, Head:       0.2200000E+03  0.4000000E+03  0.3386848E+03
+ Porosity, Retardation:   0.1000000E+00  0.1000000E+01
+ 
+ Volumetric Face Flows (L**3/T):
+                                sub-face 1               sub-face 2               sub-face 3               sub-face 4
+ Left   (face 1):    0.104819738769531E+04
+ Right  (face 2):    0.141795996093750E+04
+ Front  (face 3):    0.270787258148193E+02
+ Back   (face 4):    0.955898475646973E+01
+ Bottom (face 5):   -0.897746032714844E+03
+ Top    (face 6):   -0.125000000000000E+04
+ 
+ Water balance components:
+ Inflow (L**3/T)
+      Total face inflow =    0.232527611351013E+04
+          Source inflow =    0.000000000000000E+00
+         Storage inflow =    0.000000000000000E+00
+                           -----------------------
+                Inflow  =    0.232527611351013E+04
+ 
+ Outflow (L**3/T)
+     Total face outflow =    0.232526497840881E+04
+           Sink outflow =    0.000000000000000E+00
+        Storage outflow =    0.000000000000000E+00
+                           -----------------------
+                 Ouflow =    0.232526497840881E+04
+ 
+       Inflow - Outflow =    0.111351013183594E-01
+ 
+    Percent discrepancy =    0.478873365411538E-03
+ 
+ Face velocities (Forward tracking)
+ SubCell ( 1,  1)
+ DX, DY, DZ:   0.5000000E+03  0.5000000E+03  0.1186848E+03
+                       Face Velocity (L/T)     Connection
+ Left   (face 1):    0.176635558908549E+00            223
+ Right  (face 2):    0.238945596650298E+00            225
+ Front  (face 3):    0.456313469674693E-02            244
+ Back   (face 4):    0.161081933124234E-02            204
+ Bottom (face 5):   -0.359098413085938E-01            644
+ Top    (face 6):   -0.500000000000000E-01              0
+ 
+ 
+ ----- Call TrackCell: Cell       224,  Stress period     1,  Time step     1
+ Exit status =  2  (Exit at cell face)       
+ Particle locations: Local X, Local Y, Local Z, Tracking time
+        224    0.162129600226588E+00    0.510854214613026E+00    0.249241334707162E+00    0.200000000000000E+04         1
+        224    0.470510160141567E+00    0.515645006818086E+00    0.000000000000000E+00    0.278592862315347E+04         1
+ 
+ Layer, Ibound, IboundTS, Zone, LayerType:          1         1         1         1         1
+ DX, DY, MinX, MinY:      0.5000000E+03  0.5000000E+03  0.1500000E+04  0.4500000E+04
+ Bottom, Top, Head:       0.2200000E+03  0.4000000E+03  0.3386848E+03
+ Porosity, Retardation:   0.1000000E+00  0.1000000E+01
+ 
+ Volumetric Face Flows (L**3/T):
+                                sub-face 1               sub-face 2               sub-face 3               sub-face 4
+ Left   (face 1):    0.104819738769531E+04
+ Right  (face 2):    0.141795996093750E+04
+ Front  (face 3):    0.270787258148193E+02
+ Back   (face 4):    0.955898475646973E+01
+ Bottom (face 5):   -0.897746032714844E+03
+ Top    (face 6):   -0.125000000000000E+04
+ 
+ Water balance components:
+ Inflow (L**3/T)
+      Total face inflow =    0.232527611351013E+04
+          Source inflow =    0.000000000000000E+00
+         Storage inflow =    0.000000000000000E+00
+                           -----------------------
+                Inflow  =    0.232527611351013E+04
+ 
+ Outflow (L**3/T)
+     Total face outflow =    0.232526497840881E+04
+           Sink outflow =    0.000000000000000E+00
+        Storage outflow =    0.000000000000000E+00
+                           -----------------------
+                 Ouflow =    0.232526497840881E+04
+ 
+       Inflow - Outflow =    0.111351013183594E-01
+ 
+    Percent discrepancy =    0.478873365411538E-03
+ 
+ Face velocities (Forward tracking)
+ SubCell ( 1,  1)
+ DX, DY, DZ:   0.5000000E+03  0.5000000E+03  0.1186848E+03
+                       Face Velocity (L/T)     Connection
+ Left   (face 1):    0.176635558908549E+00            223
+ Right  (face 2):    0.238945596650298E+00            225
+ Front  (face 3):    0.456313469674693E-02            244
+ Back   (face 4):    0.161081933124234E-02            204
+ Bottom (face 5):   -0.359098413085938E-01            644
+ Top    (face 6):   -0.500000000000000E-01              0
+ 
+ 
+ ----- Call TrackCell: Cell       644,  Stress period     1,  Time step     1
+ Exit status =  1  (Reached stopping time)   
+ Particle locations: Local X, Local Y, Local Z, Tracking time
+        644    0.470510160141567E+00    0.515645006818086E+00    0.100000000000000E+01    0.278592862315347E+04         2
+        644    0.470523595705511E+00    0.515645694758563E+00    0.615617047143586E+00    0.300000000000000E+04         2
+ 
+ Layer, Ibound, IboundTS, Zone, LayerType:          2         1         1         1         0
+ DX, DY, MinX, MinY:      0.5000000E+03  0.5000000E+03  0.1500000E+04  0.4500000E+04
+ Bottom, Top, Head:       0.2000000E+03  0.2200000E+03  0.3350725E+03
+ Porosity, Retardation:   0.1000000E+00  0.1000000E+01
+ 
+ Volumetric Face Flows (L**3/T):
+                                sub-face 1               sub-face 2               sub-face 3               sub-face 4
+ Left   (face 1):    0.267960261553526E-01
+ Right  (face 2):    0.365406535565853E-01
+ Front  (face 3):    0.239510671235621E-02
+ Back   (face 4):    0.866332964506000E-03
+ Bottom (face 5):   -0.897791564941406E+03
+ Top    (face 6):   -0.897746032714844E+03
+ 
+ Water balance components:
+ Inflow (L**3/T)
+      Total face inflow =    0.897775223847711E+03
+          Source inflow =    0.000000000000000E+00
+         Storage inflow =    0.000000000000000E+00
+                           -----------------------
+                Inflow  =    0.897775223847711E+03
+ 
+ Outflow (L**3/T)
+     Total face outflow =    0.897828971927927E+03
+           Sink outflow =    0.000000000000000E+00
+        Storage outflow =    0.000000000000000E+00
+                           -----------------------
+                 Ouflow =    0.897828971927927E+03
+ 
+       Inflow - Outflow =   -0.537480802158825E-01
+ 
+    Percent discrepancy =   -0.598662893997808E-02
+ 
+ Face velocities (Forward tracking)
+ SubCell ( 1,  1)
+ DX, DY, DZ:   0.5000000E+03  0.5000000E+03  0.2000000E+02
+                       Face Velocity (L/T)     Connection
+ Left   (face 1):    0.267960261553526E-04            643
+ Right  (face 2):    0.365406535565853E-04            645
+ Front  (face 3):    0.239510671235621E-05            664
+ Back   (face 4):    0.866332964506000E-06            624
+ Bottom (face 5):   -0.359116625976562E-01           1064
+ Top    (face 6):   -0.359098413085938E-01            224
+ 
+ 
+ ----- Call TrackCell: Cell       644,  Stress period     1,  Time step     1
+ Exit status =  2  (Exit at cell face)       
+ Particle locations: Local X, Local Y, Local Z, Tracking time
+        644    0.470523595705511E+00    0.515645694758563E+00    0.615617047143586E+00    0.300000000000000E+04         2
+        644    0.470545113847845E+00    0.515646796543962E+00    0.000000000000000E+00    0.334285076357549E+04         2
+ 
+ Layer, Ibound, IboundTS, Zone, LayerType:          2         1         1         1         0
+ DX, DY, MinX, MinY:      0.5000000E+03  0.5000000E+03  0.1500000E+04  0.4500000E+04
+ Bottom, Top, Head:       0.2000000E+03  0.2200000E+03  0.3350725E+03
+ Porosity, Retardation:   0.1000000E+00  0.1000000E+01
+ 
+ Volumetric Face Flows (L**3/T):
+                                sub-face 1               sub-face 2               sub-face 3               sub-face 4
+ Left   (face 1):    0.267960261553526E-01
+ Right  (face 2):    0.365406535565853E-01
+ Front  (face 3):    0.239510671235621E-02
+ Back   (face 4):    0.866332964506000E-03
+ Bottom (face 5):   -0.897791564941406E+03
+ Top    (face 6):   -0.897746032714844E+03
+ 
+ Water balance components:
+ Inflow (L**3/T)
+      Total face inflow =    0.897775223847711E+03
+          Source inflow =    0.000000000000000E+00
+         Storage inflow =    0.000000000000000E+00
+                           -----------------------
+                Inflow  =    0.897775223847711E+03
+ 
+ Outflow (L**3/T)
+     Total face outflow =    0.897828971927927E+03
+           Sink outflow =    0.000000000000000E+00
+        Storage outflow =    0.000000000000000E+00
+                           -----------------------
+                 Ouflow =    0.897828971927927E+03
+ 
+       Inflow - Outflow =   -0.537480802158825E-01
+ 
+    Percent discrepancy =   -0.598662893997808E-02
+ 
+ Face velocities (Forward tracking)
+ SubCell ( 1,  1)
+ DX, DY, DZ:   0.5000000E+03  0.5000000E+03  0.2000000E+02
+                       Face Velocity (L/T)     Connection
+ Left   (face 1):    0.267960261553526E-04            643
+ Right  (face 2):    0.365406535565853E-04            645
+ Front  (face 3):    0.239510671235621E-05            664
+ Back   (face 4):    0.866332964506000E-06            624
+ Bottom (face 5):   -0.359116625976562E-01           1064
+ Top    (face 6):   -0.359098413085938E-01            224
+ 
+ 
+ ----- Call TrackCell: Cell      1064,  Stress period     1,  Time step     1
+ Exit status =  2  (Exit at cell face)       
+ Particle locations: Local X, Local Y, Local Z, Tracking time
+       1064    0.470545113847845E+00    0.515646796543962E+00    0.100000000000000E+01    0.334285076357549E+04         3
+       1064    0.100000000000000E+01    0.572879686545556E+00    0.903315099340728E+00    0.390915057737763E+04         3
+ 
+ Layer, Ibound, IboundTS, Zone, LayerType:          3         1         1         2         0
+ DX, DY, MinX, MinY:      0.5000000E+03  0.5000000E+03  0.1500000E+04  0.4500000E+04
+ Bottom, Top, Head:       0.0000000E+00  0.2000000E+03  0.3314633E+03
+ Porosity, Retardation:   0.1000000E+00  0.1000000E+01
+ 
+ Volumetric Face Flows (L**3/T):
+                                sub-face 1               sub-face 2               sub-face 3               sub-face 4
+ Left   (face 1):    0.366137426757812E+04
+ Right  (face 2):    0.505267041015625E+04
+ Front  (face 3):    0.773960571289062E+03
+ Back   (face 4):    0.280622314453125E+03
+ Bottom (face 5):    0.000000000000000E+00
+ Top    (face 6):   -0.897791564941406E+03
+ 
+ Water balance components:
+ Inflow (L**3/T)
+      Total face inflow =    0.533312640380859E+04
+          Source inflow =    0.000000000000000E+00
+         Storage inflow =    0.000000000000000E+00
+                           -----------------------
+                Inflow  =    0.533312640380859E+04
+ 
+ Outflow (L**3/T)
+     Total face outflow =    0.533329272460938E+04
+           Sink outflow =    0.000000000000000E+00
+        Storage outflow =    0.000000000000000E+00
+                           -----------------------
+                 Ouflow =    0.533329272460938E+04
+ 
+       Inflow - Outflow =   -0.166320800781250E+00
+ 
+    Percent discrepancy =   -0.311858738680408E-02
+ 
+ Face velocities (Forward tracking)
+ SubCell ( 1,  1)
+ DX, DY, DZ:   0.5000000E+03  0.5000000E+03  0.2000000E+03
+                       Face Velocity (L/T)     Connection
+ Left   (face 1):    0.366137426757812E+00           1063
+ Right  (face 2):    0.505267041015625E+00           1065
+ Front  (face 3):    0.773960571289063E-01           1084
+ Back   (face 4):    0.280622314453125E-01           1044
+ Bottom (face 5):    0.000000000000000E+00              0
+ Top    (face 6):   -0.359116625976562E-01            644
+ 
+ 
+ ----- Call TrackCell: Cell      1065,  Stress period     1,  Time step     1
+ Exit status =  1  (Reached stopping time)   
+ Particle locations: Local X, Local Y, Local Z, Tracking time
+       1065    0.000000000000000E+00    0.572879686545556E+00    0.903315099340728E+00    0.390915057737763E+04         3
+       1065    0.931467242530631E-01    0.586068383513794E+00    0.888925589266562E+00    0.400000000000000E+04         3
+ 
+ Layer, Ibound, IboundTS, Zone, LayerType:          3         1         1         2         0
+ DX, DY, MinX, MinY:      0.5000000E+03  0.5000000E+03  0.2000000E+04  0.4500000E+04
+ Bottom, Top, Head:       0.0000000E+00  0.2000000E+03  0.3313370E+03
+ Porosity, Retardation:   0.1000000E+00  0.1000000E+01
+ 
+ Volumetric Face Flows (L**3/T):
+                                sub-face 1               sub-face 2               sub-face 3               sub-face 4
+ Left   (face 1):    0.505267041015625E+04
+ Right  (face 2):    0.664416796875000E+04
+ Front  (face 3):    0.113592089843750E+04
+ Back   (face 4):    0.428285827636719E+03
+ Bottom (face 5):    0.000000000000000E+00
+ Top    (face 6):   -0.883765075683594E+03
+ 
+ Water balance components:
+ Inflow (L**3/T)
+      Total face inflow =    0.707235638427734E+04
+          Source inflow =    0.000000000000000E+00
+         Storage inflow =    0.000000000000000E+00
+                           -----------------------
+                Inflow  =    0.707235638427734E+04
+ 
+ Outflow (L**3/T)
+     Total face outflow =    0.707245379638672E+04
+           Sink outflow =    0.000000000000000E+00
+        Storage outflow =    0.000000000000000E+00
+                           -----------------------
+                 Ouflow =    0.707245379638672E+04
+ 
+       Inflow - Outflow =   -0.974121093750000E-01
+ 
+    Percent discrepancy =   -0.137735477720531E-02
+ 
+ Face velocities (Forward tracking)
+ SubCell ( 1,  1)
+ DX, DY, DZ:   0.5000000E+03  0.5000000E+03  0.2000000E+03
+                       Face Velocity (L/T)     Connection
+ Left   (face 1):    0.505267041015625E+00           1064
+ Right  (face 2):    0.664416796875000E+00           1066
+ Front  (face 3):    0.113592089843750E+00           1085
+ Back   (face 4):    0.428285827636719E-01           1045
+ Bottom (face 5):    0.000000000000000E+00              0
+ Top    (face 6):   -0.353506030273437E-01            645
+ 
+ 
+ ----- Call TrackCell: Cell      1065,  Stress period     1,  Time step     1
+ Exit status =  2  (Exit at cell face)       
+ Particle locations: Local X, Local Y, Local Z, Tracking time
+       1065    0.931467242530631E-01    0.586068383513794E+00    0.888925589266562E+00    0.400000000000000E+04         3
+       1065    0.100000000000000E+01    0.691219890104117E+00    0.775894570875452E+00    0.476941760576993E+04         3
+ 
+ Layer, Ibound, IboundTS, Zone, LayerType:          3         1         1         2         0
+ DX, DY, MinX, MinY:      0.5000000E+03  0.5000000E+03  0.2000000E+04  0.4500000E+04
+ Bottom, Top, Head:       0.0000000E+00  0.2000000E+03  0.3313370E+03
+ Porosity, Retardation:   0.1000000E+00  0.1000000E+01
+ 
+ Volumetric Face Flows (L**3/T):
+                                sub-face 1               sub-face 2               sub-face 3               sub-face 4
+ Left   (face 1):    0.505267041015625E+04
+ Right  (face 2):    0.664416796875000E+04
+ Front  (face 3):    0.113592089843750E+04
+ Back   (face 4):    0.428285827636719E+03
+ Bottom (face 5):    0.000000000000000E+00
+ Top    (face 6):   -0.883765075683594E+03
+ 
+ Water balance components:
+ Inflow (L**3/T)
+      Total face inflow =    0.707235638427734E+04
+          Source inflow =    0.000000000000000E+00
+         Storage inflow =    0.000000000000000E+00
+                           -----------------------
+                Inflow  =    0.707235638427734E+04
+ 
+ Outflow (L**3/T)
+     Total face outflow =    0.707245379638672E+04
+           Sink outflow =    0.000000000000000E+00
+        Storage outflow =    0.000000000000000E+00
+                           -----------------------
+                 Ouflow =    0.707245379638672E+04
+ 
+       Inflow - Outflow =   -0.974121093750000E-01
+ 
+    Percent discrepancy =   -0.137735477720531E-02
+ 
+ Face velocities (Forward tracking)
+ SubCell ( 1,  1)
+ DX, DY, DZ:   0.5000000E+03  0.5000000E+03  0.2000000E+03
+                       Face Velocity (L/T)     Connection
+ Left   (face 1):    0.505267041015625E+00           1064
+ Right  (face 2):    0.664416796875000E+00           1066
+ Front  (face 3):    0.113592089843750E+00           1085
+ Back   (face 4):    0.428285827636719E-01           1045
+ Bottom (face 5):    0.000000000000000E+00              0
+ Top    (face 6):   -0.353506030273437E-01            645
+ 
+ 
+ ----- Call TrackCell: Cell      1066,  Stress period     1,  Time step     1
+ Exit status =  1  (Reached stopping time)   
+ Particle locations: Local X, Local Y, Local Z, Tracking time
+       1066    0.000000000000000E+00    0.691219890104117E+00    0.775894570875452E+00    0.476941760576993E+04         3
+       1066    0.320406923067183E+00    0.738573947435138E+00    0.745502080139702E+00    0.500000000000000E+04         3
+ 
+ Layer, Ibound, IboundTS, Zone, LayerType:          3         1         1         2         0
+ DX, DY, MinX, MinY:      0.5000000E+03  0.5000000E+03  0.2500000E+04  0.4500000E+04
+ Bottom, Top, Head:       0.0000000E+00  0.2000000E+03  0.3311709E+03
+ Porosity, Retardation:   0.1000000E+00  0.1000000E+01
+ 
+ Volumetric Face Flows (L**3/T):
+                                sub-face 1               sub-face 2               sub-face 3               sub-face 4
+ Left   (face 1):    0.664416796875000E+04
+ Right  (face 2):    0.856773828125000E+04
+ Front  (face 3):    0.178270532226562E+04
+ Back   (face 4):    0.725677307128906E+03
+ Bottom (face 5):    0.000000000000000E+00
+ Top    (face 6):   -0.866473876953125E+03
+ 
+ Water balance components:
+ Inflow (L**3/T)
+      Total face inflow =    0.929334716796875E+04
+          Source inflow =    0.000000000000000E+00
+         Storage inflow =    0.000000000000000E+00
+                           -----------------------
+                Inflow  =    0.929334716796875E+04
+ 
+ Outflow (L**3/T)
+     Total face outflow =    0.929341558837891E+04
+           Sink outflow =    0.000000000000000E+00
+        Storage outflow =    0.000000000000000E+00
+                           -----------------------
+                 Ouflow =    0.929341558837891E+04
+ 
+       Inflow - Outflow =   -0.684204101562500E-01
+ 
+    Percent discrepancy =   -0.736227293081292E-03
+ 
+ Face velocities (Forward tracking)
+ SubCell ( 1,  1)
+ DX, DY, DZ:   0.5000000E+03  0.5000000E+03  0.2000000E+03
+                       Face Velocity (L/T)     Connection
+ Left   (face 1):    0.664416796875000E+00           1065
+ Right  (face 2):    0.856773828125000E+00           1067
+ Front  (face 3):    0.178270532226563E+00           1086
+ Back   (face 4):    0.725677307128906E-01           1046
+ Bottom (face 5):    0.000000000000000E+00              0
+ Top    (face 6):   -0.346589550781250E-01            646
+ 
+ 
+ ----- Call TrackCell: Cell      1066,  Stress period     1,  Time step     1
+ Exit status =  2  (Exit at cell face)       
+ Particle locations: Local X, Local Y, Local Z, Tracking time
+       1066    0.320406923067183E+00    0.738573947435138E+00    0.745502080139702E+00    0.500000000000000E+04         3
+       1066    0.100000000000000E+01    0.821007602725449E+00    0.691928808933970E+00    0.543033525524113E+04         3
+ 
+ Layer, Ibound, IboundTS, Zone, LayerType:          3         1         1         2         0
+ DX, DY, MinX, MinY:      0.5000000E+03  0.5000000E+03  0.2500000E+04  0.4500000E+04
+ Bottom, Top, Head:       0.0000000E+00  0.2000000E+03  0.3311709E+03
+ Porosity, Retardation:   0.1000000E+00  0.1000000E+01
+ 
+ Volumetric Face Flows (L**3/T):
+                                sub-face 1               sub-face 2               sub-face 3               sub-face 4
+ Left   (face 1):    0.664416796875000E+04
+ Right  (face 2):    0.856773828125000E+04
+ Front  (face 3):    0.178270532226562E+04
+ Back   (face 4):    0.725677307128906E+03
+ Bottom (face 5):    0.000000000000000E+00
+ Top    (face 6):   -0.866473876953125E+03
+ 
+ Water balance components:
+ Inflow (L**3/T)
+      Total face inflow =    0.929334716796875E+04
+          Source inflow =    0.000000000000000E+00
+         Storage inflow =    0.000000000000000E+00
+                           -----------------------
+                Inflow  =    0.929334716796875E+04
+ 
+ Outflow (L**3/T)
+     Total face outflow =    0.929341558837891E+04
+           Sink outflow =    0.000000000000000E+00
+        Storage outflow =    0.000000000000000E+00
+                           -----------------------
+                 Ouflow =    0.929341558837891E+04
+ 
+       Inflow - Outflow =   -0.684204101562500E-01
+ 
+    Percent discrepancy =   -0.736227293081292E-03
+ 
+ Face velocities (Forward tracking)
+ SubCell ( 1,  1)
+ DX, DY, DZ:   0.5000000E+03  0.5000000E+03  0.2000000E+03
+                       Face Velocity (L/T)     Connection
+ Left   (face 1):    0.664416796875000E+00           1065
+ Right  (face 2):    0.856773828125000E+00           1067
+ Front  (face 3):    0.178270532226563E+00           1086
+ Back   (face 4):    0.725677307128906E-01           1046
+ Bottom (face 5):    0.000000000000000E+00              0
+ Top    (face 6):   -0.346589550781250E-01            646
+ 
+ 
+ ----- Call TrackCell: Cell      1067,  Stress period     1,  Time step     1
+ Exit status =  2  (Exit at cell face)       
+ Particle locations: Local X, Local Y, Local Z, Tracking time
+       1067    0.000000000000000E+00    0.821007602725449E+00    0.691928808933970E+00    0.543033525524113E+04         3
+       1067    0.100000000000000E+01    0.982441940246469E+00    0.634272667397093E+00    0.594429040020144E+04         3
+ 
+ Layer, Ibound, IboundTS, Zone, LayerType:          3         1         1         2         0
+ DX, DY, MinX, MinY:      0.5000000E+03  0.5000000E+03  0.3000000E+04  0.4500000E+04
+ Bottom, Top, Head:       0.0000000E+00  0.2000000E+03  0.3309567E+03
+ Porosity, Retardation:   0.1000000E+00  0.1000000E+01
+ 
+ Volumetric Face Flows (L**3/T):
+                                sub-face 1               sub-face 2               sub-face 3               sub-face 4
+ Left   (face 1):    0.856773828125000E+04
+ Right  (face 2):    0.109895937500000E+05
+ Front  (face 3):    0.299448876953125E+04
+ Back   (face 4):    0.141912072753906E+04
+ Bottom (face 5):    0.000000000000000E+00
+ Top    (face 6):   -0.846417602539062E+03
+ 
+ Water balance components:
+ Inflow (L**3/T)
+      Total face inflow =    0.124086446533203E+05
+          Source inflow =    0.000000000000000E+00
+         Storage inflow =    0.000000000000000E+00
+                           -----------------------
+                Inflow  =    0.124086446533203E+05
+ 
+ Outflow (L**3/T)
+     Total face outflow =    0.124087144775391E+05
+           Sink outflow =    0.000000000000000E+00
+        Storage outflow =    0.000000000000000E+00
+                           -----------------------
+                 Ouflow =    0.124087144775391E+05
+ 
+       Inflow - Outflow =   -0.698242187500000E-01
+ 
+    Percent discrepancy =   -0.562704664761662E-03
+ 
+ Face velocities (Forward tracking)
+ SubCell ( 1,  1)
+ DX, DY, DZ:   0.5000000E+03  0.5000000E+03  0.2000000E+03
+                       Face Velocity (L/T)     Connection
+ Left   (face 1):    0.856773828125000E+00           1066
+ Right  (face 2):    0.109895937500000E+01           1068
+ Front  (face 3):    0.299448876953125E+00           1087
+ Back   (face 4):    0.141912072753906E+00           1047
+ Bottom (face 5):    0.000000000000000E+00              0
+ Top    (face 6):   -0.338567041015625E-01            647
+ 
+ 
+ ----- Call TrackCell: Cell      1068,  Stress period     1,  Time step     1
+ Exit status =  2  (Exit at cell face)       
+ Particle locations: Local X, Local Y, Local Z, Tracking time
+       1068    0.000000000000000E+00    0.982441940246469E+00    0.634272667397093E+00    0.594429040020144E+04         3
+       1068    0.572221061839324E-01    0.100000000000000E+01    0.631575111475132E+00    0.597013660325170E+04         3
+ 
+ Layer, Ibound, IboundTS, Zone, LayerType:          3         1         1         2         0
+ DX, DY, MinX, MinY:      0.5000000E+03  0.5000000E+03  0.3500000E+04  0.4500000E+04
+ Bottom, Top, Head:       0.0000000E+00  0.2000000E+03  0.3306820E+03
+ Porosity, Retardation:   0.1000000E+00  0.1000000E+01
+ 
+ Volumetric Face Flows (L**3/T):
+                                sub-face 1               sub-face 2               sub-face 3               sub-face 4
+ Left   (face 1):    0.109895937500000E+05
+ Right  (face 2):    0.137973261718750E+05
+ Front  (face 3):    0.536239941406250E+04
+ Back   (face 4):    0.337926171875000E+04
+ Bottom (face 5):    0.000000000000000E+00
+ Top    (face 6):   -0.824504211425781E+03
+ 
+ Water balance components:
+ Inflow (L**3/T)
+      Total face inflow =    0.171764973754883E+05
+          Source inflow =    0.000000000000000E+00
+         Storage inflow =    0.000000000000000E+00
+                           -----------------------
+                Inflow  =    0.171764973754883E+05
+ 
+ Outflow (L**3/T)
+     Total face outflow =    0.171765878906250E+05
+           Sink outflow =    0.000000000000000E+00
+        Storage outflow =    0.000000000000000E+00
+                           -----------------------
+                 Ouflow =    0.171765878906250E+05
+ 
+       Inflow - Outflow =   -0.905151367187500E-01
+ 
+    Percent discrepancy =   -0.526969476060634E-03
+ 
+ Face velocities (Forward tracking)
+ SubCell ( 1,  1)
+ DX, DY, DZ:   0.5000000E+03  0.5000000E+03  0.2000000E+03
+                       Face Velocity (L/T)     Connection
+ Left   (face 1):    0.109895937500000E+01           1067
+ Right  (face 2):    0.137973261718750E+01           1069
+ Front  (face 3):    0.536239941406250E+00           1088
+ Back   (face 4):    0.337926171875000E+00           1048
+ Bottom (face 5):    0.000000000000000E+00              0
+ Top    (face 6):   -0.329801684570313E-01            648
+ 
+ 
+ ----- Call TrackCell: Cell      1048,  Stress period     1,  Time step     1
+ Exit status =  1  (Reached stopping time)   
+ Particle locations: Local X, Local Y, Local Z, Tracking time
+       1048    0.572221061839324E-01    0.000000000000000E+00    0.631575111475132E+00    0.597013660325170E+04         3
+       1048    0.139002056198010E+00    0.197813225085844E-01    0.628435315954372E+00    0.600000000000000E+04         3
+ 
+ Layer, Ibound, IboundTS, Zone, LayerType:          3         1         1         2         0
+ DX, DY, MinX, MinY:      0.5000000E+03  0.5000000E+03  0.3500000E+04  0.5000000E+04
+ Bottom, Top, Head:       0.0000000E+00  0.2000000E+03  0.3305975E+03
+ Porosity, Retardation:   0.1000000E+00  0.1000000E+01
+ 
+ Volumetric Face Flows (L**3/T):
+                                sub-face 1               sub-face 2               sub-face 3               sub-face 4
+ Left   (face 1):    0.129497333984375E+05
+ Right  (face 2):    0.205426015625000E+05
+ Front  (face 3):    0.337926171875000E+04
+ Back   (face 4):   -0.337904248046875E+04
+ Bottom (face 5):    0.000000000000000E+00
+ Top    (face 6):   -0.834428100585938E+03
+ 
+ Water balance components:
+ Inflow (L**3/T)
+      Total face inflow =    0.205424656982422E+05
+          Source inflow =    0.000000000000000E+00
+         Storage inflow =    0.000000000000000E+00
+                           -----------------------
+                Inflow  =    0.205424656982422E+05
+ 
+ Outflow (L**3/T)
+     Total face outflow =    0.205426015625000E+05
+           Sink outflow =    0.000000000000000E+00
+        Storage outflow =    0.000000000000000E+00
+                           -----------------------
+                 Ouflow =    0.205426015625000E+05
+ 
+       Inflow - Outflow =   -0.135864257812500E+00
+ 
+    Percent discrepancy =   -0.661380237984041E-03
+ 
+ Face velocities (Forward tracking)
+ SubCell ( 1,  1)
+ DX, DY, DZ:   0.5000000E+03  0.5000000E+03  0.2000000E+03
+                       Face Velocity (L/T)     Connection
+ Left   (face 1):    0.129497333984375E+01           1047
+ Right  (face 2):    0.205426015625000E+01           1049
+ Front  (face 3):    0.337926171875000E+00           1068
+ Back   (face 4):   -0.337904248046875E+00           1028
+ Bottom (face 5):    0.000000000000000E+00              0
+ Top    (face 6):   -0.333771240234375E-01            628
+ 
+ 
+ ----- Call TrackCell: Cell      1048,  Stress period     1,  Time step     1
+ Exit status =  2  (Exit at cell face)       
+ Particle locations: Local X, Local Y, Local Z, Tracking time
+       1048    0.139002056198010E+00    0.197813225085844E-01    0.628435315954372E+00    0.600000000000000E+04         3
+       1048    0.100000000000000E+01    0.158530601109107E+00    0.602528254556867E+00    0.625225986982892E+04         3
+ 
+ Layer, Ibound, IboundTS, Zone, LayerType:          3         1         1         2         0
+ DX, DY, MinX, MinY:      0.5000000E+03  0.5000000E+03  0.3500000E+04  0.5000000E+04
+ Bottom, Top, Head:       0.0000000E+00  0.2000000E+03  0.3305975E+03
+ Porosity, Retardation:   0.1000000E+00  0.1000000E+01
+ 
+ Volumetric Face Flows (L**3/T):
+                                sub-face 1               sub-face 2               sub-face 3               sub-face 4
+ Left   (face 1):    0.129497333984375E+05
+ Right  (face 2):    0.205426015625000E+05
+ Front  (face 3):    0.337926171875000E+04
+ Back   (face 4):   -0.337904248046875E+04
+ Bottom (face 5):    0.000000000000000E+00
+ Top    (face 6):   -0.834428100585938E+03
+ 
+ Water balance components:
+ Inflow (L**3/T)
+      Total face inflow =    0.205424656982422E+05
+          Source inflow =    0.000000000000000E+00
+         Storage inflow =    0.000000000000000E+00
+                           -----------------------
+                Inflow  =    0.205424656982422E+05
+ 
+ Outflow (L**3/T)
+     Total face outflow =    0.205426015625000E+05
+           Sink outflow =    0.000000000000000E+00
+        Storage outflow =    0.000000000000000E+00
+                           -----------------------
+                 Ouflow =    0.205426015625000E+05
+ 
+       Inflow - Outflow =   -0.135864257812500E+00
+ 
+    Percent discrepancy =   -0.661380237984041E-03
+ 
+ Face velocities (Forward tracking)
+ SubCell ( 1,  1)
+ DX, DY, DZ:   0.5000000E+03  0.5000000E+03  0.2000000E+03
+                       Face Velocity (L/T)     Connection
+ Left   (face 1):    0.129497333984375E+01           1047
+ Right  (face 2):    0.205426015625000E+01           1049
+ Front  (face 3):    0.337926171875000E+00           1068
+ Back   (face 4):   -0.337904248046875E+00           1028
+ Bottom (face 5):    0.000000000000000E+00              0
+ Top    (face 6):   -0.333771240234375E-01            628
+ 
+ 
+ ----- Call TrackCell: Cell      1049,  Stress period     1,  Time step     1
+ Exit status =  2  (Exit at cell face)       
+ Particle locations: Local X, Local Y, Local Z, Tracking time
+       1049    0.000000000000000E+00    0.158530601109107E+00    0.602528254556867E+00    0.625225986982892E+04         3
+       1049    0.100000000000000E+01    0.326713290021312E+00    0.585970831381250E+00    0.641974917797561E+04         3
+ 
+ Layer, Ibound, IboundTS, Zone, LayerType:          3         1         1         2         0
+ DX, DY, MinX, MinY:      0.5000000E+03  0.5000000E+03  0.4000000E+04  0.5000000E+04
+ Bottom, Top, Head:       0.0000000E+00  0.2000000E+03  0.3300840E+03
+ Porosity, Retardation:   0.1000000E+00  0.1000000E+01
+ 
+ Volumetric Face Flows (L**3/T):
+                                sub-face 1               sub-face 2               sub-face 3               sub-face 4
+ Left   (face 1):    0.205426015625000E+05
+ Right  (face 2):    0.416233984375000E+05
+ Front  (face 3):    0.101245390625000E+05
+ Back   (face 4):   -0.101242734375000E+05
+ Bottom (face 5):    0.000000000000000E+00
+ Top    (face 6):   -0.831830627441406E+03
+ 
+ Water balance components:
+ Inflow (L**3/T)
+      Total face inflow =    0.416232446899414E+05
+          Source inflow =    0.000000000000000E+00
+         Storage inflow =    0.000000000000000E+00
+                           -----------------------
+                Inflow  =    0.416232446899414E+05
+ 
+ Outflow (L**3/T)
+     Total face outflow =    0.416233984375000E+05
+           Sink outflow =    0.000000000000000E+00
+        Storage outflow =    0.000000000000000E+00
+                           -----------------------
+                 Ouflow =    0.416233984375000E+05
+ 
+       Inflow - Outflow =   -0.153747558593750E+00
+ 
+    Percent discrepancy =   -0.369378398498014E-03
+ 
+ Face velocities (Forward tracking)
+ SubCell ( 1,  1)
+ DX, DY, DZ:   0.5000000E+03  0.5000000E+03  0.2000000E+03
+                       Face Velocity (L/T)     Connection
+ Left   (face 1):    0.205426015625000E+01           1048
+ Right  (face 2):    0.416233984375000E+01           1050
+ Front  (face 3):    0.101245390625000E+01           1069
+ Back   (face 4):   -0.101242734375000E+01           1029
+ Bottom (face 5):    0.000000000000000E+00              0
+ Top    (face 6):   -0.332732250976562E-01            629
+ 
+ 
+ ----- Call TrackCell: Cell      1050,  Stress period     1,  Time step     1
+ Exit status =  5  (No exit possible)        
+ Particle locations: Local X, Local Y, Local Z, Tracking time
+       1050    0.000000000000000E+00    0.326713290021312E+00    0.585970831381250E+00    0.641974917797561E+04         3
+ 
+ Layer, Ibound, IboundTS, Zone, LayerType:          3         1         1         2         0
+ DX, DY, MinX, MinY:      0.5000000E+03  0.5000000E+03  0.4500000E+04  0.5000000E+04
+ Bottom, Top, Head:       0.0000000E+00  0.2000000E+03  0.3290434E+03
+ Porosity, Retardation:   0.1000000E+00  0.1000000E+01
+ 
+ Volumetric Face Flows (L**3/T):
+                                sub-face 1               sub-face 2               sub-face 3               sub-face 4
+ Left   (face 1):    0.416233984375000E+05
+ Right  (face 2):   -0.327756015625000E+05
+ Front  (face 3):    0.373586015625000E+05
+ Back   (face 4):   -0.373582695312500E+05
+ Bottom (face 5):    0.000000000000000E+00
+ Top    (face 6):   -0.883989929199219E+03
+ 
+ Water balance components:
+ Inflow (L**3/T)
+      Total face inflow =    0.149999861022949E+06
+          Source inflow =    0.000000000000000E+00
+         Storage inflow =    0.000000000000000E+00
+                           -----------------------
+                Inflow  =    0.149999861022949E+06
+ 
+ Outflow (L**3/T)
+     Total face outflow =    0.000000000000000E+00
+           Sink outflow =    0.150000000000000E+06
+        Storage outflow =    0.000000000000000E+00
+                           -----------------------
+                 Ouflow =    0.150000000000000E+06
+ 
+       Inflow - Outflow =   -0.138977050781250E+00
+ 
+    Percent discrepancy =   -0.926514101088991E-04
+ 
+ Face velocities (Forward tracking)
+ SubCell ( 1,  1)
+ DX, DY, DZ:   0.5000000E+03  0.5000000E+03  0.2000000E+03
+                       Face Velocity (L/T)     Connection
+ Left   (face 1):    0.416233984375000E+01           1049
+ Right  (face 2):   -0.327756015625000E+01           1051
+ Front  (face 3):    0.373586015625000E+01           1070
+ Back   (face 4):   -0.373582695312500E+01           1030
+ Bottom (face 5):    0.000000000000000E+00              0
+ Top    (face 6):   -0.353595971679687E-01            630
+ 

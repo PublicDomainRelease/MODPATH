@@ -1,0 +1,24 @@
+! Example 1c: Test mask array for starting particle locations
+example_1.mpnam
+example_1c.mplist
+1 1 1 1 1 0
+example_1c.endpoint7
+2
+1050 1060
+1 
+0.0
+2
+2 
+0 
+CONSTANT 1
+CONSTANT 1
+OPEN/CLOSE zones_layer_3.txt 1 '(15i2)' 0
+2
+OPEN/CLOSE retardation_layer_1.txt 1 '(15f3.0)' 0
+CONSTANT 1.
+CONSTANT 1.
+1 
+PG1
+1
+0.0
+external example_1c.sloc
