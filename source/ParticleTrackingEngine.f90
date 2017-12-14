@@ -8,7 +8,7 @@ module ParticleTrackingEngineModule
   use BudgetReaderModule,only : BudgetReaderType
   use HeadReaderModule,only : HeadReaderType
   use BudgetListItemModule,only : BudgetListItemType
-  use RectangularUnstructuredGridModule,only : RectangularUnstructuredGridType
+  use ModflowRectangularGridModule,only : ModflowRectangularGridType
   use ModpathCellDataModule,only : ModpathCellDataType
   use ModpathSubCellDataModule,only : ModpathSubCellDataType
   use ParticleTrackingOptionsModule,only : ParticleTrackingOptionsType
@@ -45,7 +45,7 @@ module ParticleTrackingEngineModule
     doubleprecision,allocatable,dimension(:) :: SubFaceFlows
     doubleprecision,allocatable,dimension(:) :: ArrayBufferDbl
     ! Externally assigned arrays
-    integer,dimension(:),pointer :: LayerTypes
+    !integer,dimension(:),pointer :: LayerTypes
     integer,dimension(:),pointer :: IBound
     integer,dimension(:),pointer :: Zones
     doubleprecision,dimension(:),pointer :: Porosity
@@ -55,7 +55,7 @@ module ParticleTrackingEngineModule
     ! Private variables
     type(HeadReadertype),pointer :: HeadReader => null()
     type(BudgetReaderType),pointer :: BudgetReader => null()
-    type(RectangularUnstructuredGridType),pointer :: Grid => null()
+    class(ModflowRectangularGridType),pointer :: Grid => null()
     type(TrackCellType),private :: TrackCell
     type(TrackCellResultType),private :: TrackCellResult
     integer,private :: CurrentStressPeriod = 0
@@ -83,7 +83,7 @@ module ParticleTrackingEngineModule
     procedure :: SetZones=>pr_SetZones
     procedure :: SetPorosity=>pr_SetPorosity
     procedure :: SetRetardation=>pr_SetRetardation
-    procedure :: SetLayerTypes=>pr_SetLayerTypes
+    !procedure :: SetLayerTypes=>pr_SetLayerTypes
     procedure :: SetDefaultIface=>pr_SetDefaultIface
     procedure :: CheckForDefaultIface=>pr_CheckForDefaultIface
     procedure :: GetVolumetricBalanceSummary=>pr_GetVolumetricBalanceSummary
@@ -156,13 +156,19 @@ subroutine WriteCellData(unit, cellData, backwardTracking)
   type(ModpathCellDataType),intent(in) :: cellData
   type(ModpathSubCellDataType) :: subCellData
   integer :: m, n, count, row, column, subRowCount, subColumnCount
-  doubleprecision :: balance, totalFaceInflow, totalFaceOutflow, sourceInflow, sinkOutflow, storageInflow, storageOutflow, netFaceInflow
+  doubleprecision :: balance, totalFaceInflow, totalFaceOutflow, sourceInflow,  &
+    sinkOutflow, storageInflow, storageOutflow, netFaceInflow
   doubleprecision :: totalInflow, totalOutflow, netInflow
 !---------------------------------------------------------------------------------------------------------------
-  write(unit, '(1X,A,5I10)')   'Layer, Ibound, IboundTS, Zone, LayerType: ', cellData%Layer, cellData%Ibound, cellData%IboundTS, cellData%Zone, cellData%LayerType
-  write(unit, '(1X,A,4E15.7)') 'DX, DY, MinX, MinY:    ', cellData%DX, cellData%DY, cellData%MinX, cellData%MinY
-  write(unit, '(1X,A,3E15.7)') 'Bottom, Top, Head:     ', cellData%Bottom, cellData%Top, cellData%Head
-  write(unit, '(1x,A,2E15.7)') 'Porosity, Retardation: ', cellData%Porosity, cellData%Retardation
+  write(unit, '(1X,A,5I10)')   'Layer, Ibound, IboundTS, Zone, LayerType: ',    &
+    cellData%Layer, cellData%Ibound, cellData%IboundTS, cellData%Zone,          &
+    cellData%LayerType
+  write(unit, '(1X,A,4E15.7)') 'DX, DY, MinX, MinY:    ', cellData%DX,          &
+    cellData%DY, cellData%MinX, cellData%MinY
+  write(unit, '(1X,A,3E15.7)') 'Bottom, Top, Head:     ', cellData%Bottom,      &
+    cellData%Top, cellData%Head
+  write(unit, '(1x,A,2E15.7)') 'Porosity, Retardation: ', cellData%Porosity,    &
+    cellData%Retardation
   
   write(unit, *)
   write(unit, '(1X,A)') 'Volumetric Face Flows (L**3/T):'
@@ -174,7 +180,8 @@ subroutine WriteCellData(unit, cellData, backwardTracking)
   write(unit, '(1X,A,4E25.15)') 'Bottom (face 5):',(cellData%GetFaceFlow(5,n), n = 1, cellData%GetSubFaceCount(5))
   write(unit, '(1X,A,4E25.15)') 'Top    (face 6):',(cellData%GetFaceFlow(6,n), n = 1, cellData%GetSubFaceCount(6))
   
-  call cellData%GetVolumetricBalanceComponents(totalFaceInflow, totalFaceOutflow, sourceInflow, sinkOutflow, storageInflow, storageOutflow, balance)
+  call cellData%GetVolumetricBalanceComponents(totalFaceInflow,                 &
+    totalFaceOutflow, sourceInflow, sinkOutflow, storageInflow, storageOutflow, balance)
   totalInflow = totalFaceInflow + sourceInflow + storageInflow
   totalOutflow = totalFaceOutflow + sinkOutflow + storageOutflow
   netInflow = totalInflow - totalOutflow
@@ -200,7 +207,8 @@ subroutine WriteCellData(unit, cellData, backwardTracking)
   
   write(unit, *)
   if(backwardTracking) then
-      write(unit, '(1X,A)') 'Face velocities (Backward tracking. Velocity components has been reversed to represent backward tracking.)'
+      write(unit, '(1X,A)')                                                     &
+        'Face velocities (Backward tracking. Velocity components has been reversed to represent backward tracking.)'
   else
       write(unit, '(1X,A)') 'Face velocities (Forward tracking)'
   end if
@@ -243,7 +251,9 @@ subroutine WriteTraceData(unit, trackCell, tcResult, stressPeriod, timeStep)
   cellData => trackCell%CellData
   count = tcResult%TrackingPoints%GetItemCount()          
   write(unit, *)
-  write(unit, '(1X,A,I10,A,I6,A,I6)') '----- Call TrackCell: Cell', cellData%CellNumber, ',  Stress period',stressPeriod,',  Time step', timeStep
+  write(unit, '(1X,A,I10,A,I6,A,I6)') '----- Call TrackCell: Cell',             &
+    cellData%CellNumber, ',  Stress period',stressPeriod,                       &
+    ',  Time step', timeStep
 
   select case (tcResult%Status)
       case (1)
@@ -269,7 +279,13 @@ subroutine WriteTraceData(unit, trackCell, tcResult, stressPeriod, timeStep)
   write(unit, '(1X,A,I3,A)') 'Exit status =', tcResult%Status, statusText
   write(unit, '(1X,A)')         'Particle locations: Local X, Local Y, Local Z, Tracking time'
   do n = 1, count
-      write(unit, '(1X,I10,4E25.15,I10)') tcResult%TrackingPoints%Items(n)%CellNumber, tcResult%TrackingPoints%Items(n)%LocalX, tcResult%TrackingPoints%Items(n)%LocalY, tcResult%TrackingPoints%Items(n)%LocalZ, tcResult%TrackingPoints%Items(n)%TrackingTime, tcResult%TrackingPoints%Items(n)%Layer              
+      write(unit, '(1X,I10,4E25.15,I10)')                                       &
+        tcResult%TrackingPoints%Items(n)%CellNumber,                            &
+        tcResult%TrackingPoints%Items(n)%LocalX,                                &
+        tcResult%TrackingPoints%Items(n)%LocalY,                                &
+        tcResult%TrackingPoints%Items(n)%LocalZ,                                &
+        tcResult%TrackingPoints%Items(n)%TrackingTime,                          &
+        tcResult%TrackingPoints%Items(n)%Layer              
   end do
   write(unit, *)
   
@@ -277,7 +293,8 @@ subroutine WriteTraceData(unit, trackCell, tcResult, stressPeriod, timeStep)
   
 end subroutine WriteTraceData
 
-subroutine pr_GetVolumetricBalanceSummary(this, intervalCount, intervalBreaks, balanceCounts, maxError, maxErrorCell)
+subroutine pr_GetVolumetricBalanceSummary(this, intervalCount, intervalBreaks,  &
+  balanceCounts, maxError, maxErrorCell)
 !***************************************************************************************************************
 ! Description goes here
 !***************************************************************************************************************
@@ -296,7 +313,7 @@ subroutine pr_GetVolumetricBalanceSummary(this, intervalCount, intervalBreaks, b
   doubleprecision :: balance, absBalance
   
   
-  cellCount = this%Grid%GetCellCount()
+  cellCount = this%Grid%CellCount
   
   maxErrorCell = 0
   maxError = 0.0d0
@@ -306,7 +323,7 @@ subroutine pr_GetVolumetricBalanceSummary(this, intervalCount, intervalBreaks, b
   
   do n = 1, cellCount
       call this%FillCellBuffer(n, cellBuffer)
-      if(cellBuffer%IboundTS .gt. 0.0d0) then
+      if(cellBuffer%IboundTS .gt. 0) then
           balance = cellBuffer%GetVolumetricBalance()
           absBalance = dabs(balance)
           if((maxErrorCell .eq. 0) .or. (absBalance .gt. maxError) ) then
@@ -318,14 +335,16 @@ subroutine pr_GetVolumetricBalanceSummary(this, intervalCount, intervalBreaks, b
                   balanceCounts(m) = balanceCounts(m) + 1
                   exit
               end if
-              if(m .eq. intervalCount) balanceCounts(intervalCount + 1) = balanceCounts(intervalCount + 1) + 1
+              if(m .eq. intervalCount) balanceCounts(intervalCount + 1) =       &
+                balanceCounts(intervalCount + 1) + 1
           end do
       end if
   end do
 
 end subroutine pr_GetVolumetricBalanceSummary
 
-subroutine pr_SetDefaultIface(this, defaultIfaceLabels, defaultIfaceValues, arraySize)
+subroutine pr_SetDefaultIface(this, defaultIfaceLabels, defaultIfaceValues,     &
+  arraySize)
 !***************************************************************************************************************
 ! Description goes here
 !***************************************************************************************************************
@@ -358,26 +377,26 @@ subroutine pr_SetDefaultIface(this, defaultIfaceLabels, defaultIfaceValues, arra
 
 end subroutine pr_SetDefaultIface
 
-subroutine pr_SetLayerTypes(this, layerTypes, arraySize)
-!***************************************************************************************************************
+!subroutine pr_SetLayerTypes(this, layerTypes, arraySize)
+!!***************************************************************************************************************
+!!
+!!***************************************************************************************************************
+!!
+!! Specifications
+!!---------------------------------------------------------------------------------------------------------------
+!  implicit none
+!  class(ParticleTrackingEngineType) :: this
+!  integer,intent(in) :: arraySize
+!  integer,dimension(arraySize),intent(in),target :: layerTypes
+!  
+!  if(arraySize .ne. this%Grid%LayerCount) then
+!      write(*,*) "ParticleTrackingEngine: The LayerTypes array size does not match the layer count for the grid. stop"
+!      stop
+!  end if
+!  
+!  this%LayerTypes => layerTypes
 !
-!***************************************************************************************************************
-!
-! Specifications
-!---------------------------------------------------------------------------------------------------------------
-  implicit none
-  class(ParticleTrackingEngineType) :: this
-  integer,intent(in) :: arraySize
-  integer,dimension(arraySize),intent(in),target :: layerTypes
-  
-  if(arraySize .ne. this%Grid%GetLayerCount()) then
-      write(*,*) "ParticleTrackingEngine: The LayerTypes array size does not match the layer count for the grid. stop"
-      stop
-  end if
-  
-  this%LayerTypes => layerTypes
-
-end subroutine pr_SetLayerTypes
+!end subroutine pr_SetLayerTypes
 
 subroutine pr_SetIbound(this, ibound, arraySize)
 !***************************************************************************************************************
@@ -392,7 +411,7 @@ subroutine pr_SetIbound(this, ibound, arraySize)
   integer :: n
   integer,dimension(arraySize),intent(in),target :: ibound
   
-  if(arraySize .ne. this%Grid%GetCellCount()) then
+  if(arraySize .ne. this%Grid%CellCount) then
       write(*,*) "ParticleTrackingEngine: The IBound array size does not match the cell count for the grid. stop"
       stop
   end if
@@ -418,7 +437,7 @@ subroutine pr_SetZones(this, zones, arraySize)
   integer,intent(in) :: arraySize
   integer,dimension(arraySize),intent(in),target :: zones
   
-  if(arraySize .ne. this%Grid%GetCellCount()) then
+  if(arraySize .ne. this%Grid%CellCount) then
       write(*,*) "ParticleTrackingEngine: The Zones array size does not match the cell count for the grid. stop"
       stop
   end if
@@ -439,7 +458,7 @@ subroutine pr_SetPorosity(this, porosity, arraySize)
   integer,intent(in) :: arraySize
   doubleprecision,dimension(arraySize),intent(in),target :: porosity
   
-  if(arraySize .ne. this%Grid%GetCellCount()) then
+  if(arraySize .ne. this%Grid%CellCount) then
       write(*,*) "ParticleTrackingEngine: The Porosity array size does not match the cell count for the grid. stop"
       stop
   end if
@@ -460,7 +479,7 @@ subroutine pr_SetRetardation(this, retardation, arraySize)
   integer,intent(in) :: arraySize
   doubleprecision,dimension(arraySize),intent(in),target :: retardation
   
-  if(arraySize .ne. this%Grid%GetCellCount()) then
+  if(arraySize .ne. this%Grid%CellCount) then
       write(*,*) "ParticleTrackingEngine: The Retardation array size does not match the cell count for the grid. stop"
       stop
   end if
@@ -508,7 +527,7 @@ subroutine pr_Initialize(this,headReader, budgetReader, grid, hNoFlow, hDry, tra
   class(ParticleTrackingEngineType) :: this
   type(BudgetReaderType),intent(inout),target :: budgetReader
   type(HeadReaderType),intent(inout),target :: headReader
-  type(RectangularUnstructuredGridType),intent(inout),target :: grid
+  class(ModflowRectangularGridType),intent(inout),pointer :: grid
   type(ParticleTrackingOptionsType),intent(in) :: trackingOptions
   integer :: cellCount,gridType
   integer :: n, flowArraySize
@@ -521,30 +540,42 @@ subroutine pr_Initialize(this,headReader, budgetReader, grid, hNoFlow, hDry, tra
   call this%Reset()
   
   ! Return if the grid cell count equals 0
-  cellCount = grid%GetCellCount()
+  cellCount = grid%CellCount
   if(cellCount .le. 0) return
   
   ! Check budget reader and grid data for compatibility and allocate appropriate cell-by-cell flow arrays
-  gridType = grid%GetGridType()
+  gridType = grid%GridType
   select case (gridType)
       case (1)
           if((budgetReader%GetBudgetType() .ne. 1)) return
-          if((headReader%GetGridType() .ne. 1) .or. (headReader%GetCellCount() .ne. cellCount)) return
+          if((headReader%GridStyle .ne. 1) .or. (headReader%CellCount .ne. cellCount)) return
           flowArraySize = budgetReader%GetFlowArraySize()
           if(flowArraySize .ne. cellCount) return
           allocate(this%FlowsRightFace(flowArraySize))
           allocate(this%FlowsFrontFace(flowArraySize))
           allocate(this%FlowsLowerFace(flowArraySize))
           allocate(this%FlowsJA(0))
-      case(2)
+      case (2)
           if((budgetReader%GetBudgetType() .ne. 2)) return
-          if((headReader%GetGridType() .ne. 2) .or. (headReader%GetCellCount() .ne. cellCount)) return
+          if((headReader%GridStyle .ne. 2) .or. (headReader%CellCount .ne. cellCount)) return
           flowArraySize = budgetReader%GetFlowArraySize()
-          if(flowArraySize .ne. grid%GetReducedConnectionCount()) return
+          if(flowArraySize .ne. grid%JaCount) return
           allocate(this%FlowsJA(flowArraySize))
           allocate(this%FlowsRightFace(0))
           allocate(this%FlowsFrontFace(0))
           allocate(this%FlowsLowerFace(0))
+      case (3, 4)
+          if((budgetReader%GetBudgetType() .ne. 2)) return
+          if((headReader%GridStyle .ne. 1) .or. (headReader%CellCount .ne. cellCount)) return
+          flowArraySize = budgetReader%GetFlowArraySize()
+          if(flowArraySize .ne. grid%JaCount) return
+          allocate(this%FlowsJA(flowArraySize))
+          allocate(this%FlowsRightFace(0))
+          allocate(this%FlowsFrontFace(0))
+          allocate(this%FlowsLowerFace(0))          
+      !case (4)
+      !    ! Not implemented
+      !    return
       case default
           return
   end select
@@ -620,8 +651,10 @@ subroutine pr_FillCellFlowsBuffer(this,cellNumber,buffer,bufferSize,count)
       buffer(n) = 0.0d0
   end do
   
-  offset = this%Grid%GetReducedCellConnectionOffset(cellNumber)
-  count = this%Grid%GetReducedCellConnectionCount(cellNumber)
+  !offset = this%Grid%GetOffsetJa(cellNumber)
+  !count = this%Grid%GetOffsetJa(cellNumber + 1) - offset
+  offset = this%Grid%JaOffsets(cellNumber)
+  count = this%Grid%JaOffsets(cellNumber + 1) - offset
   do n = 1, count
       buffer(n) = this%FlowsJA(offset + n)
   end do
@@ -670,8 +703,10 @@ subroutine pr_LoadTimeStep(this, stressPeriod, timeStep)
   implicit none
   class(ParticleTrackingEngineType) :: this
   integer,intent(in) :: stressPeriod, timeStep
-  integer :: firstRecord, lastRecord, n, m, firstNonBlank, lastNonBlank, trimmedLength
-  integer :: spaceAssigned, status,cellCount, iface, index, boundaryFlowsOffset, listItemBufferSize, cellNumber, layer
+  integer :: firstRecord, lastRecord, n, m, firstNonBlank, lastNonBlank,        &
+    trimmedLength
+  integer :: spaceAssigned, status,cellCount, iface, index,                     &
+    boundaryFlowsOffset, listItemBufferSize, cellNumber, layer
   type(BudgetRecordHeaderType) :: header
   character(len=16) :: textLabel
   doubleprecision :: top
@@ -681,34 +716,62 @@ subroutine pr_LoadTimeStep(this, stressPeriod, timeStep)
   call this%BudgetReader%GetRecordHeaderRange(stressPeriod, timeStep, firstRecord, lastRecord)
   if(firstRecord .eq. 0) return
 
-  cellCount = this%Grid%GetCellCount()
+  cellCount = this%Grid%CellCount
   listItemBufferSize = size(this%ListItemBuffer)
   
   ! Set steady state = true, then change it if the budget file contains storage
   this%SteadyState = .true.
   
   ! Load heads for this time step
-  call this%HeadReader%FillTimeStepHeadBuffer(stressPeriod, timeStep, this%Heads, cellCount, spaceAssigned)
+  call this%HeadReader%FillTimeStepHeadBuffer(stressPeriod, timeStep,           &
+    this%Heads, cellCount, spaceAssigned)
   
   ! Fill IBoundTS array and set the SaturatedTop array for the Grid.
   ! The saturated top is set equal to the top for confined cells and water table cells 
   ! where the head is above the top or below the bottom.
-  do n = 1, cellCount
-      top = this%Grid%GetTop(n)
-      call this%Grid%SetSaturatedTop(n, top)
-      this%IBoundTS(n) = this%IBound(n)
-      layer = this%Grid%GetLayer(n)
-      if(this%LayerTypes(layer) .eq. 1) then
-          if((this%Heads(n) .eq. this%HDry) .or. (this%Heads(n) .gt. 1.0d+6)) then
-              this%IBoundTS(n) = 0
-          end if
-          if(this%IBoundTS(n) .ne. 0) then
-              if((this%Heads(n) .le. top) .and. (this%Heads(n) .ge. this%Grid%GetBottom(n))) then
-                  call this%Grid%SetSaturatedTop(n, this%Heads(n))
+  if(this%Grid%GridType .gt. 2) then
+      do n = 1, cellCount
+          this%Grid%SaturatedTop(n) = this%Grid%Top(n)
+          this%StorageFlows(n) = 0.0
+          this%IBoundTS(n) = this%IBound(n)
+          layer = this%Grid%GetLayer(n)
+          if(this%Grid%CellType(n) .eq. 1) then
+              if(this%Heads(n) .eq. this%HDry) then
+                  this%IBoundTS(n) = 0
+              else
+                  if(this%Heads(n) .lt. this%Grid%Bottom(n)) then
+                      this%IBoundTS(n) = 0
+                      this%Grid%SaturatedTop(n) = this%Grid%Bottom(n)
+                  end if
+              end if
+              if(this%IBoundTS(n) .ne. 0) then
+                  if((this%Heads(n) .le. this%Grid%Top(n)) .and.                                 &
+                    (this%Heads(n) .ge. this%Grid%Bottom(n))) then
+                      this%Grid%SaturatedTop(n) = this%Heads(n)
+                  end if
               end if
           end if
-      end if
-  end do
+      end do
+      
+  else
+      do n = 1, cellCount
+          this%Grid%SaturatedTop(n) = this%Grid%Top(n)
+          this%StorageFlows(n) = 0.0
+          this%IBoundTS(n) = this%IBound(n)
+          layer = this%Grid%GetLayer(n)
+          if(this%Grid%CellType(n) .eq. 1) then
+              if((this%Heads(n) .eq. this%HDry) .or. (this%Heads(n) .gt. 1.0d+6)) then
+                  this%IBoundTS(n) = 0
+              end if
+              if(this%IBoundTS(n) .ne. 0) then
+                  if((this%Heads(n) .le. this%Grid%Top(n)) .and.                                 &
+                    (this%Heads(n) .ge. this%Grid%Bottom(n))) then
+                      this%Grid%SaturatedTop(n) = this%Heads(n)
+                  end if
+              end if
+          end if
+      end do
+  end if
   
   ! Loop through record headers
   do n = firstRecord, lastRecord
@@ -716,158 +779,44 @@ subroutine pr_LoadTimeStep(this, stressPeriod, timeStep)
        textLabel = header%TextLabel
        call TrimAll(textLabel, firstNonBlank, lastNonBlank, trimmedLength)
        
-       if(textLabel(firstNonBlank:lastNonBlank) .eq. 'CONSTANT HEAD') then
+       select case(textLabel(firstNonBlank:lastNonBlank))
+       case('CONSTANT HEAD', 'CHD')
             ! Read constant head flows into the sinkFlows and sourceFlows arrays.
             ! For a standard budget file, Method = 0. For a compact budget file,
             ! Method = 2.
             if(header%Method .eq. 0) then
-                call this%BudgetReader%FillRecordDataBuffer(header, this%ArrayBufferDbl, cellCount, spaceAssigned, status)
+                call this%BudgetReader%FillRecordDataBuffer(header,             &
+                  this%ArrayBufferDbl, cellCount, spaceAssigned, status)
                 if(cellCount .eq. spaceAssigned) then
                     do m = 1, spaceAssigned
                         if(this%ArrayBufferDbl(m) .gt. 0.0d0) then
-                            this%SourceFlows(m) = this%SourceFlows(m) + this%ArrayBufferDbl(m)
+                            this%SourceFlows(m) = this%SourceFlows(m) +         &
+                              this%ArrayBufferDbl(m)
                         else if(this%ArrayBufferDbl(m) .lt. 0.0d0) then
-                            this%SinkFlows(m) = this%SinkFlows(m) + this%ArrayBufferDbl(m)
+                            this%SinkFlows(m) = this%SinkFlows(m) +             &
+                              this%ArrayBufferDbl(m)
                         end if
                     end do
                 end if
             else if(header%Method .eq. 2) then
-                call this%BudgetReader%FillRecordDataBuffer(header, this%ListItemBuffer, listItemBufferSize, spaceAssigned, status)
+                call this%BudgetReader%FillRecordDataBuffer(header,             &
+                  this%ListItemBuffer, listItemBufferSize, spaceAssigned, status)
                 if(spaceAssigned .gt. 0) then
                     do m = 1, spaceAssigned
                         cellNumber = this%ListItemBuffer(m)%CellNumber
                         if(this%ListItemBuffer(m)%BudgetValue .gt. 0.0d0) then
-                            this%SourceFlows(cellNumber) = this%SourceFlows(cellNumber) + this%ListItemBuffer(m)%BudgetValue
+                            this%SourceFlows(cellNumber) =                      &
+                              this%SourceFlows(cellNumber) + this%ListItemBuffer(m)%BudgetValue
                         else if(this%ListItemBuffer(m)%BudgetValue .lt. 0.0d0) then
-                            this%SinkFlows(cellNumber) = this%SinkFlows(cellNumber) + this%ListItemBuffer(m)%BudgetValue
+                            this%SinkFlows(cellNumber) =                        &
+                              this%SinkFlows(cellNumber) + this%ListItemBuffer(m)%BudgetValue
                         end if
                     end do
                 end if
-            end if
-       else if(textLabel(firstNonBlank:lastNonBlank) .eq. 'STORAGE') then
-            ! Set steady state flag to false.
-            this%SteadyState = .false.
-            
-            ! Read storage for all cells into the StorageFlows array.
-            ! Method should always be 0 or 1, but check anyway to be sure.
-            if((header%Method .eq. 0) .or. (header%Method .eq. 1)) then
-                if(header%ArrayItemCount .eq. cellCount) then
-                    call this%BudgetReader%FillRecordDataBuffer(header, this%ArrayBufferDbl, cellCount, spaceAssigned, status)
-                    if(cellCount .eq. spaceAssigned) then
-                        do m = 1, spaceAssigned
-                            this%StorageFlows(m) = this%ArrayBufferDbl(m)
-                        end do
-                    end if
-                end if
-            end if
-       
-       else if(textLabel(firstNonBlank:lastNonBlank) .eq. 'FLOW JA FACE') then
-            ! Read connected face flows into the FlowsJA array for unstructured grids.
-            ! Method should always be 0 or 1, but check anyway to be sure.
-            if((header%Method .eq. 0) .or. (header%Method .eq. 1)) then
-                if(header%ArrayItemCount .eq. this%BudgetReader%GetFlowArraySize()) then
-                    call this%BudgetReader%FillRecordDataBuffer(header, this%FlowsJA, header%ArrayItemCount, spaceAssigned, status)
-                end if
-            end if
-            
-       else if(textLabel(firstNonBlank:lastNonBlank) .eq. 'FLOW RIGHT FACE') then
-            ! Read flows across the right face for structured grids.
-            ! Method should always be 0 or 1, but check anyway to be sure.
-            if((header%Method .eq. 0) .or. (header%Method .eq. 1)) then
-                if(header%ArrayItemCount .eq. this%BudgetReader%GetFlowArraySize()) then
-                    call this%BudgetReader%FillRecordDataBuffer(header, this%FlowsRightFace, header%ArrayItemCount, spaceAssigned, status)
-                end if
-            end if
-                  
-       else if(textLabel(firstNonBlank:lastNonBlank) .eq. 'FLOW FRONT FACE') then
-            ! Read flows across the front face for structured grids.
-            ! Method should always be 0 or 1, but check anyway to be sure.
-            if((header%Method .eq. 0) .or. (header%Method .eq. 1)) then
-                if(header%ArrayItemCount .eq. this%BudgetReader%GetFlowArraySize()) then
-                    call this%BudgetReader%FillRecordDataBuffer(header, this%FlowsFrontFace, header%ArrayItemCount, spaceAssigned, status)
-                end if
-            end if
-       
-       else if(textLabel(firstNonBlank:lastNonBlank) .eq. 'FLOW LOWER FACE') then
-            ! Read flows across the lower face for structured grids.
-            ! Method should always be 0 or 1, but check anyway to be sure.
-            if((header%Method .eq. 0) .or. (header%Method .eq. 1)) then
-                if(header%ArrayItemCount .eq. this%BudgetReader%GetFlowArraySize()) then
-                    call this%BudgetReader%FillRecordDataBuffer(header, this%FlowsLowerFace, header%ArrayItemCount, spaceAssigned, status)
-                end if
-            end if
-       
-       else
-            ! Now handle any other records in the budget file.
-             if((header%Method .eq. 0) .or. (header%Method .eq. 1)) then
-                if(header%ArrayItemCount .eq. cellCount) then
-                    call this%BudgetReader%FillRecordDataBuffer(header, this%ArrayBufferDbl, cellCount, spaceAssigned, status)
-                    if(cellCount .eq. spaceAssigned) then
-                        call this%CheckForDefaultIface(header%TextLabel, iface)
-                        if(iface .gt. 0) then
-                            do m = 1, spaceAssigned
-                                boundaryFlowsOffset = 6 * (m - 1)
-                                this%BoundaryFlows(boundaryFlowsOffset + iface) = this%BoundaryFlows(boundaryFlowsOffset + iface) + this%ArrayBufferDbl(m)
-                            end do
-                        else
-                            do m = 1, spaceAssigned
-                                if(this%ArrayBufferDbl(m) .gt. 0.0d0) then
-                                    this%SourceFlows(m) = this%SourceFlows(m) + this%ArrayBufferDbl(m)
-                                else if(this%ArrayBufferDbl(m) .lt. 0.0d0) then
-                                    this%SinkFlows(m) = this%SinkFlows(m) + this%ArrayBufferDbl(m)
-                                end if
-                            end do
-                        end if
-                    end if
-                end if
-             
-             else if(header%Method .eq. 3) then
-                 ! Not yet supported
-                 
-             else if(header%Method .eq. 4) then
-                call this%BudgetReader%FillRecordDataBuffer(header, this%ArrayBufferDbl, header%ArrayItemCount, spaceAssigned, status)
-                if(header%ArrayItemCount .eq. spaceAssigned) then
-                    call this%CheckForDefaultIface(header%TextLabel, iface)
-                    if(iface .gt. 0) then
-                        do m = 1, spaceAssigned
-                            boundaryFlowsOffset = 6 * (m - 1)
-                            this%BoundaryFlows(boundaryFlowsOffset + iface) = this%BoundaryFlows(boundaryFlowsOffset + iface) + this%ArrayBufferDbl(m)
-                        end do
-                    else            
-                        do m = 1, spaceAssigned
-                            if(this%ArrayBufferDbl(m) .gt. 0.0d0) then
-                                this%SourceFlows(m) = this%SourceFlows(m) + this%ArrayBufferDbl(m)
-                            else if(this%ArrayBufferDbl(m) .lt. 0.0d0) then
-                                this%SinkFlows(m) = this%SinkFlows(m) + this%ArrayBufferDbl(m)
-                            end if
-                        end do
-                    end if
-                end if
-             
-            else if(header%Method .eq. 2) then
-                call this%BudgetReader%FillRecordDataBuffer(header, this%ListItemBuffer, listItemBufferSize, spaceAssigned, status)
-                if(spaceAssigned .gt. 0) then
-                    call this%CheckForDefaultIface(header%TextLabel, iface)
-                    if(iface .gt. 0) then
-                        do m = 1, spaceAssigned
-                            cellNumber = this%ListItemBuffer(m)%CellNumber
-                            boundaryFlowsOffset = 6 * (cellNumber - 1)
-                            this%BoundaryFlows(boundaryFlowsOffset + iface) = this%BoundaryFlows(boundaryFlowsOffset + iface) + this%ListItemBuffer(m)%BudgetValue
-                        end do
-                    else            
-                        do m = 1, spaceAssigned
-                            cellNumber = this%ListItemBuffer(m)%CellNumber
-                            if(this%ListItemBuffer(m)%BudgetValue .gt. 0.0d0) then
-                                this%SourceFlows(cellNumber) = this%SourceFlows(cellNumber) + this%ListItemBuffer(m)%BudgetValue
-                            else if(this%ListItemBuffer(m)%BudgetValue .lt. 0.0d0) then
-                                this%SinkFlows(cellNumber) = this%SinkFlows(cellNumber) + this%ListItemBuffer(m)%BudgetValue
-                            end if
-                        end do
-                    end if
-                end if
-                
-            else if(header%Method .eq. 5) then
-                call this%BudgetReader%FillRecordDataBuffer(header, this%ListItemBuffer, listItemBufferSize, spaceAssigned, status)
+            else if((header%Method .eq. 5) .or. (header%Method .eq. 6)) then
+                call this%BudgetReader%FillRecordDataBuffer(header,             &
+                  this%ListItemBuffer, listItemBufferSize, spaceAssigned,       &
+                  status)
                 if(spaceAssigned .gt. 0) then
                     do m = 1, spaceAssigned
                         call this%CheckForDefaultIface(header%TextLabel, iface)
@@ -879,20 +828,225 @@ subroutine pr_LoadTimeStep(this, stressPeriod, timeStep)
                         cellNumber = this%ListItemBuffer(m)%CellNumber
                         if(iface .gt. 0) then
                             boundaryFlowsOffset = 6 * (cellNumber - 1)
-                            this%BoundaryFlows(boundaryFlowsOffset + iface) = this%BoundaryFlows(boundaryFlowsOffset + iface) + this%ListItemBuffer(m)%BudgetValue
+                            this%BoundaryFlows(boundaryFlowsOffset + iface) =   &
+                              this%BoundaryFlows(boundaryFlowsOffset + iface) + &
+                              this%ListItemBuffer(m)%BudgetValue
                         else
                             if(this%ListItemBuffer(m)%BudgetValue .gt. 0.0d0) then
-                                this%SourceFlows(cellNumber) = this%SourceFlows(cellNumber) + this%ListItemBuffer(m)%BudgetValue
+                                this%SourceFlows(cellNumber) =                  &
+                                  this%SourceFlows(cellNumber) +                &
+                                  this%ListItemBuffer(m)%BudgetValue
                             else if(this%ListItemBuffer(m)%BudgetValue .lt. 0.0d0) then
-                                this%SinkFlows(cellNumber) = this%SinkFlows(cellNumber) + this%ListItemBuffer(m)%BudgetValue
+                                this%SinkFlows(cellNumber) =                    &
+                                  this%SinkFlows(cellNumber) +                  &
+                                  this%ListItemBuffer(m)%BudgetValue
                             end if
                         end if
                     end do
-                
                 end if
-             
             end if
-       end if
+           
+       case('STORAGE', 'STO-SS', 'STO-SY')
+            ! Read storage for all cells into the StorageFlows array.
+            ! Method should always be 0 or 1, but check anyway to be sure.
+            if((header%Method .eq. 0) .or. (header%Method .eq. 1)) then
+                if(header%ArrayItemCount .eq. cellCount) then
+                    call this%BudgetReader%FillRecordDataBuffer(header,         &
+                      this%ArrayBufferDbl, cellCount, spaceAssigned, status)
+                    if(cellCount .eq. spaceAssigned) then
+                        do m = 1, spaceAssigned
+                            this%StorageFlows(m) = this%StorageFlows(m) + this%ArrayBufferDbl(m)
+                            if(this%StorageFlows(m) .ne. 0.0) this%SteadyState = .false.
+                        end do
+                    end if
+                end if
+            end if
+           
+       case('FLOW JA FACE', 'FLOW-JA-FACE')
+            ! Read connected face flows into the FlowsJA array for unstructured grids.
+            if((header%Method .eq. 0) .or. (header%Method .eq. 1)) then
+                ! Method should always be 0 or 1 for flow between grid cells. 
+                if(header%ArrayItemCount .eq. this%BudgetReader%GetFlowArraySize()) then
+                    call this%BudgetReader%FillRecordDataBuffer(header,         &
+                      this%FlowsJA, header%ArrayItemCount, spaceAssigned,       &
+                      status)
+                end if
+            else if(header%Method .eq. 6) then
+                ! Method code 6 indicates flow to or from cells in the current model grid
+                ! and another connected model grid in a multi-model MODFLOW-6 simulation. 
+                ! Treat flows to or from connected model grids as distributed source/sink flows 
+                ! for the current grid.
+                call this%BudgetReader%FillRecordDataBuffer(header,             &
+                  this%ListItemBuffer, listItemBufferSize, spaceAssigned,       &
+                  status)
+                if(spaceAssigned .gt. 0) then
+                    do m = 1, spaceAssigned
+                        cellNumber = this%ListItemBuffer(m)%CellNumber
+                        if(this%ListItemBuffer(m)%BudgetValue .gt. 0.0d0) then
+                            this%SourceFlows(cellNumber) =                  &
+                                this%SourceFlows(cellNumber) +                &
+                                this%ListItemBuffer(m)%BudgetValue
+                        else if(this%ListItemBuffer(m)%BudgetValue .lt. 0.0d0) then
+                            this%SinkFlows(cellNumber) =                    &
+                                this%SinkFlows(cellNumber) +                  &
+                                this%ListItemBuffer(m)%BudgetValue
+                        end if
+                    end do
+                end if
+            end if
+           
+       case('FLOW RIGHT FACE')
+            ! Read flows across the right face for structured grids.
+            ! Method should always be 0 or 1, but check anyway to be sure.
+            if((header%Method .eq. 0) .or. (header%Method .eq. 1)) then
+                if(header%ArrayItemCount .eq. this%BudgetReader%GetFlowArraySize()) then
+                    call this%BudgetReader%FillRecordDataBuffer(header,         &
+                      this%FlowsRightFace, header%ArrayItemCount, spaceAssigned,&
+                      status)
+                end if
+            end if
+           
+       case('FLOW FRONT FACE')
+            ! Read flows across the front face for structured grids.
+            ! Method should always be 0 or 1, but check anyway to be sure.
+            if((header%Method .eq. 0) .or. (header%Method .eq. 1)) then
+                if(header%ArrayItemCount .eq. this%BudgetReader%GetFlowArraySize()) then
+                    call this%BudgetReader%FillRecordDataBuffer(header,         &
+                      this%FlowsFrontFace, header%ArrayItemCount, spaceAssigned,&
+                      status)
+                end if
+            end if
+           
+       case('FLOW LOWER FACE')
+            ! Read flows across the lower face for structured grids.
+            ! Method should always be 0 or 1, but check anyway to be sure.
+            if((header%Method .eq. 0) .or. (header%Method .eq. 1)) then
+                if(header%ArrayItemCount .eq. this%BudgetReader%GetFlowArraySize()) then
+                    call this%BudgetReader%FillRecordDataBuffer(header,         &
+                      this%FlowsLowerFace, header%ArrayItemCount, spaceAssigned,&
+                      status)
+                end if
+            end if
+       
+        case default
+            ! Now handle any other records in the budget file.
+             if((header%Method .eq. 0) .or. (header%Method .eq. 1)) then
+                if(header%ArrayItemCount .eq. cellCount) then
+                    call this%BudgetReader%FillRecordDataBuffer(header,         &
+                      this%ArrayBufferDbl, cellCount, spaceAssigned, status)
+                    if(cellCount .eq. spaceAssigned) then
+                        call this%CheckForDefaultIface(header%TextLabel, iface)
+                        if(iface .gt. 0) then
+                            do m = 1, spaceAssigned
+                                boundaryFlowsOffset = 6 * (m - 1)
+                                this%BoundaryFlows(boundaryFlowsOffset + iface) =   &
+                                  this%BoundaryFlows(boundaryFlowsOffset + iface) + &
+                                  this%ArrayBufferDbl(m)
+                            end do
+                        else
+                            do m = 1, spaceAssigned
+                                if(this%ArrayBufferDbl(m) .gt. 0.0d0) then
+                                    this%SourceFlows(m) = this%SourceFlows(m) +     &
+                                      this%ArrayBufferDbl(m)
+                                else if(this%ArrayBufferDbl(m) .lt. 0.0d0) then
+                                    this%SinkFlows(m) = this%SinkFlows(m) +         &
+                                      this%ArrayBufferDbl(m)
+                                end if
+                            end do
+                        end if
+                    end if
+                end if
+             else if(header%Method .eq. 3) then
+                 ! Not yet supported
+             else if(header%Method .eq. 4) then
+                call this%BudgetReader%FillRecordDataBuffer(header,             &
+                  this%ArrayBufferDbl, header%ArrayItemCount, spaceAssigned,    &
+                  status)
+                if(header%ArrayItemCount .eq. spaceAssigned) then
+                    call this%CheckForDefaultIface(header%TextLabel, iface)
+                    if(iface .gt. 0) then
+                        do m = 1, spaceAssigned
+                            boundaryFlowsOffset = 6 * (m - 1)
+                            this%BoundaryFlows(boundaryFlowsOffset + iface) =   &
+                              this%BoundaryFlows(boundaryFlowsOffset + iface) + &
+                              this%ArrayBufferDbl(m)
+                        end do
+                    else            
+                        do m = 1, spaceAssigned
+                            if(this%ArrayBufferDbl(m) .gt. 0.0d0) then
+                                this%SourceFlows(m) = this%SourceFlows(m) +     &
+                                  this%ArrayBufferDbl(m)
+                            else if(this%ArrayBufferDbl(m) .lt. 0.0d0) then
+                                this%SinkFlows(m) = this%SinkFlows(m) +         &
+                                  this%ArrayBufferDbl(m)
+                            end if
+                        end do
+                    end if
+                end if
+            else if(header%Method .eq. 2) then
+                call this%BudgetReader%FillRecordDataBuffer(header,             &
+                  this%ListItemBuffer, listItemBufferSize, spaceAssigned,       &
+                  status)
+                if(spaceAssigned .gt. 0) then
+                    call this%CheckForDefaultIface(header%TextLabel, iface)
+                    if(iface .gt. 0) then
+                        do m = 1, spaceAssigned
+                            cellNumber = this%ListItemBuffer(m)%CellNumber
+                            boundaryFlowsOffset = 6 * (cellNumber - 1)
+                            this%BoundaryFlows(boundaryFlowsOffset + iface) =   &
+                              this%BoundaryFlows(boundaryFlowsOffset + iface) + &
+                              this%ListItemBuffer(m)%BudgetValue
+                        end do
+                    else            
+                        do m = 1, spaceAssigned
+                            cellNumber = this%ListItemBuffer(m)%CellNumber
+                            if(this%ListItemBuffer(m)%BudgetValue .gt. 0.0d0) then
+                                this%SourceFlows(cellNumber) =                  &
+                                  this%SourceFlows(cellNumber) +                &
+                                  this%ListItemBuffer(m)%BudgetValue
+                            else if(this%ListItemBuffer(m)%BudgetValue .lt. 0.0d0) then
+                                this%SinkFlows(cellNumber) =                    &
+                                  this%SinkFlows(cellNumber) +                  &
+                                  this%ListItemBuffer(m)%BudgetValue
+                            end if
+                        end do
+                    end if
+                end if
+            else if((header%Method .eq. 5) .or. (header%Method .eq. 6)) then
+                call this%BudgetReader%FillRecordDataBuffer(header,             &
+                  this%ListItemBuffer, listItemBufferSize, spaceAssigned,       &
+                  status)
+                if(spaceAssigned .gt. 0) then
+                    do m = 1, spaceAssigned
+                        call this%CheckForDefaultIface(header%TextLabel, iface)
+                        index = header%FindAuxiliaryNameIndex('IFACE')
+                        if(index .gt. 0) then
+                            iface = int(this%ListItemBuffer(m)%AuxiliaryValues(index))
+                        end if
+                        
+                        cellNumber = this%ListItemBuffer(m)%CellNumber
+                        if(iface .gt. 0) then
+                            boundaryFlowsOffset = 6 * (cellNumber - 1)
+                            this%BoundaryFlows(boundaryFlowsOffset + iface) =   &
+                              this%BoundaryFlows(boundaryFlowsOffset + iface) + &
+                              this%ListItemBuffer(m)%BudgetValue
+                        else
+                            if(this%ListItemBuffer(m)%BudgetValue .gt. 0.0d0) then
+                                this%SourceFlows(cellNumber) =                  &
+                                  this%SourceFlows(cellNumber) +                &
+                                  this%ListItemBuffer(m)%BudgetValue
+                            else if(this%ListItemBuffer(m)%BudgetValue .lt. 0.0d0) then
+                                this%SinkFlows(cellNumber) =                    &
+                                  this%SinkFlows(cellNumber) +                  &
+                                  this%ListItemBuffer(m)%BudgetValue
+                            end if
+                        end if
+                    end do
+                end if
+            end if
+       
+       end select
+       
   end do
 
   this%CurrentStressPeriod = stressPeriod
@@ -944,7 +1098,7 @@ subroutine pr_ClearTimeStepBudgetData(this)
   this%CurrentTimeStep = 0
   
   if(allocated(this%SinkFlows)) then
-      cellCount = this%Grid%GetCellCount()
+      cellCount = this%Grid%CellCount
       do n = 1, cellCount
           this%IBoundTS(n) = this%IBound(n)
           this%Heads(n) = 0.0d0
@@ -965,13 +1119,13 @@ subroutine pr_ClearTimeStepBudgetData(this)
       end do
   
       arraySize = this%BudgetReader%GetFlowArraySize()
-      if(this%Grid%GetGridType() .eq. 1) then
+      if(this%Grid%GridType .eq. 1) then
           do n = 1, arraySize
           this%FlowsRightFace(n) = 0.0d0
           this%FlowsFrontFace(n) = 0.0d0
           this%FlowsLowerFace(n) = 0.0d0
           end do
-      else if(this%Grid%GetGridType() .eq. 2) then
+      else if(this%Grid%GridType .eq. 2) then
           do n = 1, arraySize
               this%FlowsJA(n) = 0.0d0
           end do
@@ -993,7 +1147,7 @@ subroutine pr_FillCellBuffer(this, cellNumber, cellBuffer)
   integer,intent(in) :: cellNumber
   type(ModpathCellDataType),intent(inout) :: cellBuffer
   doubleprecision,dimension(6) :: boundaryFlows
-  integer :: n, layer, boundaryFlowsOffset, gridType
+  integer :: n, layer, boundaryFlowsOffset, gridType, cellType
 !---------------------------------------------------------------------------------------------------------------
   
   boundaryFlowsOffset = 6 * (cellNumber - 1)
@@ -1003,22 +1157,58 @@ subroutine pr_FillCellBuffer(this, cellNumber, cellBuffer)
   
   layer = this%Grid%GetLayer(cellNumber)
   
-  gridType = this%Grid%GetGridType()
+  gridType = this%Grid%GridType
+  cellType = this%Grid%CellType(cellNumber)
   select case (gridType)
       case (1)
           ! Set cell buffer data for a structured grid
-          call cellBuffer%SetDataStructured(cellNumber,this%Grid,this%IBound(cellNumber),this%IBoundTS(cellNumber),this%Porosity(cellNumber),this%Retardation(cellNumber), & 
-               this%StorageFlows(cellNumber),this%SourceFlows(cellNumber), this%SinkFlows(cellNumber), this%FlowsRightFace, this%FlowsFrontFace, this%FlowsLowerFace, boundaryFlows, & 
-               this%Heads(cellNumber), this%LayerTypes(layer), this%Zones(cellNumber))
+          call cellBuffer%SetDataStructured(cellNumber,this%Grid%CellCount,     &
+            this%Grid,this%IBound,this%IBoundTS(cellNumber),                    &
+            this%Porosity(cellNumber),this%Retardation(cellNumber),             & 
+            this%StorageFlows(cellNumber),this%SourceFlows(cellNumber),         &
+            this%SinkFlows(cellNumber), this%FlowsRightFace,                    &
+            this%FlowsFrontFace, this%FlowsLowerFace, boundaryFlows,            & 
+            this%Heads(cellNumber), cellType,                                   &
+            this%Zones(cellNumber))
       case (2)
-          ! Set cell buffer data for an unstructured grid
-          call cellBuffer%SetDataUnstructured(cellNumber,this%Grid,this%IBound(cellNumber),this%IBoundTS(cellNumber),this%Porosity(cellNumber),this%Retardation(cellNumber), & 
-               this%StorageFlows(cellNumber),this%SourceFlows(cellNumber), this%SinkFlows(cellNumber), this%FlowsJA, boundaryFlows, & 
-               this%Heads(cellNumber), this%LayerTypes(layer), this%Zones(cellNumber))
+          ! Set cell buffer data for a MODFLOW-USG unstructured grid
+          call cellBuffer%SetDataUnstructured(cellNumber,this%Grid%CellCount,   &
+            this%Grid%JaCount,this%Grid,                                        &
+            this%IBound,this%IBoundTS(cellNumber),                              &
+            this%Porosity(cellNumber),this%Retardation(cellNumber),             & 
+            this%StorageFlows(cellNumber),this%SourceFlows(cellNumber),         &
+            this%SinkFlows(cellNumber), this%FlowsJA, boundaryFlows,            & 
+            this%Heads(cellNumber), cellType,                                   &
+            this%Zones(cellNumber))
           ! Compute internal sub-cell face flows for cells with multiple sub-cells
           if(cellBuffer%GetSubCellCount() .gt. 1) then
               call cellBuffer%ComputeSubCellFlows()
           end if
+      case (3)
+          ! Set cell buffer data for a MODFLOW-6 structured grid (DIS)
+          call cellBuffer%SetDataUnstructured(cellNumber,this%Grid%CellCount,   &
+            this%Grid%JaCount,this%Grid,                                        &
+            this%IBound,this%IBoundTS(cellNumber),                              &
+            this%Porosity(cellNumber),this%Retardation(cellNumber),             & 
+            this%StorageFlows(cellNumber),this%SourceFlows(cellNumber),         &
+            this%SinkFlows(cellNumber), this%FlowsJA, boundaryFlows,            & 
+            this%Heads(cellNumber), cellType,                                   &
+            this%Zones(cellNumber))
+      case (4)
+          ! Set cell buffer data for a MODFLOW-6 unstructured grid (DISV)
+          call cellBuffer%SetDataUnstructured(cellNumber,this%Grid%CellCount,   &
+            this%Grid%JaCount,this%Grid,                                        &
+            this%IBound,this%IBoundTS(cellNumber),                              &
+            this%Porosity(cellNumber),this%Retardation(cellNumber),             & 
+            this%StorageFlows(cellNumber),this%SourceFlows(cellNumber),         &
+            this%SinkFlows(cellNumber), this%FlowsJA, boundaryFlows,            & 
+            this%Heads(cellNumber), cellType,                                   &
+            this%Zones(cellNumber))
+           ! Compute internal sub-cell face flows for cells with multiple sub-cells
+          if(cellBuffer%GetSubCellCount() .gt. 1) then
+              call cellBuffer%ComputeSubCellFlows()
+          end if
+         
       case default
       ! Write error message and stop
   end select
@@ -1064,7 +1254,9 @@ subroutine pr_Reset(this)
 
 end subroutine pr_Reset
 
-subroutine pr_TrackPath(this, trackPathResult, traceModeOn, traceModeUnit, group, particleID, seqNumber, location, maximumTrackingTime, timeseriesPoints, timeseriesPointCount)
+subroutine pr_TrackPath(this, trackPathResult, traceModeOn, traceModeUnit,      &
+  group, particleID, seqNumber, location, maximumTrackingTime, timeseriesPoints,&
+  timeseriesPointCount)
 !***************************************************************************************************************
 !
 !***************************************************************************************************************
@@ -1075,7 +1267,8 @@ subroutine pr_TrackPath(this, trackPathResult, traceModeOn, traceModeUnit, group
   class(ParticleTrackingEngineType),target :: this
   type(TrackPathResultType),target,intent(out) :: trackPathResult
   type(ParticleLocationType),intent(in) :: location
-  integer,intent(in) :: group, particleID, seqNumber, timeseriesPointCount, traceModeUnit
+  integer,intent(in) :: group, particleID, seqNumber, timeseriesPointCount,     &
+    traceModeUnit
   logical,intent(in) :: traceModeOn
   type(ParticleLocationType) :: loc
   type(ParticleCoordinateType) :: pCoord
@@ -1083,7 +1276,8 @@ subroutine pr_TrackPath(this, trackPathResult, traceModeOn, traceModeUnit, group
   type(TrackCellResultType),pointer :: tcResult
   doubleprecision,intent(in) :: maximumTrackingTime
   doubleprecision,dimension(timeseriesPointCount),intent(in) :: timeseriesPoints
-  doubleprecision :: stopTime, fromLocalX, fromLocalY, fromLocalZ, globalX, globalY, globalZ
+  doubleprecision :: stopTime, fromLocalX, fromLocalY, fromLocalZ, globalX,     &
+    globalY, globalZ
   integer :: timeIndex, n, count, nextCell
   logical :: continueLoop, isTimeSeriesPoint, isMaximumTime
 !---------------------------------------------------------------------------------------------------------------
@@ -1121,7 +1315,8 @@ subroutine pr_TrackPath(this, trackPathResult, traceModeOn, traceModeUnit, group
       ! Find the next stopping time value (tmax), then track the particle through the cell starting at location loc.
       timeIndex = -1
       if(timeseriesPointCount .gt. 0) then
-          timeIndex = pr_FindTimeIndex(timeseriesPoints, loc%TrackingTime, maximumTrackingTime, timeseriesPointCount)
+          timeIndex = pr_FindTimeIndex(timeseriesPoints, loc%TrackingTime,      &
+            maximumTrackingTime, timeseriesPointCount)
       end if
       stopTime = maximumTrackingTime
       isTimeSeriesPoint = .false.
@@ -1157,7 +1352,10 @@ subroutine pr_TrackPath(this, trackPathResult, traceModeOn, traceModeUnit, group
                   fromLocalX = this%TrackCellResult%TrackingPoints%Items(count)%LocalX
                   fromLocalY = this%TrackCellResult%TrackingPoints%Items(count)%LocalY
                   fromLocalZ = this%TrackCellResult%TrackingPoints%Items(count)%LocalZ         
-                  call this%Grid%ConvertFromNeighbor(this%TrackCellResult%NextCellNumber, this%TrackCellResult%CellNumber, fromLocalX, fromLocalY, fromLocalZ, loc)
+                  call this%Grid%ConvertFromNeighbor(                           &
+                    this%TrackCellResult%NextCellNumber,                        &
+                    this%TrackCellResult%CellNumber, fromLocalX, fromLocalY,    &
+                    fromLocalZ, loc)
                   loc%TrackingTime = this%TrackCellResult%TrackingPoints%Items(count)%TrackingTime
               else
                   ! If next cell is inactive, it implies that a boundary face has been reached. 
@@ -1215,7 +1413,9 @@ subroutine pr_TrackPath(this, trackPathResult, traceModeOn, traceModeUnit, group
   
       ! Write trace mode data if the trace mode is on for this particle
       if(traceModeOn) then
-         call WriteTraceData(traceModeUnit, this%TrackCell, this%TrackCellResult, this%GetCurrentStressPeriod(), this%GetCurrentTimeStep())
+         call WriteTraceData(traceModeUnit, this%TrackCell,                     &
+           this%TrackCellResult, this%GetCurrentStressPeriod(),                 &
+           this%GetCurrentTimeStep())
       end if
       
       ! If continueLoop is still set to true, go through the loop again. If set to false, exit the loop now.
@@ -1230,7 +1430,9 @@ subroutine pr_TrackPath(this, trackPathResult, traceModeOn, traceModeUnit, group
       pCoord%LocalY = this%LocBuffP%Items(n)%LocalY
       pCoord%LocalZ = this%LocBuffP%Items(n)%LocalZ
       pCoord%TrackingTime = this%LocBuffP%Items(n)%TrackingTime
-      call this%Grid%ConvertToGlobalXYZ(pCoord%CellNumber, pCoord%LocalX, pCoord%LocalY, pCoord%LocalZ, pCoord%GlobalX, pCoord%GlobalY, pCoord%GlobalZ)
+      call this%Grid%ConvertToModelXYZ(pCoord%CellNumber, pCoord%LocalX,       &
+        pCoord%LocalY, pCoord%LocalZ, pCoord%GlobalX, pCoord%GlobalY,           &
+        pCoord%GlobalZ)
       call trackPathResult%ParticlePath%Pathline%AddItem(pCoord)
   end do
   
@@ -1241,7 +1443,9 @@ subroutine pr_TrackPath(this, trackPathResult, traceModeOn, traceModeUnit, group
       pCoord%LocalY = this%LocBuffTS%Items(n)%LocalY
       pCoord%LocalZ = this%LocBuffTS%Items(n)%LocalZ
       pCoord%TrackingTime = this%LocBuffTS%Items(n)%TrackingTime
-      call this%Grid%ConvertToGlobalXYZ(pCoord%CellNumber, pCoord%LocalX, pCoord%LocalY, pCoord%LocalZ, pCoord%GlobalX, pCoord%GlobalY, pCoord%GlobalZ)
+      call this%Grid%ConvertToModelXYZ(pCoord%CellNumber, pCoord%LocalX,       &
+        pCoord%LocalY, pCoord%LocalZ, pCoord%GlobalX, pCoord%GlobalY,           &
+        pCoord%GlobalZ)
       call trackPathResult%ParticlePath%Timeseries%AddItem(pCoord)
   end do
   

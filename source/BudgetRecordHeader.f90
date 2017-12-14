@@ -21,6 +21,10 @@ module BudgetRecordHeaderModule
     integer(kind=8) :: HeaderOffset = -1
     integer(kind=8) :: DataOffset = -1
     character(len=16) :: TextLabel = '                '
+    character(len=16) :: TXT1ID1 = '                '
+    character(len=16) :: TXT2ID1 = '                '
+    character(len=16) :: TXT1ID2 = '                '
+    character(len=16) :: TXT2ID2 = '                '
     integer :: ArrayBufferSize
     integer :: ColumnCount = 0
     integer :: RowCount = 0
@@ -88,6 +92,7 @@ contains
   class(BudgetRecordHeaderType) :: this
   integer :: n
   
+  this%PrecisionType = 0
   this%TimeStep = 0
   this%StressPeriod = 0
   this%Method = 0
@@ -103,6 +108,11 @@ contains
   this%ListItemValueCount = 0
   this%ListItemCount = 0
   this%ArrayItemCount = 0
+  this%TextLabel = '                '
+  this%TXT1ID1 = '                '
+  this%TXT1ID2 = '                '
+  this%TXT2ID1 = '                '
+  this%TXT2ID2 = '                '
   if(allocated(this%AuxiliaryNames)) deallocate(this%AuxiliaryNames)
   allocate(this%AuxiliaryNames(0))
   

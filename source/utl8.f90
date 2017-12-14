@@ -131,6 +131,55 @@ module UTL8MODULE
     end do
     return
   end subroutine uget_block
+
+  subroutine uget_block_labeled(iin,iout,ctag,clabel,ierr,isfound,lloc,line)
+! ******************************************************************************
+! Read until the ctag block is found.  Return isfound with true, if found.
+! ******************************************************************************
+! 
+!    SPECIFICATIONS:
+! ------------------------------------------------------------------------------
+    implicit none
+    !dummy
+    integer, intent(in) :: iin
+    integer, intent(in) :: iout
+    character (len=*), intent(in) :: ctag,clabel
+    integer, intent(inout) :: ierr
+    logical, intent(inout) :: isfound
+    integer, intent(inout) :: lloc
+    character (len=*), intent(inout) :: line
+    !local
+    integer :: istart
+    integer :: istop
+    integer :: ival
+    double precision :: rval
+! ------------------------------------------------------------------------------
+    !code
+    isfound = .false.
+    do
+      lloc = 1
+      call u8rdcom(iin,iout,line,ierr)
+      if (ierr.lt.0) exit
+      call urword(line, lloc, istart, istop, 1, ival, rval, iin, iout)
+      if (line(istart:istop).eq.'BEGIN') then
+        call urword(line, lloc, istart, istop, 1, ival, rval, iin, iout)
+        if (line(istart:istop).eq.ctag) then
+            if(len_trim(clabel) .gt. 0) then
+                call URWORD(line, lloc, istart, istop, 1, ival, rval, iin, iout)
+                if(line(istart:istop).eq.clabel) then
+                    isfound = .true.
+                end if
+            else
+                isfound = .true.
+            end if
+        else
+          backspace(iin)
+        end if
+        exit
+      end if
+    end do
+    return
+  end subroutine uget_block_labeled
   
   subroutine uterminate_block(iin,iout,key,ctag,lloc,line,ierr)
 ! ******************************************************************************
@@ -1939,6 +1988,7 @@ module UTL8MODULE
       CHARACTER*24 ANAME
       DOUBLE PRECISION,DIMENSION(jj),intent(inout) :: A
       double precision :: r,cnstnt
+      integer :: m, i, j, k, nr, npr, jfirst, jlast
       CHARACTER*20 FMTIN
       CHARACTER*200 CNTRL
       CHARACTER*200 FNAME
@@ -1992,15 +2042,20 @@ module UTL8MODULE
 !C4A-----LOCAT <0 OR =0; SET ALL ARRAY VALUES EQUAL TO CNSTNT. RETURN.
       DO 80 J=1,JJ
    80 A(J)=CNSTNT
-      WRITE(IOUT,3) ANAME,CNSTNT
+      if(layer .eq. 0) WRITE(IOUT,3) ANAME,CNSTNT
     3 FORMAT(1X,/1X,A,' =',1P,G14.6)
+      if(layer .ne. 0) write(iout,33) aname,cnstnt,layer
+33    format(1x,/1x,a,' =',1p,G14.6,' FOR LAYER ',i4)       
       RETURN
 !C
 !C4B-----LOCAT>0; READ FORMATTED RECORDS USING FORMAT FMTIN.
    90 CONTINUE
-      WRITE(IOUT,5) ANAME,LOCAT,LAYER,FMTIN
+      if(layer .eq. 0) WRITE(IOUT,5) ANAME,LOCAT,FMTIN
 5     FORMAT(1X,///11X,A,/ &
-     &       1X,'READING ON UNIT ',I4,' FOR LAYER ',i5,' WITH FORMAT: ',A20)
+     &       1X,'READING ON UNIT ',I4,' WITH FORMAT: ',A20)
+      if(layer .ne. 0) write(iout,55) aname,layer,locat,fmtin
+55    format(1x,///11x,a,' FOR LAYER ',i5/ &      
+     &       1X,'READING ON UNIT ',I4,' WITH FORMAT: ',A20)
       if(fmtin .eq. '(FREE)') then
           READ(LOCAT,*) (A(J),J=1,JJ)
       else
@@ -2015,14 +2070,23 @@ module UTL8MODULE
   100 A(J)=A(J)*CNSTNT
 !C
 !C6------IF PRINT CODE (IPRN) =0 OR >0 THEN PRINT ARRAY VALUES.
-120   CONTINUE
-      IF(IPRN.EQ.0) THEN
-         WRITE(IOUT,1001) (A(J),J=1,JJ)
-1001     FORMAT((1X,1PG12.5,9(1X,G12.5)))
-      ELSE IF(IPRN.GT.0) THEN
-         WRITE(IOUT,1002) (A(J),J=1,JJ)
-1002     FORMAT((1X,1PG12.5,4(1X,G12.5)))
-      END IF
+120 CONTINUE
+    
+      if(iprn .ge. 0) then
+          npr = 10
+          if(iprn .gt. 0) npr = 5
+          m = mod(jj, npr)
+          nr = (jj - m)/npr
+          if(m .gt. 0) nr = nr + 1
+          jlast = 0
+          do i = 1, nr
+              jfirst = jlast + 1
+              jlast = jfirst + npr -1
+              if(jlast .gt. jj) jlast = jj
+              WRITE(IOUT,'(1X,I11,A,5X,1PG12.5,9(1X,G12.5))') jfirst, ':', (A(J),J=jfirst,jlast)
+          end do
+      end if
+
 !C
 !C7------RETURN
       RETURN
@@ -2122,12 +2186,15 @@ module UTL8MODULE
 !C     ------------------------------------------------------------------
       USE OpenSpecModule
       double precision :: r,cnstnt
+      integer :: m, i, j, k, nr, npr, jfirst, jlast
+      integer, dimension(9) :: nprvals
       CHARACTER*24 ANAME
       DIMENSION IA(JJ)
       CHARACTER*20 FMTIN
       CHARACTER*200 CNTRL
       CHARACTER*200 FNAME
       DATA NUNOPN/99/
+      data nprvals/60,40,30,25,20,10,25,15,10/
       !INCLUDE 'openspec.inc'
 !C     ------------------------------------------------------------------
 !C
@@ -2208,15 +2275,46 @@ module UTL8MODULE
       DO 100 J=1,JJ
   100 IA(J)=IA(J)*ICNSTNT
 !C
-!C6------IF PRINT CODE (IPRN) =0 OR >0 THEN PRINT ARRAY VALUES.
-120   CONTINUE
-      IF(IPRN.EQ.0) THEN
-         WRITE(IOUT,1001) (IA(J),J=1,JJ)
-1001     FORMAT(20(1X,I9))
-      ELSE IF(IPRN.GT.0) THEN
-         WRITE(IOUT,1002) (IA(J),J=1,JJ)
-1002     FORMAT(8(1X,I9))
-      END IF
+!C6------IF PRINT CODE (IPRN) >= 0 and <=9 THEN PRINT ARRAY VALUES.
+120 CONTINUE
+    if(iprn .ge. 0) then
+      if(iprn .eq. 0) iprn = 6
+      npr = nprvals(iprn)
+      m = mod(jj, npr)
+      nr = (jj - m)/npr
+      if(m .gt. 0) nr = nr + 1
+      
+      jlast = 0
+      do i = 1, nr
+          jfirst = jlast + 1
+          jlast = jfirst + npr -1
+          if(jlast .gt. jj) jlast = jj
+          select case(iprn)
+            case(1)
+!-------------FORMAT 60I1
+              WRITE(IOUT,'(1X,I11,A,5X,60(1X,I1))') jfirst, ':', (IA(J),J=jfirst,jlast)
+            case(2)
+              WRITE(IOUT,'(1X,I11,A,5X,40(1X,I2))') jfirst, ':', (IA(J),J=jfirst,jlast)
+            case(3)
+              WRITE(IOUT,'(1X,I11,A,5X,60(1X,I3))') jfirst, ':', (IA(J),J=jfirst,jlast)
+            case(4)
+              WRITE(IOUT,'(1X,I11,A,5X,60(1X,I4))') jfirst, ':', (IA(J),J=jfirst,jlast)
+            case(5)
+              WRITE(IOUT,'(1X,I11,A,5X,60(1X,I5))') jfirst, ':', (IA(J),J=jfirst,jlast)
+            case(6)
+              WRITE(IOUT,'(1X,I11,A,5X,60(1X,I11))') jfirst, ':', (IA(J),J=jfirst,jlast)
+            case(7)
+              WRITE(IOUT,'(1X,I11,A,5X,60(1X,I2))') jfirst, ':', (IA(J),J=jfirst,jlast)
+            case(8)
+              WRITE(IOUT,'(1X,I11,A,5X,60(1X,I4))') jfirst, ':', (IA(J),J=jfirst,jlast)
+            case(9)
+              WRITE(IOUT,'(1X,I11,A,5X,60(1X,I6))') jfirst, ':', (IA(J),J=jfirst,jlast)
+            case default
+              ! do not print
+          end select
+      end do
+      
+    end if
 !C
 !C7------RETURN
       RETURN

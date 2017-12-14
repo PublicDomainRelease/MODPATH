@@ -12,34 +12,24 @@ module HeadReaderModule
 ! type: 
 !--------------------------------------
   type,public :: HeadReaderType
-    integer,private :: FileUnit = -1
-    character(len=:),private,allocatable :: Filename
-    integer,private :: OutputUnit = 0
-    integer,private :: PrecisionType = 0
-    integer,private :: LayerCount = 0
-    integer,private :: CellCount = 0
-    integer,private :: GridType = 0
-    integer,private :: RecordCount = 0
-    integer,private :: TimeStepCount = 0
-    type(HeadRecordHeaderType),private,allocatable,dimension(:) :: RecordHeadersUsg
-    doubleprecision,private,allocatable,dimension(:) :: TotalTimes
+    integer :: FileUnit = -1
+    character(len=:),allocatable :: Filename
+    integer :: OutputUnit = 0
+    integer :: PrecisionType = 0
+    integer :: LayerCount = 0
+    integer :: CellCount = 0
+    integer :: GridStyle = 0
+    integer :: RecordCount = 0
+    integer :: TimeStepCount = 0
+    type(HeadRecordHeaderType),allocatable,dimension(:) :: RecordHeaders
+    doubleprecision,allocatable,dimension(:) :: TotalTimes
   contains
     procedure :: OpenFile=>pr_OpenFile
     procedure :: CloseFile=>pr_CloseFile
     procedure :: GetFileOpenStatus=>pr_GetFileOpenStatus
-    procedure :: GetFileUnit=>pr_GetFileUnit
-    procedure :: GetFilename=>pr_GetFilename
-    procedure :: GetGridType=>pr_GetGridType
-    procedure :: GetOutputUnit=>pr_GetOutputUnit
-    procedure :: GetPrecisionType=>pr_GetPrecisionType
-    procedure :: GetLayerCount=>pr_GetLayerCount
-    procedure :: GetCellCount=>pr_GetCellCount
-    procedure :: GetRecordCount=>pr_GetRecordCount
-    procedure :: GetRecordHeaderData=>pr_GetRecordHeaderData
     procedure :: GetHeaderPosition=>pr_GetHeaderPosition
     procedure :: GetHeaderOffset=>pr_GetHeaderOffset
     procedure :: GetDataOffset=>pr_GetDataOffset
-    procedure :: GetTimeStepCount=>pr_GetTimeStepCount
     procedure :: GetTime=>pr_GetTime
     procedure :: FindRecordIndex=>pr_FindRecordIndex
     procedure :: FillTimeStepHeadBuffer=>pr_FillTimeStepHeadBuffer
@@ -51,19 +41,9 @@ module HeadReaderModule
     procedure,private :: ReadUnstructuredRecordHeader=>pr_ReadUnstructuredRecordHeader
     procedure,private :: ReadStructuredRecordHeader=>pr_ReadStructuredRecordHeader
     procedure,private :: CountLayersAndCells=>pr_CountLayersAndCells
-    !procedure,private :: pr_FillRecordDataBuffer
   end type
 
 contains
-
-  function pr_GetTimeStepCount(this) result(count)
-  implicit none
-  class(HeadReaderType) :: this
-  integer :: count
-  
-  count = this%TimeStepCount  
-  
-  end function pr_GetTimeStepCount
 
   function pr_GetTime(this, cumulativeTimeStep) result(time)
   implicit none
@@ -86,7 +66,9 @@ contains
   if(this%RecordCount .lt. 1) return
   
   do n = 1, this%RecordCount
-      if((this%RecordHeadersUsg(n)%StressPeriod .eq. stressPeriod) .and. (this%RecordHeadersUsg(n)%TimeStep .eq. timeStep) .and. (this%RecordHeadersUsg(n)%Layer .eq. layer)) then
+      if((this%RecordHeaders(n)%StressPeriod .eq. stressPeriod) .and.        &
+         (this%RecordHeaders(n)%TimeStep .eq. timeStep) .and.                &
+         (this%RecordHeaders(n)%Layer .eq. layer)) then
           index = n
           return
       end if
@@ -111,16 +93,16 @@ contains
   
   nsize = 0
   do n = firstIndex, lastIndex
-      nfirst = this%RecordHeadersUsg(n)%FirstCellNumber
-      nlast = this%RecordHeadersUsg(n)%LastCellNumber
+      nfirst = this%RecordHeaders(n)%FirstCellNumber
+      nlast = this%RecordHeaders(n)%LastCellNumber
       nsize = nsize + (nlast - nfirst + 1)
   end do
   
   if(bufferSize .lt. nsize) return
   
   do n = firstIndex, lastIndex
-      nfirst = this%RecordHeadersUsg(n)%FirstCellNumber
-      nlast = this%RecordHeadersUsg(n)%LastCellNumber
+      nfirst = this%RecordHeaders(n)%FirstCellNumber
+      nlast = this%RecordHeaders(n)%LastCellNumber
       call this%FillHeadBuffer(n, buffer, bufferSize, nfirst, nlast, spaceAssigned)
       if(spaceAssigned .eq. 0) return
   end do
@@ -128,29 +110,6 @@ contains
   spaceAssigned = nsize
   
   end subroutine pr_FillTimeStepHeadBuffer
-  
-  !subroutine pr_FillTimeStepLayerHeadBuffer(this, stressPeriod, timeStep, layer, buffer, bufferSize, spaceAssigned)
-  !implicit none
-  !class(HeadReaderType) :: this
-  !integer,intent(in) :: stressPeriod, timeStep, bufferSize
-  !integer,intent(inout) :: spaceAssigned
-  !doubleprecision,dimension(bufferSize),intent(inout) :: buffer
-  !integer :: firstIndex, lastIndex, n, nfirst, nlast, nsize
-  !
-  !spaceAssigned = 0
-  !n = this%FindRecordIndex(stressPeriod, timeStep, layer)
-  !if(n .lt. 1) return
-  !
-  !nfirst = this%RecordHeadersUsg(n)%FirstCellNumber
-  !nlast = this%RecordHeadersUsg(n)%LastCellNumber
-  !nsize = nlast - nfirst + 1
-  !
-  !if(bufferSize .lt. nsize) return
-  !
-  !call this%FillHeadBuffer(n, buffer, bufferSize, nfirst, nlast)
-  !if((nfirst .gt. 0) .and. (nlast .gt. 0)) spaceAssigned = nlast - nfirst + 1
-  !
-  !end subroutine pr_FillTimeStepLayerHeadBuffer
 
   function pr_GetHeaderPosition(this, recordIndex) result(position)
   implicit none
@@ -158,7 +117,7 @@ contains
   integer,intent(in) :: recordIndex
   integer(kind=8) :: position
   
-  position = this%RecordHeadersUsg(recordIndex)%HeaderPosition
+  position = this%RecordHeaders(recordIndex)%HeaderPosition
   
   end function pr_GetHeaderPosition
 
@@ -168,7 +127,7 @@ contains
   integer,intent(in) :: recordIndex
   integer :: offset
   
-  offset = this%RecordHeadersUsg(recordIndex)%HeaderOffset
+  offset = this%RecordHeaders(recordIndex)%HeaderOffset
   
   end function pr_GetHeaderOffset
 
@@ -178,7 +137,7 @@ contains
   integer,intent(in) :: recordIndex
   integer :: offset
   
-  offset = this%RecordHeadersUsg(recordIndex)%DataOffset
+  offset = this%RecordHeaders(recordIndex)%DataOffset
   
   end function pr_GetDataOffset
   
@@ -193,12 +152,12 @@ contains
   integer :: n, dataElementCount
   
   spaceAssigned = 0
-  dataElementCount = this%RecordHeadersUsg(recordIndex)%LastCellNumber - this%RecordHeadersUsg(recordIndex)%FirstCellNumber + 1
+  dataElementCount = this%RecordHeaders(recordIndex)%LastCellNumber - this%RecordHeaders(recordIndex)%FirstCellNumber + 1
   n = nlast - nfirst +1
   if(n .ne. dataElementCount) goto 100
   if(bufferSize .lt. nlast) goto 100
   
-  position = this%RecordHeadersUsg(recordIndex)%GetDataPosition()
+  position = this%RecordHeaders(recordIndex)%GetDataPosition()
   read(this%FileUnit, pos=position, err=100)
   if(this%PrecisionType .eq. 1) then
       do n = nfirst, nlast
@@ -223,7 +182,8 @@ contains
   
   end subroutine pr_FillHeadBuffer
 
-  function pr_CheckComplete(this, stressPeriodCount, layerCount, timeStepCounts, stressPeriodLengths, layerCellCounts) result(isComplete)
+  function pr_CheckComplete(this, stressPeriodCount, layerCount,                &
+    timeStepCounts, stressPeriodLengths, layerCellCounts) result(isComplete)
   implicit none
   class(HeadReaderType) :: this
   integer,intent(in) :: stressPeriodCount, layerCount
@@ -243,13 +203,14 @@ contains
           do layer = 1, layerCount
               recordCount = recordCount + 1
               if(recordCount .gt. this%RecordCount) return
-              if(this%RecordHeadersUsg(recordCount)%StressPeriod .ne. period) return
-              if(this%RecordHeadersUsg(recordCount)%timeStep .ne. step) return
-              if(this%RecordHeadersUsg(recordCount)%Layer .ne. layer) return
-              bufferSize = 1 + (this%RecordHeadersUsg(recordCount)%LastCellNumber - this%RecordHeadersUsg(recordCount)%FirstCellNumber)
+              if(this%RecordHeaders(recordCount)%StressPeriod .ne. period) return
+              if(this%RecordHeaders(recordCount)%timeStep .ne. step) return
+              if(this%RecordHeaders(recordCount)%Layer .ne. layer) return
+              bufferSize = 1 + (this%RecordHeaders(recordCount)%LastCellNumber - &
+                this%RecordHeaders(recordCount)%FirstCellNumber)
               if(bufferSize .ne. layerCellCounts(layer)) return
               if((step .eq. 1) .and. (layer .eq. 1) ) then
-                  periodLength = this%RecordHeadersUsg(recordCount)%StressPeriodLength
+                  periodLength = this%RecordHeaders(recordCount)%StressPeriodLength
                   error = 2.0d0 * (stressPeriodLengths(period) - periodLength) / (stressPeriodLengths(period) + periodLength)
                   if(error .lt. 0.0d0) error = -error
                   if(error .gt. tol) return
@@ -264,42 +225,6 @@ contains
   
   end function pr_CheckComplete
 
-  function pr_GetCellCount(this) result(count)
-  implicit none
-  class(HeadReaderType) :: this
-  integer :: count
-  
-  count = this%CellCount
-  
-  end function pr_GetCellCount
-
-  function pr_GetLayerCount(this) result(count)
-  implicit none
-  class(HeadReaderType) :: this
-  integer :: count
-  
-  count = this%LayerCount
-  
-  end function pr_GetLayerCount
-  
-  function pr_GetRecordCount(this) result(count)
-  implicit none
-  class(HeadReaderType) :: this
-  integer :: count
-  
-  count = this%RecordCount
-  
-  end function pr_GetRecordCount
-  
-  function pr_GetGridType(this) result(gridType)
-  implicit none
-  class(HeadReaderType) :: this
-  integer :: gridType
-  
-  gridType = this%GridType
-  
-  end function pr_GetGridType
-
   subroutine pr_CountLayersAndCells(this, layerCount, cellCount)
   implicit none
   class(HeadReaderType) :: this
@@ -311,10 +236,10 @@ contains
   nextLayer = 1
   ! Count the layers for period 1, step 1 and assume that is the same for all time steps
   do n = 1, this%RecordCount
-      period = this%RecordHeadersUsg(n)%StressPeriod
-      step = this%RecordHeadersUsg(n)%TimeStep
-      layer = this%RecordHeadersUsg(n)%Layer
-      layerCellCount = 1 + this%RecordHeadersUsg(n)%LastCellNumber - this%RecordHeadersUsg(n)%FirstCellNumber
+      period = this%RecordHeaders(n)%StressPeriod
+      step = this%RecordHeaders(n)%TimeStep
+      layer = this%RecordHeaders(n)%Layer
+      layerCellCount = 1 + this%RecordHeaders(n)%LastCellNumber - this%RecordHeaders(n)%FirstCellNumber
       
       if((period .ne. 1) .or. (step .ne. 1)) exit
       if(layer .eq. nextLayer) then
@@ -330,49 +255,7 @@ contains
   end do
   
   end subroutine pr_CountLayersAndCells
-  
-  subroutine pr_GetRecordHeaderData(this, recordIndex, stressPeriod, timeStep, periodLength, totalTime, layer, firstCellNumber, lastCellNumber )
-  implicit none
-  class(HeadReaderType) :: this
-  integer,intent(in) :: recordIndex 
-  integer,intent(inout) :: firstCellNumber, lastCellNumber, stressPeriod, timeStep, layer
-  doubleprecision,intent(inout) :: totalTime, periodLength
-  integer :: n, period, step, lay
-  
-  stressPeriod = 0
-  timeStep = 0
-  layer = 0
-  periodLength = 0.0d0
-  totalTime = 0.0d0
-  firstCellNumber = 0
-  lastCellNumber = 0
-  if((recordIndex .lt. 1) .or. (recordIndex .gt. this%RecordCount)) return
-  
-  if(this%GridType .eq. 1) then
-      ! Add code
-  else if(this%GridType .eq. 2) then
-      stressPeriod = this%RecordHeadersUsg(recordIndex)%StressPeriod
-      timeStep = this%RecordHeadersUsg(recordIndex)%TimeStep
-      layer = this%RecordHeadersUsg(recordIndex)%Layer
-      periodLength = this%RecordHeadersUsg(recordIndex)%StressPeriodLength
-      totalTime = this%RecordHeadersUsg(recordIndex)%TotalTime
-      firstCellNumber = this%RecordHeadersUsg(recordIndex)%FirstCellNumber
-      lastCellNumber = this%RecordHeadersUsg(recordIndex)%LastCellNumber
-  end if
-  
-  end subroutine pr_GetRecordHeaderData
 
-!---------------------------------------------------------
-  function pr_GetPrecisionType(this) result(precisionType)
-  implicit none
-  class(HeadReaderType) :: this
-  integer :: precisionType
-  
-  precisionType = this%PrecisionType
-  
-  end function pr_GetPrecisionType
-
-!---------------------------------------------------------
   function pr_GetFileOpenStatus(this) result(fileOpened)
   implicit none
   class(HeadReaderType) :: this
@@ -382,39 +265,7 @@ contains
   if(this%FileUnit .ne. -1) fileOpened = .true.
   
   end function pr_GetFileOpenStatus
-
-!---------------------------------------------------------
-  function pr_GetFileUnit(this) result(unitNumber)
-  implicit none
-  class(HeadReaderType) :: this
-  integer :: unitNumber
   
-  unitNumber = this%FileUnit
-  
-  end function pr_GetFileUnit
-
-!---------------------------------------------------------
-  function pr_GetFilename(this) result(name)
-  implicit none
-  class(HeadReaderType) :: this
-  character(len=:),allocatable :: name
-  
-  if(.not. allocated(this%Filename)) this%Filename = ''
-  name = this%Filename
-  
-  end function pr_GetFilename
-
-!---------------------------------------------------------
-  function pr_GetOutputUnit(this) result(unit)
-  implicit none
-  class(HeadReaderType) :: this
-  integer :: unit
-  
-  unit = this%OutputUnit
-  
-  end function pr_GetOutputUnit
-  
-!---------------------------------------------------------
   subroutine pr_OpenFile(this,filename, inUnit ,outputUnit)
   implicit none
   class(HeadReaderType) :: this
@@ -431,7 +282,9 @@ contains
   ! Find a free file unit number and open the file for read unformatted stream access
 !  call freeunitnumber(this%FileUnit)
   openFileMessage = ''
-  open(unit=this%FileUnit,file=this%Filename,form='unformatted',access='stream',status='old',action='read',iomsg=openFileMessage,err=100)
+  open(unit=this%FileUnit,file=this%Filename,form='unformatted',                &
+       access='stream',status='old',action='read',                              &
+       iomsg=openFileMessage,err=100)
   
   ! Find file size
   inquire(unit=this%FileUnit,size=fileLength)
@@ -447,7 +300,7 @@ contains
   
   ! Check to see if it was processed as a single or double precision unstructured file
   ! If not, try to process it as a structured file
-  if((this%PrecisionType .eq. 0) .and. (this%GridType .eq. 0)) then
+  if((this%PrecisionType .eq. 0) .and. (this%GridStyle .eq. 0)) then
       call this%ProcessStructuredRecordHeaders(1)
       if(this%PrecisionType .eq. 0) then
           call this%ProcessStructuredRecordHeaders(2)
@@ -477,11 +330,11 @@ contains
   period = 0
   step = 0
   do n = 1, this%RecordCount
-      if((this%RecordHeadersUsg(n)%StressPeriod .eq. period) .and. (this%RecordHeadersUsg(n)%TimeStep .eq. step)) cycle
-      period = this%RecordHeadersUsg(n)%StressPeriod
-      step = this%RecordHeadersUsg(n)%TimeStep
+      if((this%RecordHeaders(n)%StressPeriod .eq. period) .and. (this%RecordHeaders(n)%TimeStep .eq. step)) cycle
+      period = this%RecordHeaders(n)%StressPeriod
+      step = this%RecordHeaders(n)%TimeStep
       timeStepCount = timeStepCount + 1
-      this%TotalTimes(timeStepCount) = this%RecordHeadersUsg(n)%TotalTime
+      this%TotalTimes(timeStepCount) = this%RecordHeaders(n)%TotalTime
   end do
   this%TimeStepCount = timeStepCount
   
@@ -492,7 +345,6 @@ contains
 
   end subroutine pr_OpenFile
 
-!---------------------------------------------------------
   subroutine pr_CloseFile(this)
   implicit none
   class(HeadReaderType) :: this
@@ -506,14 +358,13 @@ contains
   this%OutputUnit = 0
   this%PrecisionType = 0
   this%LayerCount = 0
-  this%GridType = 0
+  this%GridStyle = 0
   this%RecordCount = 0
-  if(allocated(this%RecordHeadersUsg)) deallocate(this%RecordHeadersUsg)
+  if(allocated(this%RecordHeaders)) deallocate(this%RecordHeaders)
   if(allocated(this%Filename)) deallocate(this%Filename)
   
   end subroutine pr_CloseFile
 
-!---------------------------------------------------------
   subroutine pr_ProcessUnstructuredRecordHeaders(this, precisionType)
   implicit none
   class(HeadReaderType) :: this
@@ -524,7 +375,7 @@ contains
   integer :: n, recordCount
   
   ! Deallocate RecordHeaders array
-  if(allocated(this%RecordHeadersUsg)) deallocate(this%RecordHeadersUsg)
+  if(allocated(this%RecordHeaders)) deallocate(this%RecordHeaders)
   
   ! Find file size
   inquire(unit=this%FileUnit,size=fileSize)
@@ -539,31 +390,30 @@ contains
   end do
   
   ! Allocate header records array
-  if(allocated(this%RecordHeadersUsg)) deallocate(this%RecordHeadersUsg)
-  allocate(this%RecordHeadersUsg(recordCount))
+  if(allocated(this%RecordHeaders)) deallocate(this%RecordHeaders)
+  allocate(this%RecordHeaders(recordCount))
   
   ! Read through file again to initialize and save the header records in the header records array
   position = 1
   do n = 1, recordCount
-      call this%ReadUnstructuredRecordHeader(position, this%RecordHeadersUsg(n), precisionType)
-      if(this%RecordHeadersUsg(n)%PrecisionType .eq. 0) goto 100
-      position = this%RecordHeadersUsg(n)%GetNextHeaderPosition()
+      call this%ReadUnstructuredRecordHeader(position, this%RecordHeaders(n), precisionType)
+      if(this%RecordHeaders(n)%PrecisionType .eq. 0) goto 100
+      position = this%RecordHeaders(n)%GetNextHeaderPosition()
   end do
   
   this%RecordCount = recordCount
   this%Precisiontype = precisionType
-  this%GridType = 2
+  this%GridStyle = 2
   
   return
 
 100 Continue
-  this%GridType = 0
+  this%GridStyle = 0
   this%PrecisionType = 0
   this%RecordCount = 0
-  if(allocated(this%RecordHeadersUsg)) deallocate(this%RecordHeadersUsg)    
+  if(allocated(this%RecordHeaders)) deallocate(this%RecordHeaders)    
   end subroutine pr_ProcessUnstructuredRecordHeaders
 
-!---------------------------------------------------------
   subroutine pr_ProcessStructuredRecordHeaders(this, precisionType)
   implicit none
   class(HeadReaderType) :: this
@@ -574,7 +424,7 @@ contains
   integer :: n, recordCount
   
   ! Deallocate RecordHeaders array
-  if(allocated(this%RecordHeadersUsg)) deallocate(this%RecordHeadersUsg)
+  if(allocated(this%RecordHeaders)) deallocate(this%RecordHeaders)
   
   ! Find file size
   inquire(unit=this%FileUnit,size=fileSize)
@@ -589,31 +439,30 @@ contains
   end do
   
   ! Allocate header records array
-  if(allocated(this%RecordHeadersUsg)) deallocate(this%RecordHeadersUsg)
-  allocate(this%RecordHeadersUsg(recordCount))
+  if(allocated(this%RecordHeaders)) deallocate(this%RecordHeaders)
+  allocate(this%RecordHeaders(recordCount))
   
   ! Read through file again to initialize and save the header records in the header records array
   position = 1
   do n = 1, recordCount
-      call this%ReadStructuredRecordHeader(position, this%RecordHeadersUsg(n), precisionType)
-      if(this%RecordHeadersUsg(n)%PrecisionType .eq. 0) goto 100
-      position = this%RecordHeadersUsg(n)%GetNextHeaderPosition()
+      call this%ReadStructuredRecordHeader(position, this%RecordHeaders(n), precisionType)
+      if(this%RecordHeaders(n)%PrecisionType .eq. 0) goto 100
+      position = this%RecordHeaders(n)%GetNextHeaderPosition()
   end do
   
   this%RecordCount = recordCount
   this%Precisiontype = precisionType
-  this%GridType = 1
+  this%GridStyle = 1
   
   return
 
 100 Continue
-  this%GridType = 0
+  this%GridStyle = 0
   this%PrecisionType = 0
   this%RecordCount = 0
-  if(allocated(this%RecordHeadersUsg)) deallocate(this%RecordHeadersUsg)    
+  if(allocated(this%RecordHeaders)) deallocate(this%RecordHeaders)    
   end subroutine pr_ProcessStructuredRecordHeaders
 
-!---------------------------------------------------------
   subroutine pr_ReadUnstructuredRecordHeader(this, position, header, precisionType)
   class(HeadReaderType) :: this
   type(HeadRecordHeaderType),intent(inout) :: header
@@ -640,7 +489,9 @@ contains
   ! Set position
   read(this%FileUnit, pos=position, err=100)
   if(precisionType .eq. 1) then
-      read(this%FileUnit, err=100) header%TimeStep, header%StressPeriod, stressPeriodLength, totalTime, textLabel, header%FirstCellNumber, header%LastCellNumber, header%Layer
+      read(this%FileUnit, err=100) header%TimeStep, header%StressPeriod,        &
+        stressPeriodLength, totalTime, textLabel, header%FirstCellNumber,       &
+        header%LastCellNumber, header%Layer
       call TrimAll(textLabel, firstNonBlank, lastNonBlank, trimmedLength)
       if(firstNonBlank.eq.0 .or. lastNonBlank.eq.0) goto 100
       if(textLabel(firstNonBlank:lastNonBlank) .ne. 'HEADU') goto 100
@@ -649,7 +500,9 @@ contains
       header%TotalTime = dble(totalTime)
       header%TextLabel = textLabel
   else if(precisionType .eq. 2) then
-      read(this%FileUnit, err=100) header%TimeStep, header%StressPeriod, stressPeriodLengthDbl, totalTimeDbl, textLabel, header%FirstCellNumber, header%LastCellNumber, header%Layer
+      read(this%FileUnit, err=100) header%TimeStep, header%StressPeriod,        &
+        stressPeriodLengthDbl, totalTimeDbl, textLabel, header%FirstCellNumber, &
+        header%LastCellNumber, header%Layer
       call TrimAll(textLabel, firstNonBlank, lastNonBlank, trimmedLength)
       if(firstNonBlank.eq.0 .or. lastNonBlank.eq.0) goto 100
       if(textLabel(firstNonBlank:lastNonBlank) .ne. 'HEADU') goto 100
@@ -671,7 +524,6 @@ contains
   
   end subroutine pr_ReadUnstructuredRecordHeader
   
-!---------------------------------------------------------
   subroutine pr_ReadStructuredRecordHeader(this, position, header, precisionType)
   class(HeadReaderType) :: this
   type(HeadRecordHeaderType),intent(inout) :: header
@@ -698,7 +550,9 @@ contains
   ! Set position
   read(this%FileUnit, pos=position, err=100)
   if(precisionType .eq. 1) then
-      read(this%FileUnit, err=100) header%TimeStep, header%StressPeriod, stressPeriodLength, totalTime, textLabel, header%ColumnCount, header%RowCount, header%Layer
+      read(this%FileUnit, err=100) header%TimeStep, header%StressPeriod,        &
+        stressPeriodLength, totalTime, textLabel, header%ColumnCount,           &
+        header%RowCount, header%Layer
       call TrimAll(textLabel, firstNonBlank, lastNonBlank, trimmedLength)
       if(firstNonBlank.eq.0 .or. lastNonBlank.eq.0) goto 100
       if(textLabel(firstNonBlank:lastNonBlank) .ne. 'HEAD') goto 100
@@ -707,7 +561,9 @@ contains
       header%TotalTime = dble(totalTime)
       header%TextLabel = textLabel
   else if(precisionType .eq. 2) then
-      read(this%FileUnit, err=100) header%TimeStep, header%StressPeriod, stressPeriodLengthDbl, totalTimeDbl, textLabel, header%ColumnCount, header%RowCount, header%Layer
+      read(this%FileUnit, err=100) header%TimeStep, header%StressPeriod,        &
+        stressPeriodLengthDbl, totalTimeDbl, textLabel, header%ColumnCount,     &
+        header%RowCount, header%Layer
       call TrimAll(textLabel, firstNonBlank, lastNonBlank, trimmedLength)
       if(firstNonBlank.eq.0 .or. lastNonBlank.eq.0) goto 100
       if(textLabel(firstNonBlank:lastNonBlank) .ne. 'HEAD') goto 100

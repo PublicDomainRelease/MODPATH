@@ -1,7 +1,7 @@
 module ModpathSimulationDataModule
   use ParticleTrackingOptionsModule,only : ParticleTrackingOptionsType
   use ParticleGroupModule,only : ParticleGroupType
-  use RectangularUnstructuredGridModule,only : RectangularUnstructuredGridType
+  use ModflowRectangularGridModule,only : ModflowRectangularGridType
   use StartingLocationReaderModule,only : ReadAndPrepareLocations
   implicit none
   
@@ -70,20 +70,20 @@ contains
   this%NameFile = line
   
   ! Read MODPATH listing file filename
-  read(inUnit, *) this%ListingFile
+  read(inUnit, '(a)') this%ListingFile
   
   end subroutine pr_ReadFileHeaders
   
-  subroutine pr_ReadData(this, inUnit, outUnit, cellsPerLayer, layerCount, cellCount, ibound, timeDiscretization, grid)
+  subroutine pr_ReadData(this, inUnit, outUnit, ibound, timeDiscretization, grid)
   use UTL8MODULE,only : urword, ustop, u1dint, u1drel, u1ddbl, u8rdcom, u3ddblmpusg, u3dintmp, u3dintmpusg, u3ddblmp
   use TimeDiscretizationDataModule,only : TimeDiscretizationDataType
   implicit none
   class(ModpathSimulationDataType) :: this
-  integer,intent(in) :: inUnit, outUnit, layerCount, cellCount
-  integer,dimension(layerCount),intent(in) :: cellsPerLayer
-  integer,dimension(cellCount),intent(in) :: ibound
+  class(ModflowRectangularGridType),intent(in) :: grid
+  integer,intent(in) :: inUnit, outUnit
+  integer,dimension(:),allocatable :: cellsPerLayer
+  integer,dimension(grid%CellCount),intent(in) :: ibound
   type(TimeDiscretizationDataType),intent(in) :: timeDiscretization
-  type(RectangularUnstructuredGridType),intent(in) :: grid
   integer :: icol, istart, istop, n, nc, kper, kstp, seqNumber, particleCount, nn, slocUnit, errorCode
   integer :: releaseOption, releaseTimeCount
   doubleprecision :: initialReleaseTime, releaseInterval
@@ -100,16 +100,12 @@ contains
   if(allocated(this%TimePoints)) deallocate(this%TimePoints)
   if(allocated(this%ParticleGroups)) deallocate(this%ParticleGroups)
   if(allocated(this%TrackingOptions)) deallocate(this%TrackingOptions)
-  
-  nn = 0
-  do n = 1, layerCount
-      nn = nn + cellsPerLayer(n)
+  allocate(this%Zones(grid%CellCount))
+  allocate(this%Retardation(grid%CellCount))
+  allocate(cellsPerLayer(grid%LayerCount))
+  do n = 1, grid%LayerCount
+      cellsPerLayer(n) = grid%GetLayerCellCount(n)
   end do
-  if(nn .ne. cellCount) then
-      call ustop('The sum of cells per layer does not match the number of cells in the grid. Stop.')
-  end if
-  allocate(this%Zones(cellCount))
-  allocate(this%Retardation(cellCount))
   
   ! Write header to the listing file
   write(outUnit, *)
@@ -160,52 +156,52 @@ contains
   select case (this%SimulationType)
       case (1)
           write(outUnit,'(A,I2,A)') 'Endpoint Analysis (Simulation type =',this%SimulationType,')'
-          read(inUnit,*) this%EndpointFile
+          read(inUnit,'(a)') this%EndpointFile
           icol=1
           call urword(this%EndpointFile, icol, istart, istop, 0, n, r, 0, 0)
           this%Endpointfile=this%EndpointFile(istart:istop)
       case (2)
           write(outUnit,'(A,I2,A)') 'Pathline Analysis (Simulation type =', this%SimulationType, ')'
-          read(inUnit, *) this%EndpointFile
+          read(inUnit, '(a)') this%EndpointFile
           icol = 1
           call urword(this%EndpointFile,icol,istart,istop,0,n,r,0,0)
           this%EndpointFile = this%EndpointFile(istart:istop)
-          read(inUnit, *) this%PathlineFile
+          read(inUnit, '(a)') this%PathlineFile
           icol = 1
           call urword(this%PathlineFile, icol, istart, istop, 0, n, r, 0, 0)
           this%PathlineFile = this%PathlineFile(istart:istop)
       case (3)
           write(outUnit,'(A,I2,A)') 'Timeseries Analysis (Simulation type =',this%SimulationType,')'
-          read(inUnit, *) this%EndpointFile
+          read(inUnit, '(a)') this%EndpointFile
           icol=1
           call urword(this%EndpointFile, icol, istart, istop, 0, n, r, 0, 0)
           this%Endpointfile=this%EndpointFile(istart:istop)
-          read(inUnit, *) this%TimeseriesFile
+          read(inUnit, '(a)') this%TimeseriesFile
           icol = 1
           call urword(this%TimeseriesFile, icol, istart, istop, 0, n, r, 0, 0)
           this%TimeseriesFile = this%TimeseriesFile(istart:istop)
           IF(this%AdvectiveObservationsOption.EQ.2) then
-            read(inUnit, *) this%AdvectiveObservationsFile
+            read(inUnit, '(a)') this%AdvectiveObservationsFile
             icol = 1
             call urword(this%AdvectiveObservationsFile, icol, istart, istop, 0, n, r,0,0)
             this%AdvectiveObservationsFile = this%AdvectiveObservationsFile(istart:istop)
           end if
       case (4)
           write(outUnit,'(A,I2,A)') 'Combined Pathline and Timeseries Analysis (Simulation type =', this%SimulationType, ')'
-          read(inUnit, *) this%EndpointFile
+          read(inUnit, '(a)') this%EndpointFile
           icol = 1
           call urword(this%EndpointFile,icol,istart,istop,0,n,r,0,0)
           this%EndpointFile = this%EndpointFile(istart:istop)
-          read(inUnit, *) this%PathlineFile
+          read(inUnit, '(a)') this%PathlineFile
           icol = 1
           call urword(this%PathlineFile, icol, istart, istop, 0, n, r, 0, 0)
           this%PathlineFile = this%PathlineFile(istart:istop)
-          read(inUnit, *) this%TimeseriesFile
+          read(inUnit, '(a)') this%TimeseriesFile
           icol = 1
           call urword(this%TimeseriesFile, icol, istart, istop, 0, n, r, 0, 0)
           this%TimeseriesFile = this%TimeseriesFile(istart:istop)
           IF(this%AdvectiveObservationsOption.EQ.2) then
-            read(inUnit, *) this%AdvectiveObservationsFile
+            read(inUnit, '(a)') this%AdvectiveObservationsFile
             icol = 1
             call urword(this%AdvectiveObservationsFile, icol, istart, istop, 0, n, r,0,0)
             this%AdvectiveObservationsFile = this%AdvectiveObservationsFile(istart:istop)
@@ -216,7 +212,7 @@ contains
   
   ! Read trace mode filename if trace mode is on
   if(this%TraceMode .gt. 0) then
-      read(inUnit,*) this%TraceFile
+      read(inUnit,'(a)') this%TraceFile
       icol=1
       call urword(this%EndpointFile, icol, istart, istop, 0, n, r, 0, 0)
       this%TraceFile=this%TraceFile(istart:istop)
@@ -275,9 +271,10 @@ contains
         write(outUnit,'(A,E15.7)') 'Reference time = ', this%ReferenceTime
       case(2)
         read(inUnit, *) kper, kstp, frac
+        this%ReferenceTime = timeDiscretization%GetTimeFromPeriodAndStep(kper, kstp, frac)
         write(outUnit,'(A,I6,A,I6)') 'Reference time will be calculated for: Period ', KPER,' Step ', KSTP
         write(outUnit,'(A,F10.7)') 'The relative time position within the time step is =',FRAC
-        this%ReferenceTime = timeDiscretization%GetTimeFromPeriodAndStep(kper, kstp, frac)
+        write(outUnit,'(A,E15.7)') 'Computed reference time = ', this%ReferenceTime
       case default
         call ustop('Invalid reference time option.')
     end select
@@ -290,11 +287,16 @@ contains
     this%StoppingTimeOption = n
     select case(this%StoppingTimeOption)
         case(1)
-            write(outUnit,'(A,I2,A)') 'Stop tracking at the beginning or end of the MODFLOW simulation (Stopping time option = ',this%StoppingTimeOption,')'
+            write(outUnit,'(A,I2,A)')                                           &
+              'Stop tracking at the beginning or end of the MODFLOW simulation (Stopping time option = ',  &
+              this%StoppingTimeOption,')'
         case(2)
-            write(outUnit,'(A,I2,A)') 'Extend initial or final steady-state time step and continue tracking (Stopping time option = ',this%StoppingTimeOption,')'
+            write(outUnit,'(A,I2,A)')                                           &
+              'Extend initial or final steady-state time step and continue tracking (Stopping time option = ', &
+              this%StoppingTimeOption,')'
         case(3)
-            write(outUnit,'(A,I2,A)') 'Specify a limit for tracking time (Stoping time option = ',this%StoppingTimeOption,')'
+            write(outUnit,'(A,I2,A)')                                           &
+              'Specify a limit for tracking time (Stoping time option = ',this%StoppingTimeOption,')'
             read(inUnit, *) this%StopTime
             write(outUnit,'(A,E15.7)') 'Stop time = ', this%StopTime
         case default
@@ -340,14 +342,18 @@ contains
         write(outUnit, '(/a)') 'A zone array will be read.'
         read(inUnit,*) this%StopZone
         if(this%StopZone .lt. 1) then
-          write(outUnit,'(A,I5)') 'Particles will be allowed to pass through all zones. StopZone = ', this%StopZone
+          write(outUnit,'(A,I5)')                                               &
+            'Particles will be allowed to pass through all zones. StopZone = ', this%StopZone
         else
-          write(outUnit,'(A,I5)') 'Particles will be terminated when they enter cells with a zone numbers equal to ', this%StopZone
+          write(outUnit,'(A,I5)')                                               &
+            'Particles will be terminated when they enter cells with a zone numbers equal to ', this%StopZone
         end if
-        if(grid%GetGridType() .eq. 1) then
-            call u3dintmp(inUnit, outUnit, layerCount, grid%GetRowCount(), grid%GetColumnCount(), cellCount, this%Zones, ANAME(1))            
-        else if(Grid%GetGridType() .eq. 2) then
-            call u3dintmpusg(inUnit, outUnit, cellCount, layerCount, this%Zones, ANAME(1), cellsPerLayer)
+        if((grid%GridType .eq. 1) .or. (grid%GridType .eq. 3)) then
+            call u3dintmp(inUnit, outUnit, grid%LayerCount, grid%RowCount,      &
+              grid%ColumnCount, grid%CellCount, this%Zones, ANAME(1))            
+        else if((grid%GridType .eq. 2) .or. (grid%GridType .eq. 4)) then
+            call u3dintmpusg(inUnit, outUnit, grid%CellCount, grid%LayerCount, this%Zones,&
+              ANAME(1), cellsPerLayer)
         else
             write(outUnit,*) 'Invalid grid type specified when reading zone array data.'
             write(outUnit,*) 'Stopping.'
@@ -356,7 +362,7 @@ contains
     else
         write(outUnit,'(A)') 'The zone value for all cells = 1'
         this%StopZone = 0
-        do n = 1, cellCount
+        do n = 1, grid%CellCount
             this%Zones(n) = 1
         end do
     end if
@@ -368,10 +374,12 @@ contains
     this%RetardationFactorOption = n  
     if(this%RetardationFactorOption .gt. 1) then
         write(outUnit,'(/A)') 'The retardation factor array will be read.'
-        if(grid%GetGridType() .eq. 1) then
-            call u3ddblmp(inUnit, outUnit, layerCount, grid%GetRowCount(), grid%GetColumnCount(), cellCount, this%Retardation, ANAME(2))            
-        else if(Grid%GetGridType() .eq. 2) then
-            call u3ddblmpusg(inUnit, outUnit, cellCount, layerCount, this%Retardation, aname(2), cellsPerLayer)
+        if((grid%GridType .eq. 1) .or. (grid%GridType .eq. 3)) then
+            call u3ddblmp(inUnit, outUnit, grid%LayerCount, grid%RowCount,      &
+              grid%ColumnCount, grid%CellCount, this%Retardation, ANAME(2))            
+        else if((grid%GridType .eq. 2) .or. (grid%GridType .eq. 4)) then
+            call u3ddblmpusg(inUnit, outUnit, grid%CellCount, grid%LayerCount,            &
+              this%Retardation, aname(2), cellsPerLayer)
         else
             write(outUnit,*) 'Invalid grid type specified when reading retardation array data.'
             write(outUnit,*) 'Stopping.'
@@ -379,7 +387,7 @@ contains
         end if
     else
         write(outUnit,'(/A)') 'The retardation factor for all cells = 1'
-        do n = 1, cellCount
+        do n = 1, grid%CellCount
             this%Retardation(n) = 1.0d0
         end do
     end if
@@ -395,7 +403,7 @@ contains
     allocate(this%ParticleGroups(this%ParticleGroupCount))
     do n = 1, this%ParticleGroupCount
       this%ParticleGroups(n)%Group = n
-      read(inUnit, *) this%ParticleGroups(n)%Name
+      read(inUnit, '(a)') this%ParticleGroups(n)%Name
       read(inUnit, *) releaseOption
       
       select case (releaseOption)
@@ -404,12 +412,15 @@ contains
               call this%ParticleGroups(n)%SetReleaseOption1(initialReleaseTime)
           case (2)
               read(inUnit, *) releaseTimeCount, initialReleaseTime, releaseInterval
-              call this%ParticleGroups(n)%SetReleaseOption2(initialReleaseTime, releaseTimeCount, releaseInterval)
+              call this%ParticleGroups(n)%SetReleaseOption2(initialReleaseTime, &
+                releaseTimeCount, releaseInterval)
           case (3)
+              read(inUnit, *) releaseTimeCount
               if(allocated(releaseTimes)) deallocate(releaseTimes)
               allocate(releaseTimes(releaseTimeCount))
               read(inUnit, *) (releaseTimes(nn), nn = 1, releaseTimeCount)
-              call this%ParticleGroups(n)%SetReleaseOption3(releaseTimeCount, releaseTimes)
+              call this%ParticleGroups(n)%SetReleaseOption3(releaseTimeCount,   &
+                releaseTimes)
           case default
           ! write error message and stop
           end select
@@ -427,8 +438,10 @@ contains
       else
           call ustop('Invalid starting locations file name. stop.')
       end if
-      call ReadAndPrepareLocations(slocUnit, outUnit, this%ParticleGroups(n), ibound, cellCount, grid, seqNumber)
-      write(outUnit, '(a,i4,a,i10,a)') 'Particle group ', n, ' contains ', this%ParticleGroups(n)%TotalParticleCount, ' particles.'
+      call ReadAndPrepareLocations(slocUnit, outUnit, this%ParticleGroups(n),   &
+        ibound, grid%CellCount, grid, seqNumber)
+      write(outUnit, '(a,i4,a,i10,a)') 'Particle group ', n, ' contains ',      &
+        this%ParticleGroups(n)%TotalParticleCount, ' particles.'
       particleCount = particleCount + this%ParticleGroups(n)%TotalParticleCount
     end do
     this%TotalParticleCount = particleCount

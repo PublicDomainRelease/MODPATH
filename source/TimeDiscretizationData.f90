@@ -17,19 +17,20 @@ module TimeDiscretizationDataModule
     doubleprecision,dimension(:),allocatable :: TotalTimes
     integer,dimension(:),allocatable,private :: StepOffsets
   contains
-    procedure :: ReadFileType1=>pr_ReadFileType1
-    procedure :: ReadFileType2=>pr_ReadFileType2
-    procedure :: GetPeriodAndStep=>pr_GetPeriodAndStep
-    procedure :: GetCumulativeTimeStep=>pr_GetCumulativeTimeStep
-    procedure :: ComputeTotalTimes=>pr_ComputeTotalTimes
-    procedure :: FindContainingTimeStep=>pr_FindContainingTimeStep
-    procedure :: GetTimeFromPeriodAndStep=>pr_GetTimeFromPeriodAndStep
+    procedure,private :: ReadFileType1
+    procedure,private :: ReadFileType2
+    generic :: ReadData => ReadFileType1, ReadFileType2
+    procedure :: GetPeriodAndStep
+    procedure :: GetCumulativeTimeStep
+    procedure :: ComputeTotalTimes
+    procedure :: FindContainingTimeStep
+    procedure :: GetTimeFromPeriodAndStep
   end type
 
 
 contains
   
-  function pr_GetTimeFromPeriodAndStep(this, stressPeriod, timeStep, relativeTime) result(time)
+  function GetTimeFromPeriodAndStep(this, stressPeriod, timeStep, relativeTime) result(time)
 !***************************************************************************************************************
 ! Description goes here
 !***************************************************************************************************************
@@ -56,9 +57,9 @@ contains
   if(time .lt. time1) time = time1
   if(time .gt. time2) time = time2
   
-  end function pr_GetTimeFromPeriodAndStep
+  end function GetTimeFromPeriodAndStep
   
-  function pr_FindContainingTimeStep(this, time) result(step)
+  function FindContainingTimeStep(this, time) result(step)
 !***************************************************************************************************************
 ! Description goes here
 !***************************************************************************************************************
@@ -87,9 +88,9 @@ contains
       end if
   end do
   
-  end function pr_FindContainingTimeStep
+  end function FindContainingTimeStep
   
-  subroutine pr_GetPeriodAndStep(this, cumulativeStep, stressPeriod, timeStep) 
+  subroutine GetPeriodAndStep(this, cumulativeStep, stressPeriod, timeStep) 
 !***************************************************************************************************************
 ! Description goes here
 !***************************************************************************************************************
@@ -117,9 +118,9 @@ contains
       end if
   end do
   
-  end subroutine pr_GetPeriodAndStep
+  end subroutine GetPeriodAndStep
   
-  function pr_GetCumulativeTimeStep(this, stressPeriod, timeStep) result(step)
+  function GetCumulativeTimeStep(this, stressPeriod, timeStep) result(step)
 !***************************************************************************************************************
 ! Description goes here
 !***************************************************************************************************************
@@ -137,9 +138,9 @@ contains
   
   step = this%StepOffsets(stressPeriod) + timeStep
   
-  end function pr_GetCumulativeTimeStep
+  end function GetCumulativeTimeStep
   
-  subroutine pr_ReadFileType1(this, inUnit, outUnit, stressPeriodCount)
+  subroutine ReadFileType1(this, inUnit, outUnit, stressPeriodCount)
 !***************************************************************************************************************
 ! Description goes here
 !***************************************************************************************************************
@@ -185,8 +186,11 @@ contains
       if(ssFlag .eq. 'TR') this%StressPeriodTypes(n) = .false.
       cStepCount = cStepCount + this%TimeStepCounts(n)
       
-      write(outUnit, '(1x,a,f15.5,a,i10,a,f15.5,a,a)') 'Period length:', this%StressPeriodLengths(n),' Time step count:', this%TimeStepCounts(n), &
-                                                     ' Time step multiplier:', this%Multipliers(n), ' Stress period type:', ssFlag
+      write(outUnit, '(1x,a,f15.5,a,i10,a,f15.5,a,a)')                          &
+        'Period length:', this%StressPeriodLengths(n),                          &
+        ' Time step count:', this%TimeStepCounts(n),                            &
+        ' Time step multiplier:', this%Multipliers(n),                          &
+        ' Stress period type:', ssFlag
   end do
   
   this%CumulativeTimeStepCount = cStepCount
@@ -207,9 +211,9 @@ contains
   
   call this%ComputeTotalTimes()
   
-  end subroutine pr_ReadFileType1
+  end subroutine ReadFileType1
   
-  subroutine pr_ReadFileType2(this, inUnit, outUnit)
+  subroutine ReadFileType2(this, inUnit, outUnit)
 !***************************************************************************************************************
 ! Description goes here
 !***************************************************************************************************************
@@ -217,12 +221,17 @@ contains
 ! Specifications
 !---------------------------------------------------------------------------------------------------------------
   use utl7module,only : upcase
+  use UTL8MODULE,only : uget_block, uterminate_block, u8rdcom, urword, ustop
   implicit none
   class(TimeDiscretizationDataType) :: this
   integer,intent(in) :: inUnit, outUnit
-  integer :: n, period, step, stepCount, cStep, cStepCount
-  doubleprecision :: dt, mult, perlen
+  integer :: n, period, step, stepCount, cStep, cStepCount, ierr, lloc, nval
+  integer :: istart, istop, ncode
+  doubleprecision :: dt, mult, perlen, rval
   character(len=2) :: ssFlag
+  character(len=15) :: ctag
+  character(len=132) :: line
+  logical :: isfound
 !---------------------------------------------------------------------------------------------------------------
   
   if(allocated(this%StressPeriodLengths)) deallocate(this%StressPeriodLengths)
@@ -233,9 +242,51 @@ contains
   if(allocated(this%StepOffsets)) deallocate(this%StepOffsets)
   if(allocated(this%TotalTimes)) deallocate(this%TotalTimes)
   
-  read(inUnit, *) this%StressPeriodCount
-  write(outUnit, '(1x,a,i10)') 'Stress period count = ', this%StressPeriodCount  
+  ! Read OPTIONS block
+  call uget_block(inUnit, outUnit, 'OPTIONS', ierr, isfound, lloc, line)
+  if(isfound) then
+      do
+          call u8rdcom(inUnit, outUnit, line, ierr)
+          lloc = 1
+          call urword(line, lloc, istart, istop, 1, nval, rval, 0, 0)
+          select case(line(istart:istop))
+              case('TIME_UNITS')
+                  call urword(line, lloc, istart, istop, 1, nval, rval, 0, 0)
+                  ! Ignore the time units parameter for now.
+              case('END','BEGIN')
+                  call uterminate_block(inUnit, outUnit, line(istart:istop), 'OPTIONS', lloc, line, ierr)
+                  if(ierr .eq. 0) exit
+              case default
+                call ustop('Unrecognized keyword in OPTIONS block of TDIS file. Stop.')
+          end select        
+      end do
+  else
+      call ustop('OPTIONS block not found in TDIS file. Stop.')
+  end if
   
+  ! Read DIMENSIONS block
+  call uget_block(inUnit, outUnit, 'DIMENSIONS', ierr, isfound, lloc, line)
+  if(isfound) then
+      do
+          call u8rdcom(inUnit, outUnit, line, ierr)
+          lloc = 1
+          call urword(line, lloc, istart, istop, 1, nval, rval, 0, 0)
+          select case(line(istart:istop))
+            case('NPER')
+                call urword(line, lloc, istart, istop, 2, nval, rval, 0, 0)
+                this%StressPeriodCount = nval
+            case('END','BEGIN')
+                call uterminate_block(inUnit, outUnit, line(istart:istop), 'DIMENSIONS', lloc, line, ierr)
+                if(ierr .eq. 0) exit
+            case default
+                call ustop('Unrecognized keyword in DIMENSIONS block of TDIS file. Stop.')
+          end select        
+      end do
+  else
+      call ustop('DIMENSIONS block not found in TDIS file. Stop.')
+  end if
+  
+  ! Allocate arrays
   allocate(this%TimeStepCounts(this%StressPeriodCount))
   allocate(this%StressPeriodLengths(this%StressPeriodCount))
   allocate(this%Multipliers(this%StressPeriodCount))
@@ -246,18 +297,40 @@ contains
   write(outUnit, *)
   write(outUnit, '(1x,a)') 'Time discretization file data'
   write(outUnit, '(1x,a)') '-----------------------------'
+  write(outUnit, '(1x,a,i10)') 'Stress period count = ', this%StressPeriodCount  
 
-  cStepCount = 0
-  do n = 1, this%StressPeriodCount
-      read(inUnit, *) this%StressPeriodLengths(n), this%TimeStepCounts(n), this%Multipliers(n), ssFlag
-      call upcase(ssFlag)
-      this%StressPeriodTypes(n) = .true.
-      if(ssFlag .eq. 'TR') this%StressPeriodTypes(n) = .false.
-      cStepCount = cStepCount + this%TimeStepCounts(n)
-      
-      write(outUnit, '(1x,a,f15.5,a,i10,a,f15.5,a,a)') 'Period length:', this%StressPeriodLengths(n),' Time step count:', this%TimeStepCounts(n), &
-                                                     ' Time step multiplier:', this%Multipliers(n), ' Stress period type:', ssFlag
-  end do
+  ! Read STRESS_PERIODS block (in newer versions this is now PERIODDATA)
+  call uget_block(inUnit, outUnit, 'PERIODDATA', ierr, isfound, lloc, line)
+  if(isfound) then
+     cStepCount = 0
+     do n = 1, this%StressPeriodCount
+          lloc = 1
+          call u8rdcom(inUnit, outUnit, line, ierr)
+          call urword(line, lloc, istart, istop, 3, nval, rval, 0, 0)
+          this%StressPeriodLengths(n) = rval
+          call urword(line, lloc, istart, istop, 2, nval, rval, 0, 0)
+          this%TimeStepCounts(n) = nval
+          call urword(line, lloc, istart, istop, 3, nval, rval, 0, 0)
+          this%Multipliers(n) = rval
+          cStepCount = cStepCount + this%TimeStepCounts(n)
+          ! Set the stress period type to TRUE to indicate steady state. 
+          ! This will be modified as needed later when the storage package file is read.
+          this%StressPeriodTypes(n) = .true.
+          write(outUnit, '(1x,a,f15.5,a,i10,a,f15.5)')                              &
+            'Period length:', this%StressPeriodLengths(n),                          &
+            ' Time step count:', this%TimeStepCounts(n),                            &
+            ' Time step multiplier:', this%Multipliers(n)                           
+      end do
+      lloc = 1
+      call u8rdcom(inUnit, outUnit, line, ierr)
+      call urword(line, lloc, istart, istop, 1, nval, rval, 0, 0)
+      call uterminate_block(inUnit, outUnit, line(istart:istop), 'PERIODDATA', lloc, line, ierr)
+      if(ierr .ne. 0) then
+          call ustop('Improper termination of the STRESS_PERIODS block in the TDIS file. Stop.')
+      end if
+  else
+      call ustop('STRESS_PERIODS block not found in TDIS file. Stop.')
+  end if
   
   this%CumulativeTimeStepCount = cStepCount
   allocate(this%TotalTimes(this%CumulativeTimeStepCount))
@@ -277,9 +350,9 @@ contains
   
   call this%ComputeTotalTimes()
   
-  end subroutine pr_ReadFileType2
-
-  subroutine pr_ComputeTotalTimes(this)
+  end subroutine ReadFileType2
+  
+  subroutine ComputeTotalTimes(this)
 !***************************************************************************************************************
 ! Description goes here
 !***************************************************************************************************************
@@ -317,6 +390,6 @@ contains
       
   end do
 
-  end subroutine pr_ComputeTotalTimes
+  end subroutine ComputeTotalTimes
 
 end module TimeDiscretizationDataModule

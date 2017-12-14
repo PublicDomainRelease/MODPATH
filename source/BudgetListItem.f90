@@ -11,6 +11,7 @@ module BudgetListItemModule
   type,public :: BudgetListItemType
     integer :: CellNumber
     integer :: AuxiliaryValueCount
+    integer :: ID2
     doubleprecision :: BudgetValue
     doubleprecision,dimension(20) :: AuxiliaryValues
   contains
@@ -30,6 +31,7 @@ contains
   this%CellNumber = 0
   this%BudgetValue = 0.0d0
   this%AuxiliaryValueCount = 0
+  this%ID2 = 0
   do n = 1, 20
       this%AuxiliaryValues(n) = 0.0d0
   end do

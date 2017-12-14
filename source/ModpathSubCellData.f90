@@ -103,9 +103,9 @@ contains
   type(ParticleLocationType) :: fval
   
   fval%CellNumber = location%CellNumber
-  fval%LocalX = ((1.0d0 - location.LocalX) * this%OffsetX(1)) + (location.LocalX * this%OffsetX(2))
-  fval%LocalY = ((1.0d0 - location.LocalY) * this%OffsetY(1)) + (location.LocalY * this%OffsetY(2))
-  fval%LocalZ = ((1.0d0 - location.LocalZ) * this%OffsetZ(1)) + (location.LocalZ * this%OffsetZ(2))
+  fval%LocalX = ((1.0d0 - location%LocalX) * this%OffsetX(1)) + (location%LocalX * this%OffsetX(2))
+  fval%LocalY = ((1.0d0 - location%LocalY) * this%OffsetY(1)) + (location%LocalY * this%OffsetY(2))
+  fval%LocalZ = ((1.0d0 - location%LocalZ) * this%OffsetZ(1)) + (location%LocalZ * this%OffsetZ(2))
   fval%TracKingTime = location%TrackingTime
   
   end function pr_ConvertToLocalParentCoordinate
@@ -125,9 +125,9 @@ contains
   
   if(this%ContainsLocalParentCoordinate(location%LocalX, location%LocalY, location%LocalZ)) then
     fval%CellNumber = location%CellNumber
-    fval%LocalX = (location.LocalX - this%OffsetX(1)) / (this%OffsetX(2) - this%OffsetX(1))
-    fval%LocalY = (location.LocalY - this%OffsetY(1)) / (this%OffsetY(2) - this%OffsetY(1))
-    fval%LocalZ = (location.LocalZ - this%OffsetZ(1)) / (this%OffsetZ(2) - this%OffsetZ(1))
+    fval%LocalX = (location%LocalX - this%OffsetX(1)) / (this%OffsetX(2) - this%OffsetX(1))
+    fval%LocalY = (location%LocalY - this%OffsetY(1)) / (this%OffsetY(2) - this%OffsetY(1))
+    fval%LocalZ = (location%LocalZ - this%OffsetZ(1)) / (this%OffsetZ(2) - this%OffsetZ(1))
     fval%TrackingTime = location%TrackingTime
   end if
   

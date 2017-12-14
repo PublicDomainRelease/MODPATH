@@ -45,19 +45,19 @@ module BudgetReaderModule
     procedure :: GetRecordHeaderCount=>pr_GetRecordHeaderCount
     procedure :: GetRecordHeader=>pr_GetRecordHeader
     procedure :: GetRecordHeaderIndex=>pr_GetRecordHeaderIndex
-    generic   :: FillRecordDataBuffer=>pr_FillRecordDataBufferMethod_0_1_4, pr_FillRecordDataBufferMethod_3, pr_FillRecordDataBufferMethod_2_5
+    generic   :: FillRecordDataBuffer=>pr_FillRecordDataBufferMethod_0_1_4,     &
+      pr_FillRecordDataBufferMethod_3, pr_FillRecordDataBufferMethod_2_5_6
     
     ! Private procedures
     procedure,private :: ReadRecordHeader=>pr_ReadRecordHeader
     procedure,private :: ProcessRecordHeaders=>pr_ProcessRecordHeaders
     procedure,private :: pr_FillRecordDataBufferMethod_0_1_4
     procedure,private :: pr_FillRecordDataBufferMethod_3
-    procedure,private :: pr_FillRecordDataBufferMethod_2_5
+    procedure,private :: pr_FillRecordDataBufferMethod_2_5_6
   end type
 
-contains
+    contains
 
-!---------------------------------------------------------
   function pr_GetRecordHeaderIndex(this, stressPeriod, timeStep, label) result(index)
   implicit none
   class(BudgetReaderType) :: this
@@ -89,6 +89,7 @@ contains
   recordHeader = this%RecordHeaders(recordIndex)
 
   end function pr_GetRecordHeader
+  
 !---------------------------------------------------------
   function pr_GetRecordHeaderCount(this) result(count)
   implicit none
@@ -371,14 +372,14 @@ contains
   end subroutine pr_FillRecordDataBufferMethod_3
 
 !---------------------------------------------------------
-  subroutine pr_FillRecordDataBufferMethod_2_5(this, header, listBuffer, bufferSize, spaceAssigned, status)
+  subroutine pr_FillRecordDataBufferMethod_2_5_6(this, header, listBuffer, bufferSize, spaceAssigned, status)
   implicit none
   class(BudgetReaderType) :: this
   type(BudgetRecordHeaderType),intent(in) :: header
   integer,intent(in) :: bufferSize
   type(BudgetListItemType),intent(inout),dimension(bufferSize) :: listBuffer
   integer,intent(inout) :: spaceAssigned,status
-  integer :: n, m, requiredSize, auxNamesCount, cellNumber
+  integer :: n, m, requiredSize, auxNamesCount, cellNumber, id2
   integer(kind=8) :: position
   real(kind=4) :: singleValue
   
@@ -400,9 +401,10 @@ contains
       case (1)
           read(this%FileUnit,pos=position,err=100) 
           do n = 1, requiredSize
-               read(this%FileUnit, err = 100) cellNumber
+               read(this%FileUnit, err = 100) listBuffer(n)%CellNumber
+               listBuffer(n)%ID2 = 0
+               if(header%Method .eq. 6) read(this%FileUnit, err = 100) listBuffer(n)%ID2
                read(this%FileUnit, err = 100) singleValue
-               listBuffer(n)%CellNumber = cellNumber
                listBuffer(n)%BudgetValue = dble(singleValue)
                if(auxNamesCount .gt. 0) then
                    do m = 1, auxNamesCount
@@ -416,6 +418,8 @@ contains
           read(this%FileUnit,pos=position,err=100) 
           do n = 1, requiredSize
                read(this%FileUnit, err = 100) listBuffer(n)%CellNumber
+               listBuffer(n)%ID2 = 0
+               if(header%Method .eq. 6) read(this%FileUnit, err = 100) listBuffer(n)%ID2
                read(this%FileUnit, err = 100) listBuffer(n)%BudgetValue
                if(auxNamesCount .gt. 0) then
                    do m = 1, auxNamesCount
@@ -436,7 +440,7 @@ contains
   status = 5
   spaceAssigned = 0
   
-  end subroutine pr_FillRecordDataBufferMethod_2_5
+  end subroutine pr_FillRecordDataBufferMethod_2_5_6
   
 !---------------------------------------------------------
   subroutine pr_OpenBudgetFile(this,filename, inUnit, outputUnit)
@@ -468,7 +472,9 @@ contains
   ! Find a free file unit number and open the file for read unformatted stream access
 !  call freeunitnumber(this%FileUnit)
   openFileMessage = ''
-  open(unit=this%FileUnit,file=this%Filename,form='unformatted',access='stream',status='old',action='read',iomsg=openFileMessage,err=100)
+  open(unit=this%FileUnit,file=this%Filename,form='unformatted',                &
+       access='stream',status='old',action='read',iomsg=openFileMessage,        &
+       err=100)
   
   ! Find file size
   inquire(unit=this%FileUnit,size=fileLength)
@@ -575,25 +581,28 @@ contains
   ! Set position
   headerOffset = 0
   read(this%FileUnit, pos=position, err=100)
-  read(this%FileUnit, err=100) header%TimeStep, header%StressPeriod, header%TextLabel, header%ColumnCount, header%RowCount, header%LayerCount
+  read(this%FileUnit, err=100) header%TimeStep, header%StressPeriod,            &
+    header%TextLabel, header%ColumnCount, header%RowCount, header%LayerCount
   headerOffset = headerOffset + 16 + (5 * intBytes)
   
   if(header%LayerCount .lt. 0) then
       header%LayerCount = -header%LayerCount
       
       if(precisionType .eq. 1) then
-          read(this%FileUnit, err=100) header%Method, timeStepLength, stressPeriodLength, totalTime
+          read(this%FileUnit, err=100) header%Method, timeStepLength,           &
+            stressPeriodLength, totalTime
           header%TimeStepLength = dble(timeStepLength)
           header%StressPeriodLength = dble(stressPeriodLength)
           header%TotalTime = dble(totalTime)
       else
-          read(this%FileUnit, err=100) header%Method, timeStepLengthDbl, stressPeriodLengthDbl, totalTimeDbl
+          read(this%FileUnit, err=100) header%Method, timeStepLengthDbl,        &
+            stressPeriodLengthDbl, totalTimeDbl
           header%TimeStepLength = timeStepLengthDbl
           header%StressPeriodLength = stressPeriodLengthDbl
           header%TotalTime = totalTimeDbl
       end if
       
-      if((header%Method .lt. 1) .or. (header%Method .gt. 5)) goto 100
+      if((header%Method .lt. 1) .or. (header%Method .gt. 6)) goto 100
       headerOffset = headerOffset + intBytes + (3 * realBytes)
       if(header%Method .eq. 2) then
           header%ListItemValueCount = 1
@@ -619,6 +628,32 @@ contains
           headerOffset = headerOffset + intBytes
           
           if(header%ListItemCount .lt. 0) goto 100
+      else if(header%Method .eq. 6) then
+          read(this%FileUnit, err=100) header%TXT1ID1
+          read(this%FileUnit, err=100) header%TXT1ID2
+          read(this%FileUnit, err=100) header%TXT2ID1
+          read(this%FileUnit, err=100) header%TXT2ID2
+          headerOffset = headerOffset + 64
+          
+          read(this%FileUnit, err=100) header%ListItemValueCount
+          headerOffset = headerOffset + intBytes
+          
+          if(header%ListItemValueCount .lt. 0) goto 100
+          auxCount = header%ListItemValueCount - 1
+          if(allocated(header%AuxiliaryNames)) deallocate(header%AuxiliaryNames)
+          allocate(header%AuxiliaryNames(auxCount))
+          if(auxCount .gt. 0) then
+              do n = 1, auxCount
+                  read(this%FileUnit,err=100) header%AuxiliaryNames(n)
+                  headerOffset = headerOffset + 16
+              end do
+          end if
+          
+          read(this%FileUnit,err=100) header%ListItemCount
+          headerOffset = headerOffset + intBytes
+          
+          if(header%ListItemCount .lt. 0) goto 100
+          ! Add code
       end if
       
   else
@@ -628,7 +663,7 @@ contains
       header%TotalTime = 0.0d0
   end if
   
-  if((header%Method .eq. 2) .or. (header%Method .eq. 5)) then
+  if((header%Method .eq. 2) .or. (header%Method .eq. 5) .or. (header%Method .eq. 6)) then
       header%ArrayItemCount = 0
   else if((header%Method .eq. 3) .or. (header%Method .eq. 4)) then
       header%ArrayItemCount = header%ColumnCount * header%RowCount
@@ -651,6 +686,8 @@ contains
       header%DataOffset = realBytes * (layerCountLong * rowCountLong * columnCountLong)
   else if((header%Method .eq. 2) .or. (header%Method .eq. 5)) then
       header%DataOffset = listItemCountLong * ((realBytes * listItemValueCountLong) + intBytes)
+  else if(header%Method .eq. 6) then
+      header%DataOffset = listItemCountLong * ((realBytes * listItemValueCountLong) + (2 * intBytes))
   else if(header%Method .eq. 3) then
       header%DataOffset = (realBytes + intBytes) * (rowCountLong * columnCountLong)
   else if(header%Method .eq. 4) then
@@ -663,7 +700,7 @@ contains
   
   ! Handle error. Reinitialize header to signal the error, then return.
 100 continue
-  call header%Initialize
+  call header%Initialize()
   
   end subroutine pr_ReadRecordHeader
 
@@ -672,9 +709,11 @@ contains
   implicit none
   class(BudgetReaderType) :: this
   integer,intent(in) :: targetPrecisionType
-  integer :: n,recordCount,budgetType,precisionType,budgetFileFormat,eq0Count,gt0Count
-  logical :: layerAndRowCountEqual1,hasFlowJA,hasFlowFrontFace,constantGridDimensions
-  integer :: nlay,nrow,ncol,firstChar,lastChar,trimmedLength,maxArrayBufferSize,maxListItemCount,bufferSize
+  integer :: n,recordCount,budgetType,precisionType,budgetFileFormat,eq0Count,  &
+    gt0Count
+  logical :: hasFlowJA,hasFlowFrontFace
+  integer :: nlay,nrow,ncol,firstChar,lastChar,trimmedLength,                   &
+    maxArrayBufferSize,maxListItemCount,bufferSize
   integer(kind=8) :: position,fileSize,nextPosition,temp
   character(len=16) :: text
   type(BudgetRecordHeaderType) :: header
@@ -687,9 +726,7 @@ contains
   
   ! Set initial values for the logical flags used to check budget type (structured or unstructured)
   hasFlowJA = .false.
-  layerAndRowCountEqual1 = .true.
   hasFlowFrontFace = .false.
-  constantGridDimensions = .true.
   
   ! Read through header records and count them. Update the logical budget type flags for each record header.
   precisionType = targetPrecisionType
@@ -718,19 +755,16 @@ contains
       end if
       
       if(recordCount .eq. 1) then
-          nrow = header%RowCount
-          ncol = header%ColumnCount
-          nlay = header%LayerCount
-          maxArrayBufferSize = nrow*ncol*nlay
+          maxArrayBufferSize = header%RowCount * header%ColumnCount * header%LayerCount
           maxListItemCount = header%ListItemCount
-      else
-          if(header%RowCount .ne. nrow) constantGridDimensions = .false.
-          if(header%ColumnCount .ne. ncol) constantGridDimensions = .false.
-          if(header%LayerCount .ne. nlay) constantGridDimensions = .false.          
       end if
       
       call TrimAll(header%TextLabel,firstChar,lastChar,trimmedLength)
       if(header%TextLabel(firstChar:lastChar) .eq. 'FLOW JA FACE') then
+           hasFlowJA = .true.
+           this%FlowArraySize = header%ColumnCount
+      end if
+      if(header%TextLabel(firstChar:lastChar) .eq. 'FLOW-JA-FACE') then
            hasFlowJA = .true.
            this%FlowArraySize = header%ColumnCount
       end if
@@ -739,7 +773,7 @@ contains
            this%FlowArraySize = header%ColumnCount * header%RowCount * header%LayerCount
       end if
       
-      if((header%RowCount .ne. 1) .or. (header%LayerCount .ne. 1)) layerAndRowCountEqual1 = .false.
+      !if((header%RowCount .ne. 1) .or. (header%LayerCount .ne. 1)) layerAndRowCountEqual1 = .false.
       
       bufferSize = header%RowCount * header%ColumnCount * header%LayerCount
       if(bufferSize .gt. maxArrayBufferSize) maxArrayBufferSize = bufferSize
@@ -787,9 +821,9 @@ contains
   end if
   
   ! Check budget type flags to determine whether it is a structured or unstructured budget file
-  if(hasFlowJA .and. layerAndRowCountEqual1) then
+  if(hasFlowJA) then
       budgetType = 2
-  else if(hasFlowFrontFace .and. constantGridDimensions) then
+  else if(hasFlowFrontFace) then
       budgetType = 1
   end if
   

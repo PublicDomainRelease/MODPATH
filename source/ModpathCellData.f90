@@ -1,5 +1,6 @@
 module ModpathCellDataModule
-  use RectangularUnstructuredGridModule,only : RectangularUnstructuredGridType
+  use ModflowRectangularGridModule,only : ModflowRectangularGridType
+  !use RectangularUnstructuredGridModule, only : RectangularUnstructuredGridType
   use ParticleLocationModule,only : ParticleLocationType
   use ModpathSubCellDataModule,only : ModpathSubCellDataType
   implicit none
@@ -158,11 +159,14 @@ contains
   end function pr_GetVolumetricBalance
   
 
-  subroutine pr_GetVolumetricBalanceComponents(this, totalFaceInflow, totalFaceOutflow, sourceFlow, sinkFlow, storageInflow, storageOutflow, balance)
+  subroutine pr_GetVolumetricBalanceComponents(this, totalFaceInflow,           &
+    totalFaceOutflow, sourceFlow, sinkFlow, storageInflow, storageOutflow,      &
+    balance)
   implicit none
   class(ModpathCellDataType) :: this
   doubleprecision :: inflow,outflow
-  doubleprecision,intent(inout) :: totalFaceInflow, totalFaceOutflow, sourceFlow, sinkFlow, storageInflow, storageOutflow, balance
+  doubleprecision,intent(inout) :: totalFaceInflow, totalFaceOutflow,           &
+    sourceFlow, sinkFlow, storageInflow, storageOutflow, balance
   integer :: n
   
   balance = 0.0d0
@@ -386,9 +390,10 @@ contains
 
   end subroutine pr_Reset
 
-  
 !------------------------------------------
-  subroutine pr_SetFlowAndPropertyData(this,ibound,porosity,retardation,arraySize,faceFlowsCount,faceFlows,connectionList,storageFlow,sourceFlow,sinkFlow,boundaryFlows)
+  subroutine pr_SetFlowAndPropertyData(this,ibound,porosity,retardation,        &
+    arraySize,faceFlowsCount,faceFlows,connectionList,storageFlow,sourceFlow,   &
+    sinkFlow,boundaryFlows)
   implicit none
   class(ModpathCellDataType) :: this
   integer :: n,index,cellNumber,count,i
@@ -595,15 +600,19 @@ contains
   end subroutine pr_SetFlowAndPropertyData
 
 !------------------------------------------
-  subroutine pr_SetDataUnstructured(this,cellNumber,grid,ibound,iboundTS,porosity,retardation,storageFlow,sourceFlow,sinkFlow,faceFlows,boundaryFlows, head, layerType, zone)
+  subroutine pr_SetDataUnstructured(this,cellNumber,cellCount,reducedConnectionCount,grid,&
+    ibound,iboundTS,porosity,retardation,storageFlow,sourceFlow,sinkFlow,       &
+    faceFlows,boundaryFlows, head, layerType, zone)
   implicit none
   class(ModpathCellDataType) :: this
-  type(RectangularUnstructuredGridType),intent(in) :: grid
-  integer,intent(in) :: cellNumber
-  integer,intent(in) :: ibound, iboundTS, layerType, zone
+  class(ModflowRectangularGridType),intent(in) :: grid
+  integer,intent(in) :: cellNumber,cellCount
+  integer,intent(in) :: reducedConnectionCount
+  integer,intent(in) :: iboundTS, layerType, zone
+  integer,intent(in),dimension(cellCount) :: ibound
   doubleprecision,intent(in) :: porosity, retardation, storageFlow, sourceFlow, sinkFlow
   doubleprecision,intent(in),dimension(6) :: boundaryFlows
-  doubleprecision,intent(in),dimension(grid%GetReducedConnectionCount()) :: faceFlows
+  doubleprecision,intent(in),dimension(reducedConnectionCount) :: faceFlows
   doubleprecision,intent(in) :: head
   integer :: n,index,count,i,conn
   doubleprecision :: flow
@@ -612,19 +621,20 @@ contains
 
   this%CellNumber = cellNumber
   this%Layer = grid%GetLayer(cellNumber)
-  this%DX = grid%GetDX(cellNumber)
-  this%DY = grid%GetDY(cellNumber)
+  this%DX = grid%DelX(cellNumber)
+  this%DY = grid%DelY(cellNumber)
   this%MinX = grid%GetLeft(cellNumber)
   this%MinY = grid%GetFront(cellNumber)
-  this%Bottom = grid%GetBottom(cellNumber)
-  this%Top = grid%GetTop(cellNumber)
-  this%ReducedConnectionCount = grid%GetReducedCellConnectionCount(cellNumber)
+  this%Bottom = grid%Bottom(cellNumber)
+  this%Top = grid%Top(cellNumber)
+  this%ReducedConnectionCount = grid%GetJaCellConnectionsCount(cellNumber)
+  !this%ReducedConnectionCount = grid%GetReducedCellConnectionCount(cellNumber)
   
   ! Assign property data
   this%Zone = zone
   this%LayerType = layerType
   this%Head = head
-  this%Ibound = ibound
+  this%Ibound = ibound(cellNumber)
   this%IboundTS = iboundTS
   this%Porosity = porosity
   this%Retardation = retardation
@@ -634,86 +644,110 @@ contains
   
   ! Process face flow data
   ! Face 1
-  count = grid%GetFaceConnectionCount(cellNumber, 1)
+  count = grid%GetPotentialFaceConnectionCount(cellNumber, 1)
   this%PotentialConnectionsCount(1) = count
   if(count .gt. 0) then
       this%SubFaceCounts(1) = count
       i = 0
       do n = 1, count
         conn = grid%GetFaceConnection(cellNumber,1,n)
-        if(conn .eq. 0) i = i + 1
         this%SubFaceConn1(n) = conn
+        if(conn .eq. 0) then
+            i = i + 1
+        else
+            if(ibound(conn) .eq. 0) i = i + 1
+        end if
       end do
       this%SubFaceBoundaryCounts(1) = i
   end if
   
   
   ! Face 2
-  count = grid%GetFaceConnectionCount(cellNumber, 2)
+  count = grid%GetPotentialFaceConnectionCount(cellNumber, 2)
   this%PotentialConnectionsCount(2) = count
   if(count .gt. 0) then
       this%SubFaceCounts(2) = count
       i = 0
       do n = 1, count
         conn = grid%GetFaceConnection(cellNumber,2,n)
-        if(conn .eq. 0) i = i + 1
         this%SubFaceConn2(n) = conn
+        if(conn .eq. 0) then
+            i = i + 1
+        else
+            if(ibound(conn) .eq. 0) i = i + 1
+        end if
       end do
       this%SubFaceBoundaryCounts(2) = i
   end if
   
   ! Face 3
-  count = grid%GetFaceConnectionCount(cellNumber, 3)
+  count = grid%GetPotentialFaceConnectionCount(cellNumber, 3)
   this%PotentialConnectionsCount(3) = count
   if(count .gt. 0) then
      this%SubFaceCounts(3) = count
       i = 0
       do n = 1, count
         conn = grid%GetFaceConnection(cellNumber,3,n)
-        if(conn .eq. 0) i = i + 1
         this%SubFaceConn3(n) = conn
+        if(conn .eq. 0) then
+            i = i + 1
+        else
+            if(ibound(conn) .eq. 0) i = i + 1
+        end if
       end do
       this%SubFaceBoundaryCounts(3) = i
   end if
   
   ! Face 4
-  count = grid%GetFaceConnectionCount(cellNumber, 4)
+  count = grid%GetPotentialFaceConnectionCount(cellNumber, 4)
   this%PotentialConnectionsCount(4) = count
   if(count .gt. 0) then
       this%SubFaceCounts(4) = count
       i = 0
       do n = 1, count
         conn = grid%GetFaceConnection(cellNumber,4,n)
-        if(conn .eq. 0) i = i + 1
         this%SubFaceConn4(n) = conn
+        if(conn .eq. 0) then
+            i = i + 1
+        else
+            if(ibound(conn) .eq. 0) i = i + 1
+        end if
       end do
       this%SubFaceBoundaryCounts(4) = i
   end if
   
   ! Face 5
-  count = grid%GetFaceConnectionCount(cellNumber, 5)
+  count = grid%GetPotentialFaceConnectionCount(cellNumber, 5)
   this%PotentialConnectionsCount(5) = count
   if(count .gt. 0) then
       this%SubFaceCounts(5) = count
       i = 0
       do n = 1, count
         conn = grid%GetFaceConnection(cellNumber,5,n)
-        if(conn .eq. 0) i = i + 1
         this%SubFaceConn5(n) = conn
+        if(conn .eq. 0) then
+            i = i + 1
+        else
+            if(ibound(conn) .eq. 0) i = i + 1
+        end if
       end do
       this%SubFaceBoundaryCounts(5) = i
   end if
   
   ! Face 6
-  count = grid%GetFaceConnectionCount(cellNumber, 6)
+  count = grid%GetPotentialFaceConnectionCount(cellNumber, 6)
   this%PotentialConnectionsCount(6) = count
   if(count .gt. 0) then
       this%SubFaceCounts(6) = count
       i = 0
       do n = 1, count
         conn = grid%GetFaceConnection(cellNumber,6,n)
-        if(conn .eq. 0) i = i + 1
         this%SubFaceConn6(n) = conn
+        if(conn .eq. 0) then
+            i = i + 1
+        else
+            if(ibound(conn) .eq. 0) i = i + 1
+        end if
       end do
       this%SubFaceBoundaryCounts(6) = i
   end if
@@ -902,17 +936,22 @@ contains
   end subroutine pr_SetDataUnstructured
 
 !------------------------------------------
-  subroutine pr_SetDataStructured(this,cellNumber,grid,ibound,iboundTS,porosity,retardation,storageFlow,sourceFlow,sinkFlow,flowsRightFace,flowsFrontFace,flowsLowerFace,boundaryFlows, head, layerType, zone)
+  subroutine pr_SetDataStructured(this,cellNumber,cellCount,grid,ibound,        &
+    iboundTS,porosity,retardation,storageFlow,sourceFlow,sinkFlow,              &
+    flowsRightFace,flowsFrontFace,flowsLowerFace,boundaryFlows, head,           &
+    layerType, zone)
   implicit none
   class(ModpathCellDataType) :: this
-  type(RectangularUnstructuredGridType),intent(in) :: grid
+  class(ModflowRectangularGridType),intent(in) :: grid
   integer,intent(in) :: cellNumber
-  integer,intent(in) :: ibound, iboundTS, layerType, zone
+  integer,intent(in) :: cellCount
+  integer,intent(in) :: iboundTS, layerType, zone
+  integer,intent(in),dimension(cellCount) :: ibound
   doubleprecision,intent(in) :: porosity, retardation, storageFlow, sourceFlow, sinkFlow
   doubleprecision,intent(in),dimension(6) :: boundaryFlows
-  doubleprecision,intent(in),dimension(grid%GetCellCount()) :: flowsRightFace
-  doubleprecision,intent(in),dimension(grid%GetCellCount()) :: flowsFrontFace
-  doubleprecision,intent(in),dimension(grid%GetCellCount()) :: flowsLowerFace
+  doubleprecision,intent(in),dimension(cellCount) :: flowsRightFace
+  doubleprecision,intent(in),dimension(cellCount) :: flowsFrontFace
+  doubleprecision,intent(in),dimension(cellCount) :: flowsLowerFace
   doubleprecision,intent(in) :: head
   integer :: n,index,count,i,conn
   doubleprecision :: flow
@@ -921,19 +960,20 @@ contains
 
   this%CellNumber = cellNumber
   this%Layer = grid%GetLayer(cellNumber)
-  this%DX = grid%GetDX(cellNumber)
-  this%DY = grid%GetDY(cellNumber)
+  this%DX = grid%DelX(cellNumber)
+  this%DY = grid%DelY(cellNumber)
   this%MinX = grid%GetLeft(cellNumber)
   this%MinY = grid%GetFront(cellNumber)
-  this%Bottom = grid%GetBottom(cellNumber)
-  this%Top = grid%GetTop(cellNumber)
-  this%ReducedConnectionCount = grid%GetReducedCellConnectionCount(cellNumber)
+  this%Bottom = grid%Bottom(cellNumber)
+  this%Top = grid%Top(cellNumber)
+  this%ReducedConnectionCount = grid%GetJaCellConnectionsCount(cellNumber)
+  !this%ReducedConnectionCount = grid%GetReducedCellConnectionCount(cellNumber)
   
   ! Assign property data
   this%Zone = zone
   this%LayerType = layerType
   this%Head = head
-  this%Ibound = ibound
+  this%Ibound = ibound(cellNumber)
   this%IboundTS = iboundTS
   this%Porosity = porosity
   this%Retardation = retardation
@@ -943,86 +983,110 @@ contains
   
   ! Process face flow data
   ! Face 1
-  count = grid%GetFaceConnectionCount(cellNumber, 1)
+  count = grid%GetPotentialFaceConnectionCount(cellNumber, 1)
   this%PotentialConnectionsCount(1) = count
   if(count .gt. 0) then
       this%SubFaceCounts(1) = count
       i = 0
       do n = 1, count
         conn = grid%GetFaceConnection(cellNumber,1,n)
-        if(conn .eq. 0) i = i + 1
         this%SubFaceConn1(n) = conn
+        if(conn .eq. 0) then
+            i = i + 1
+        else
+            if(ibound(conn) .eq. 0) i = i + 1
+        end if
       end do
       this%SubFaceBoundaryCounts(1) = i
   end if
   
   
   ! Face 2
-  count = grid%GetFaceConnectionCount(cellNumber, 2)
+  count = grid%GetPotentialFaceConnectionCount(cellNumber, 2)
   this%PotentialConnectionsCount(2) = count
   if(count .gt. 0) then
       this%SubFaceCounts(2) = count
       i = 0
       do n = 1, count
         conn = grid%GetFaceConnection(cellNumber,2,n)
-        if(conn .eq. 0) i = i + 1
         this%SubFaceConn2(n) = conn
+        if(conn .eq. 0) then
+            i = i + 1
+        else
+            if(ibound(conn) .eq. 0) i = i + 1
+        end if
       end do
       this%SubFaceBoundaryCounts(2) = i
   end if
   
   ! Face 3
-  count = grid%GetFaceConnectionCount(cellNumber, 3)
+  count = grid%GetPotentialFaceConnectionCount(cellNumber, 3)
   this%PotentialConnectionsCount(3) = count
   if(count .gt. 0) then
      this%SubFaceCounts(3) = count
       i = 0
       do n = 1, count
         conn = grid%GetFaceConnection(cellNumber,3,n)
-        if(conn .eq. 0) i = i + 1
         this%SubFaceConn3(n) = conn
+        if(conn .eq. 0) then
+            i = i + 1
+        else
+            if(ibound(conn) .eq. 0) i = i + 1
+        end if
       end do
       this%SubFaceBoundaryCounts(3) = i
   end if
   
   ! Face 4
-  count = grid%GetFaceConnectionCount(cellNumber, 4)
+  count = grid%GetPotentialFaceConnectionCount(cellNumber, 4)
   this%PotentialConnectionsCount(4) = count
   if(count .gt. 0) then
       this%SubFaceCounts(4) = count
       i = 0
       do n = 1, count
         conn = grid%GetFaceConnection(cellNumber,4,n)
-        if(conn .eq. 0) i = i + 1
         this%SubFaceConn4(n) = conn
+        if(conn .eq. 0) then
+            i = i + 1
+        else
+            if(ibound(conn) .eq. 0) i = i + 1
+        end if
       end do
       this%SubFaceBoundaryCounts(4) = i
   end if
   
   ! Face 5
-  count = grid%GetFaceConnectionCount(cellNumber, 5)
+  count = grid%GetPotentialFaceConnectionCount(cellNumber, 5)
   this%PotentialConnectionsCount(5) = count
   if(count .gt. 0) then
       this%SubFaceCounts(5) = count
       i = 0
       do n = 1, count
         conn = grid%GetFaceConnection(cellNumber,5,n)
-        if(conn .eq. 0) i = i + 1
         this%SubFaceConn5(n) = conn
+        if(conn .eq. 0) then
+            i = i + 1
+        else
+            if(ibound(conn) .eq. 0) i = i + 1
+        end if
       end do
       this%SubFaceBoundaryCounts(5) = i
   end if
   
   ! Face 6
-  count = grid%GetFaceConnectionCount(cellNumber, 6)
+  count = grid%GetPotentialFaceConnectionCount(cellNumber, 6)
   this%PotentialConnectionsCount(6) = count
   if(count .gt. 0) then
       this%SubFaceCounts(6) = count
       i = 0
       do n = 1, count
         conn = grid%GetFaceConnection(cellNumber,6,n)
-        if(conn .eq. 0) i = i + 1
         this%SubFaceConn6(n) = conn
+        if(conn .eq. 0) then
+            i = i + 1
+        else
+            if(ibound(conn) .eq. 0) i = i + 1
+        end if
       end do
       this%SubFaceBoundaryCounts(6) = i
   end if
@@ -1466,24 +1530,6 @@ end subroutine pr_SolveGauss
   this%SubCellFlows(4) = -h(2)
   
   end subroutine pr_ComputeSubCellFlows
-
-!!------------------------------------------
-!  function pr_GetSubCellBoundaryFlow(this, faceFlows, arraySize, subFaceNumber, subDivisionCount) result(flow)
-!  implicit none 
-!  class(ModpathCellDataType) :: this
-!  integer,intent(in) :: subFaceNumber,subDivisionCount,arraySize
-!  doubleprecision,intent(in),dimension(arraySize) :: faceFlows
-!  doubleprecision :: flow
-!  integer :: faceFlowsSize
-!  
-!  faceFlowsSize = size(faceFlows)
-!  if(faceFlowsSize .eq. 1) then
-!    flow = faceFlows(1) / subDivisionCount
-!  else
-!    flow = faceFlows(subFaceNumber)
-!  end if
-!  
-!  end function pr_GetSubCellBoundaryFlow
 
 !------------------------------------------
   function pr_GetSubCellBoundaryFlow(this, faceNumber, subFaceNumber) result(flow)

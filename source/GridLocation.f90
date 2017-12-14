@@ -18,6 +18,7 @@ module GridLocationModule
     doubleprecision :: LocalZ
     contains
     procedure :: SetGridLocationData=>pr_SetData
+    procedure :: Reset => pr_Reset
   end type
   
   

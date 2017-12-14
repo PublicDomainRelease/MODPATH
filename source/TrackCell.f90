@@ -113,10 +113,9 @@ contains
   doubleprecision,intent(in) :: maximumTime
   type(TrackSubCellResultType) :: subCellResult
   type(ParticleLocationType) :: subLoc,pLoc
-  logical :: stopImmediately,stopIfNoSubCellExit,hasExit
-  integer :: subRow,subColumn,count, layer
+  logical :: stopIfNoSubCellExit,hasExit
+  integer :: subRow,subColumn,count, layer, stopZone
   
-  stopImmediately = .false.
   stopIfNoSubCellExit = .true.
   
   ! Initialize cellResult
@@ -144,24 +143,36 @@ contains
   call trackCellResult%TrackingPoints%AddItem(initialLocation)
   
   ! Check for stopping conditions
-  ! First check to see if cell has at least one exit face.
-  hasExit = this%CellData%HasExitFace(this%TrackingOptions%BackwardTracking)
+  
+  ! Check to see if this cell is an automatic stop zone cell
+  stopZone = this%TrackingOptions%StopZone;
+  if(stopZone .gt. 0) then
+      if(this%CellData%Zone .eq. stopZone) then
+        trackCellResult%Status = trackCellResult%Status_StopZoneCell()
+        return;
+      end if
+  end if
   
   ! If the cell has no exit face then:
-  !   1. If the system is steady state, set stopImmediately = .true.
-  !   2. If the system is transient, tracking is backward, and SourceFlow is not equal to 0, set stopImmediately = .true.
-  !   3. If the system is transient, tracking is forware, and SinkFlow is not equal to 0, set stopImmediately = .true.
+  !   1. If the system is steady state, set status NoExitPossible and return immediately
+  !   2. If the system is transient, tracking is backward, and SourceFlow is not equal to 0, set status to 
+  !      NoExitPossible and return immediately
+  !   3. If the system is transient, tracking is forware, and SinkFlow is not equal to 0, set status to
+  !      NoExitPossible and return immediately
+  !
+  ! First check to see if cell has at least one exit face.
+  hasExit = this%CellData%HasExitFace(this%TrackingOptions%BackwardTracking)
   if(.not. hasExit) then
       if(this%SteadyState) then
-          stopImmediately = .true.
           trackCellResult%Status = trackCellResult%Status_NoExitPossible()
+          return;
       else
           if((this%TrackingOptions%BackwardTracking) .and. (this%CellData%SourceFlow .ne. 0.0d0)) then
-               stopImmediately = .true.
                trackCellResult%Status = trackCellResult%Status_NoExitPossible()
+               return;
           else if((.not. this%TrackingOptions%BackwardTracking) .and. (this%CellData%SinkFlow .ne. 0.0d0)) then
-               stopImmediately = .true.
                trackCellResult%Status = trackCellResult%Status_NoExitPossible()
+               return;
           end if
       end if
   end if
@@ -170,10 +181,8 @@ contains
   if(this%TrackingOptions%BackwardTracking) then
       if(this%TrackingOptions%StopAtWeakSources) then
           if(this%CellData%SourceFlow .ne. 0.0d0) then 
-              stopImmediately = .true.
-              if(trackCellResult%Status .ne. trackCellResult%Status_NoExitPossible()) then
-                  trackCellResult%Status = trackCellResult%Status_StopAtWeakSource()
-              end if
+              trackCellResult%Status = trackCellResult%Status_StopAtWeakSource()
+              return;
           else
               if(.not. this%SteadyState) stopIfNoSubCellExit = .false.
           end if
@@ -181,23 +190,15 @@ contains
   else
       if(this%TrackingOptions%StopAtWeakSinks) then
           if(this%CellData%SinkFlow .ne. 0.0d0) then
-              stopImmediately = .true.
-              if(trackCellResult%Status .ne. trackCellResult%Status_NoExitPossible()) then
-                  trackCellResult%Status = trackCellResult%Status_StopAtWeakSink()
-              end if
+              trackCellResult%Status = trackCellResult%Status_StopAtWeakSink()
+              return;
           else
               if(.not. this%SteadyState) stopIfNoSubCellExit = .false.
           end if
       end if
   end if
   
-  ! If stopImmediately = .true. then process the result and return immediately
-  if(stopImmediately) then
-      ! The value of trackCellResult%Status is already set to the appropriate condition, so just return.
-      return
-  end if
-  
-  ! Otherwise, if stopImmediately = .false. then loop through particle tracking for all sub-cells until a stopping condition is reached.
+  ! No immediate stopping condition was found, so loop through sub-cells until a stopping condition is reached.
       
   ! Find the sub-cell that contains the initial location
   call this%FindSubCell(initialLocation,subRow,subColumn)
@@ -209,8 +210,10 @@ contains
   end if
   
   ! Initialize the sub-cell buffer and convert the initial location to the equivalent local sub-cell coordinates.
-  call this%CellData%FillSubCellDataBuffer(this%TrackSubCell%SubCellData,subRow,subColumn,this%TrackingOptions%BackwardTracking)
-  subLoc = this%TrackSubCell%SubCellData%ConvertFromLocalParentCoordinate(initialLocation)
+  call this%CellData%FillSubCellDataBuffer(this%TrackSubCell%SubCellData,       &
+    subRow,subColumn,this%TrackingOptions%BackwardTracking)
+  subLoc =                                                                      &
+    this%TrackSubCell%SubCellData%ConvertFromLocalParentCoordinate(initialLocation)
   
   ! Loop through sub-cells until a stopping condition is met.
   ! The loop count is set to 100. If it goes through the loop 100 times then something is wrong. 
@@ -240,7 +243,9 @@ contains
                 subLoc%LocalZ = subCellResult%FinalLocation%LocalZ
                 subLoc%TrackingTime = subCellResult%FinalLocation%TrackingTime
                 subColumn = 1
-                call this%CellData%FillSubCellDataBuffer(this%TrackSubCell%SubCellData,subRow,subColumn,this%TrackingOptions%BackwardTracking)
+                call this%CellData%FillSubCellDataBuffer(                       &
+                  this%TrackSubCell%SubCellData,subRow,subColumn,               &
+                  this%TrackingOptions%BackwardTracking)
             case (2)
                 if(subCellResult%Column .ne. 1) then
                     ! Face 2 cannot be an internal face unless the column index equals 1.
@@ -253,7 +258,9 @@ contains
                 subLoc%LocalZ = subCellResult%FinalLocation%LocalZ
                 subLoc%TrackingTime = subCellResult%FinalLocation%TrackingTime
                 subColumn = 2
-                call this%CellData%FillSubCellDataBuffer(this%TrackSubCell%SubCellData,subRow,subColumn,this%TrackingOptions%BackwardTracking)
+                call this%CellData%FillSubCellDataBuffer(                       &
+                  this%TrackSubCell%SubCellData,subRow,subColumn,               &
+                  this%TrackingOptions%BackwardTracking)
             case (3)
                 if(subCellResult%Row .ne. 1) then
                     ! Face 3 cannot be an internal face unless the row index equals 1.
@@ -266,7 +273,9 @@ contains
                 subLoc%LocalZ = subCellResult%FinalLocation%LocalZ
                 subLoc%TrackingTime = subCellResult%FinalLocation%TrackingTime
                 subRow = 2
-                call this%CellData%FillSubCellDataBuffer(this%TrackSubCell%SubCellData, subRow, subColumn, this%TrackingOptions%BackwardTracking)
+                call this%CellData%FillSubCellDataBuffer(                       &
+                  this%TrackSubCell%SubCellData, subRow, subColumn,             &
+                  this%TrackingOptions%BackwardTracking)
             case (4)
                 if(subCellResult%Row .ne. 2) then
                     ! Face 4 cannot be an internal face unless the row index equals 2.
@@ -279,7 +288,9 @@ contains
                 subLoc%LocalZ = subCellResult%FinalLocation%LocalZ
                 subLoc%TrackingTime = subCellResult%FinalLocation%TrackingTime
                 subRow = 1
-                call this%CellData%FillSubCellDataBuffer(this%TrackSubCell%SubCellData, subRow, subColumn, this%TrackingOptions%BackwardTracking)
+                call this%CellData%FillSubCellDataBuffer(                       &
+                  this%TrackSubCell%SubCellData, subRow, subColumn,             &
+                  this%TrackingOptions%BackwardTracking)
             case default
                 ! Something went wrong. Set trackCellResult%Status equal to Undefined and return
                 trackCellResult%Status = trackCellResult%Status_Undefined()

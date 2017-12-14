@@ -1,6 +1,7 @@
 module ParticleGroupModule
   use ParticleModule,only : ParticleType
-  use RectangularUnstructuredGridModule,only : RectangularUnstructuredGridType
+  !use RectangularUnstructuredGridModule,only : RectangularUnstructuredGridType
+  !use ModflowRectangularGridModule,only : ModflowRectangularGridType
   implicit none
   
 ! Set default access status to private

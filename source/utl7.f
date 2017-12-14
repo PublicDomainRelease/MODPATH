@@ -1676,6 +1676,8 @@ C     ------------------------------------------------------------------
 
       IF (STOPMESS.NE.' ') THEN
         WRITE(*,10) STOPMESS
+        write(*,10) 'Press enter to terminate the program ...'
+        read(*,*)
       ENDIF
       STOP
 

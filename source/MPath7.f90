@@ -7,10 +7,13 @@
 !
 !   Specifiactions:
 !---------------------------------------------------------------------------------
-    use GlobalDataModule,only : niunit, narealsp, issflg, nper, mpbasUnit, disUnit, tdisUnit, mpugridUnit, &
-        headUnit, headuUnit, budgetUnit, inUnit, pathlineUnit, endpointUnit, timeseriesUnit, binPathlineUnit, mplistUnit, &
-        traceUnit, budchkUnit, aobsUnit, logUnit, mpsimUnit, traceModeUnit, mpnamFile, mplistFile, mpbasFile, disFile, & 
-        tdisFile, gridFile, headFile, budgetFile, mpsimFile, traceFile, particleGroupCount, gridFileType
+    use GlobalDataModule,only : niunit, narealsp, issflg, nper, mpbasUnit,      &
+        disUnit, tdisUnit, gridMetaUnit, headUnit, headuUnit, budgetUnit,        &
+        inUnit, pathlineUnit, endpointUnit, timeseriesUnit, binPathlineUnit,    &
+        mplistUnit, traceUnit, budchkUnit, aobsUnit, logUnit, mpsimUnit,        &
+        traceModeUnit, mpnamFile, mplistFile, mpbasFile, disFile, tdisFile,     &
+        gridFile, headFile, budgetFile, mpsimFile, traceFile,  gridMetaFile,    &
+        particleGroupCount, gridFileType
     use UtilMiscModule,only : ulog
     use utl8module,only : freeunitnumber, ustop
     use ModpathCellDataModule,only : ModpathCellDataType
@@ -18,7 +21,13 @@
     use ModpathSimulationDataModule,only : ModpathSimulationDataType
     use BudgetReaderModule,only : BudgetReaderType
     use HeadReaderModule,only : HeadReaderType
-    use RectangularUnstructuredGridModule,only : RectangularUnstructuredGridType
+    
+    use ModflowRectangularGridModule,only : ModflowRectangularGridType
+    use RectangularGridDisModule,only : RectangularGridDisType
+    use RectangularGridDisMf6Module,only : RectangularGridDisMf6Type
+    use RectangularGridDisvMf6Module,only : RectangularGridDisvMf6Type
+    use RectangularGridDisuMfusgModule,only : RectangularGridDisuMfusgType    
+    
     use TimeDiscretizationDataModule,only : TimeDiscretizationDataType
     use ParticleTrackingEngineModule,only : ParticleTrackingEngineType
     use TrackPathResultModule,only : TrackPathResultType
@@ -28,12 +37,20 @@
     use ParticleModule,only : ParticleType
     use ParticleManagerModule
     use BudgetRecordHeaderModule,only : BudgetRecordHeaderType
+    use GeoReferenceModule,only : GeoReferenceType
+    use CompilerVersion,only : get_compiler
     implicit none
     
     ! Variables declarations
     type(HeadReaderType),allocatable :: headReader
     type(BudgetReaderType), allocatable :: budgetReader
-    type(RectangularUnstructuredGridType), allocatable :: usgGrid
+    
+    class(ModflowRectangularGridType), pointer :: modelGrid
+    class(RectangularGridDisType), allocatable, target :: disGrid
+    class(RectangularGridDisMf6Type), allocatable, target :: disMf6Grid
+    class(RectangularGridDisvMf6Type), allocatable, target :: disvMf6Grid
+    class(RectangularGridDisuMfusgType), allocatable, target :: disuMfusgGrid
+
     type(TimeDiscretizationDataType), allocatable :: tdisData
     type(ParticleTrackingEngineType), allocatable,target :: trackingEngine
     type(ModpathBasicDataType), allocatable, target :: basicData
@@ -46,33 +63,38 @@
     type(ParticleGroupType),pointer :: pGroup
     type(ParticleType),pointer :: p
     type(BudgetRecordHeaderType) :: budgetRecordHeader
-    integer,dimension(:),allocatable :: cellsPerLayer
+    type(GeoReferenceType) :: geoRef
     doubleprecision,dimension(:),allocatable :: timePoints
     doubleprecision,dimension(:),allocatable :: tPoint
     integer,dimension(7) :: budgetIntervalBins
     doubleprecision,dimension(6) :: budgetIntervalBreaks
-    logical :: traceModeOn
+    logical :: traceModeOn, unitOpened
     integer :: budgetIntervalBreakCount, maxErrorCell
     doubleprecision :: maxError
     integer :: clockCountStart, clockCountStop, clockCountRate, clockCountMax
     doubleprecision :: elapsedTime
-    logical :: ssFlag
-    integer :: cellCount, layerCount, groupIndex, particleIndex, pendingCount, activeCount, timePointCount, tPointCount, pathlineRecordCount
+    integer :: groupIndex, particleIndex, pendingCount,  &
+      activeCount, timePointCount, tPointCount, pathlineRecordCount
     integer :: stressPeriodCount, recordHeaderCount
-    integer :: n, m, ktime, kfirst, klast, kincr, period, step, nt, count, plCount, tsCount, status, itend, particleID, topActiveCellNumber, auxCount
+    integer :: n, m, ktime, kfirst, klast, kincr, period, step, nt, count,      &
+      plCount, tsCount, status, itend, particleID, topActiveCellNumber,         &
+      auxCount
+    integer :: bufferSize, cellConnectionCount
+    integer,dimension(:),allocatable :: buffer
     doubleprecision :: t, stoptime, maxTime, tsMax, time
     character(len=132) message
     character(len=10) version
-    character(len=30) versionDate
     character(len=75) terminationMessage
+    character(len=80) compilerVersionText
     
 !---------------------------------------------------------------------------------
     
     ! Set version
-    version = '7.1.000'
-    versionDate = ' (September 26, 2016)'
+    version = '7.2.001'
     
-    write(*,'(1x/a,a,a)') 'MODPATH Version ', version, versionDate
+    call get_compiler(compilerVersionText)
+    write(*,'(1x/a,a)') 'MODPATH Version ', version
+    write(*,'(a)') compilerVersionText
     write(*,*)
     
     ! Set the default termination message
@@ -95,6 +117,7 @@
      budgetUnit = 114
      traceModeUnit = 115
      binPathlineUnit = 116
+     gridMetaUnit = 117
      
     ! Open the log file
     open(unit=logUnit, file='mpath7.log', status='replace', form='formatted', access='sequential')
@@ -119,14 +142,30 @@
     ! Open the MODPATH output listing file
     open(unit=mplistUnit, file=mplistFile, status='replace', form='formatted', access='sequential')
     
-    write(mplistUnit,'(1x/a,a,a)') 'MODPATH Version ', version, versionDate
+    write(mplistUnit,'(1x/a,a)') 'MODPATH Version ', version
+    write(mplistUnit,'(a)') compilerVersionText
+    write(mplistUnit, *)
+    write(mplistUnit, '(a)') 'This software has been approved for release by the U.S. Geological'
+    write(mplistUnit, '(a)') 'Survey (USGS). Although the software has been subjected to rigorous'    
+    write(mplistUnit, '(a)') 'review, the USGS reserves the right to update the software as needed'    
+    write(mplistUnit, '(a)') 'pursuant to further analysis and review. No warranty, expressed or'    
+    write(mplistUnit, '(a)') 'implied, is made by the USGS or the U.S. Government as to the'    
+    write(mplistUnit, '(a)') 'functionality of the software and related material nor shall the'    
+    write(mplistUnit, '(a)') 'fact of release constitute any such warranty. Furthermore, the'    
+    write(mplistUnit, '(a)') 'software is released on condition that neither the USGS nor the U.S.'    
+    write(mplistUnit, '(a)') 'Government shall be held liable for any damages resulting from its'    
+    write(mplistUnit, '(a)') 'authorized or unauthorized use. Also refer to the USGS Water'    
+    write(mplistUnit, '(a)') 'Resources Software User Rights Notice for complete use, copyright,'    
+    write(mplistUnit, '(a)') 'and distribution information.'    
+    write(mplistUnit, *)
+    
     
     ! Read the MODPATH name file
     call ReadNameFile(mpnamFile, mplistUnit, gridFileType)
     
     ! Process spatial and time discretization data
     call ulog('Allocate rectangular unstructured grid component.', logUnit)
-    allocate(usgGrid)
+    allocate(modelGrid)
     call ulog('Allocate time discretization data component ...', logUnit)
     allocate(tdisData)
     
@@ -135,12 +174,15 @@
       
     select case (gridFileType)
         case (1) 
-            ! MODFLOW-2005 discretization file
+            ! MODFLOW-2005 discretization file (DIS)
             ! Read spatial and time discretization. 
             write(mplistUnit, '(a,1x)') 'Grid file type: MODFLOW-2005 discretization file (DIS)'
-            call ulog('Read rectangular unstructured grid data.', logUnit)
-            call usgGrid%ReadFileType1(disUnit, mplistUnit, stressPeriodCount)
-            call tdisData%ReadFileType1(disUnit, mplistUnit, stressPeriodCount)
+            call ulog('Allocate disGrid.', logUnit)
+            allocate(disGrid)
+            call ulog('Read grid file.', logUnit)
+            call disGrid%ReadData(disUnit, gridMetaUnit, mplistUnit, stressPeriodCount)
+            modelGrid => disGrid
+            call tdisData%ReadData(disUnit, mplistUnit, stressPeriodCount)
             
             ! Close discretization files
             close(disUnit)
@@ -148,15 +190,31 @@
         case (2)
             ! MODPATH spatial(MPUGRID) and time (TDIS) discretization files 
             ! Read spatial discretization
-            write(mplistUnit, '(a,1x)') 'Grid file type: MODPATH unstructured rectangular grid file.'
-            call ulog('Read rectangular unstructured grid data.', logUnit)
-            call usgGrid%ReadFileType2(disUnit, mplistUnit)
+            write(mplistUnit, '(a,1x)') 'Grid file type: MODFLOW-USG unstructured grid file (DISU).'
+            call ulog('Allocate disuMfusgGrid.', logUnit)
+            allocate(disuMfusgGrid)
+            call ulog('Read grid file.', logUnit)
+            call disuMfusgGrid%ReadData(disUnit, gridMetaUnit, mplistUnit, stressPeriodCount)
+            modelGrid => disuMfusgGrid
+            call tdisData%ReadData(disUnit, mplistUnit, stressPeriodCount)
+            ! Close discretization file
+            close(disUnit)
+        
+        case (3)
+            ! MODFLOW-6 DIS binary grid file
+            ! Read spatial discretization
+            write(mplistUnit, '(a,1x)') 'Grid file type: MODFLOW-6 DIS binary grid file.'
+            call ulog('Allocate disMf6Grid.', logUnit)
+            allocate(disMf6Grid)
+            call ulog('Read DIS binary grid file.', logUnit)
+            call disMf6Grid%ReadData(disUnit, gridMetaUnit, mplistUnit)
+            modelGrid => disMf6Grid
             
             ! Read time discretization file
             if(len_trim(tdisFile) .gt. 0) then
-                write(mplistUnit, '(a,1x)') 'Time discretization file type: MODPATH time discretization file.'
+                write(mplistUnit, '(a,1x)') 'Time discretization file type: MODFLOW-6 time discretization file.'
                 call ulog('Read time discretization data component ...', logUnit)
-                call tdisData%ReadFileType2(tdisUnit, mplistUnit)
+                call tdisData%ReadData(tdisUnit, mplistUnit)
             else
                 call ulog('The time discretization file was not specified.', logUnit)
                 call ustop('The time discretization file was not specified.')
@@ -165,25 +223,62 @@
             ! Close discretization files
             close(disUnit)
             close(tdisUnit)
-        
+            
+        case (4)
+            ! MODFLOW-6 DISV binary grid file
+            ! Read spatial discretization
+            write(mplistUnit, '(a,1x)') 'Grid file type: MODFLOW-6 DIS binary grid file.'
+            call ulog('Allocate disvMf6Grid.', logUnit)
+            allocate(disvMf6Grid)
+            call ulog('Read DISV binary grid file.', logUnit)
+            call disvMf6Grid%ReadData(disUnit, gridMetaUnit, mplistUnit)
+            modelGrid => disvMf6Grid
+           
+            ! Read time discretization file
+            if(len_trim(tdisFile) .gt. 0) then
+                write(mplistUnit, '(a,1x)') 'Time discretization file type: MODFLOW-6 time discretization file.'
+                call ulog('Read time discretization data component ...', logUnit)
+                call tdisData%ReadData(tdisUnit, mplistUnit)
+            else
+                call ulog('The time discretization file was not specified.', logUnit)
+                call ustop('The time discretization file was not specified.')
+            end if
+            
+            ! Close discretization files
+            close(disUnit)
+            close(tdisUnit)
+            
+        case (5)
+            ! MODFLOW-6 DISU binary grid file
+            write(mplistUnit, '(1x,a)') 'MODFLOW-6 DISU binary grid files are not yet supported. Stop.' 
+            
         case default
             write(mplistUnit, '(1x,a)') 'Unknown grid file type. Stop.'
             stop
             
-    end select
+        end select
     
-    ! Fill the cellsPerLayer array
-    layerCount = usgGrid%GetLayerCount()
-    cellCount = usgGrid%GetCellCount()
-    allocate(cellsPerLayer(layerCount))
-    m = 0
-    do n = 1, layerCount
-        cellsPerLayer(n) = usgGrid%GetLayerCellCount(n)
-        m = m + cellsPerLayer(n)
+    ! Write connection data
+    write(logUnit, *)
+    write(logUnit, '(1x,a)') '----------------------------------------------------------'
+    write(logUnit, '(1x,a)') 'Cell connection data:'
+    write(logUnit, '(1x,a)') '----------------------------------------------------------'
+    write(logUnit, '(1x,a)') 'Format has two lines for each cell, listed by cell number.'
+    write(logUnit, '(1x,a)') 'Line 1: Cell connections'
+    write(logUnit, '(1x,a)') 'Line 1: Face assignment codes'
+    write(logUnit, '(1x,a)') '----------------------------------------------------------'
+    bufferSize = 25
+    allocate(buffer(bufferSize))
+    do n = 1, modelGrid%CellCount
+        call modelGrid%GetJaCellConnections(n, buffer, bufferSize, cellConnectionCount)
+        write(logUnit, '(1x,25i8)') (buffer(m), m = 1, cellConnectionCount)
+        call modelGrid%GetCellConnectionFaces(n, buffer, bufferSize, cellConnectionCount)
+        write(logUnit, '(1x,25i8)') (buffer(m), m = 1, cellConnectionCount)
+        write(logUnit, *)        
     end do
-    if(m .ne. cellCount) then
-        call ustop('The sum of cells per layer does not match the number of cells in the grid. Stop.')
-    end if
+    
+    ! Initialize the georeference data
+    call geoRef%SetData(modelGrid%OriginX, modelGrid%OriginY, modelGrid%RotationAngle)
     
     ! Initialize the budgetReader component
     call ulog('Allocate budget reader component.', logUnit)
@@ -207,11 +302,11 @@
     call ulog('Allocate MODPATH basic data component.', logUnit)
     allocate(basicData)
     call ulog('Read MODPATH basic data component.', logUnit)   
-    call basicData%ReadData(mpbasUnit, mplistUnit, cellsPerLayer, layerCount, cellCount, usgGrid)
+    call basicData%ReadData(mpbasUnit, mplistUnit, modelGrid)
     
     ! Read the remainder of the MODPATH simulation file
     call ulog('Read the remainder of the MODPATH simulation data component.', logUnit)
-    call simulationData%ReadData(mpsimUnit, mplistUnit, cellsPerLayer, layerCount, cellCount, basicData%IBound, tdisData, usgGrid)
+    call simulationData%ReadData(mpsimUnit, mplistUnit, basicData%IBound, tdisData, modelGrid)
         
     ! Budget File Data Summary
     ! If budget output option = 2, then write a list of budget record headers.
@@ -227,13 +322,14 @@
     ! Initialize the particle tracking engine:
     call ulog('Allocate particle tracking engine component.', logUnit)
     allocate(trackingEngine)
-    call trackingEngine%Initialize(headReader, budgetReader, usgGrid, basicData%HNoFlow, basicData%HDry, simulationData%TrackingOptions)
-    call trackingEngine%SetIBound(basicData%IBound,usgGrid%GetCellCount())
-    call trackingEngine%SetPorosity(basicData%Porosity, usgGrid%GetCellCount())
-    call trackingEngine%SetLayerTypes(basicData%LayerTypes, usgGrid%GetLayerCount() )
-    call trackingEngine%SetZones(simulationData%Zones, usgGrid%GetCellCount())
-    call trackingEngine%SetRetardation(simulationData%Retardation, usgGrid%GetCellCount())
-    call trackingEngine%SetDefaultIface(basicData%DefaultIfaceLabels, basicData%DefaultIfaceValues, basicData%DefaultIfaceCount)
+    call trackingEngine%Initialize(headReader, budgetReader, modelGrid,           &
+      basicData%HNoFlow, basicData%HDry, simulationData%TrackingOptions)
+    call trackingEngine%SetIBound(basicData%IBound,modelGrid%CellCount)
+    call trackingEngine%SetPorosity(basicData%Porosity, modelGrid%CellCount)
+    call trackingEngine%SetZones(simulationData%Zones, modelGrid%CellCount)
+    call trackingEngine%SetRetardation(simulationData%Retardation, modelGrid%CellCount)
+    call trackingEngine%SetDefaultIface(basicData%DefaultIfaceLabels,           &
+      basicData%DefaultIfaceValues, basicData%DefaultIfaceCount)
     ! The trackingEngine initialization is complete
     
     ! Compute range of time steps to use in the time step loop
@@ -252,31 +348,37 @@
     ! Set the appropriate value of stoptime. Start by setting stoptime to correspond to the start or the
     ! end of the simulation (depending on the tracking direction)
     if(simulationData%TrackingDirection .eq. 1) then
-        stoptime = tdisData%TotalTimes(tdisData%CumulativeTimeStepCount) - simulationData%ReferenceTime
-        ssFlag = tdisData%SteadyStateFlags(tdisData%CumulativeTimeStepCount)
+        stoptime = tdisData%TotalTimes(tdisData%CumulativeTimeStepCount) -      &
+          simulationData%ReferenceTime
+        call tdisData%GetPeriodAndStep(tdisData%CumulativeTimeStepCount, period, step)
+        call tdisData%GetPeriodAndStep(tdisData%CumulativeTimeStepCount, period, step)
+        call trackingEngine%LoadTimeStep(period, step)
     else
         stoptime = simulationData%ReferenceTime
-        ssFlag = tdisData%SteadyStateFlags(1)
+        call tdisData%GetPeriodAndStep(tdisData%CumulativeTimeStepCount, period, step)
+        call trackingEngine%LoadTimeStep(1, 1)
     end if
     !
     if(simulationData%StoppingTimeOption .eq. 2) then
         ! Set stoptime to 1.0d+30 if the EXTEND option is on and the boundary time step is steady state.
         ! If the boundary time step is transient, leave stoptime set to correspond to the beginning or 
         ! end of the simulation.
-        if(ssFlag) stoptime = 1.0d+30
+        if(trackingEngine%SteadyState) stoptime = 1.0d+30
     else if(simulationData%StoppingTimeOption .eq. 3) then
-        ! If a specific stoptime was specified, always apply it if ssFlag indicates a steady-state time step at the beginning
+        ! If a specific stoptime was specified, always apply it if there is a steady-state time step at the beginning
         ! or end of the time domain of the simulation.
-        if(ssFlag) then
+        if(trackingEngine%SteadyState) then
             stoptime = simulationData%StopTime
         else
         ! If the boundary time step is transient, do not set stoptime to the specified value if it would extend beyond
         ! the time domain of the simulation.
-            if(simulationData%StopTime .lt. stoptime) stoptime = simulationData%StopTime
+            if(simulationData%StopTime .lt. stoptime)                           &
+              stoptime = simulationData%StopTime
         end if
     end if
     
-    write(mplistUnit, '(1x/a,e15.7)') 'The simulation will be run with stoptime = ', stoptime
+    write(mplistUnit, '(1x/a,e15.7)')                                           &
+      'The simulation will be run with stoptime = ', stoptime
 
     write(*,*)
     write(*,'(A)') 'Run particle tracking simulation ...'    
@@ -296,21 +398,34 @@
     allocate(tPoint(tPointCount))
     
     ! Open particle output files
-    open(unit=endpointUnit, file=simulationData%EndpointFile, status='replace', form='formatted', access='sequential')
-    if((simulationData%SimulationType .eq. 2) .or. (simulationData%SimulationType .eq. 4)) then
-        open(unit=pathlineUnit, file=simulationData%PathlineFile, status='replace', form='formatted', access='sequential')
+    open(unit=endpointUnit, file=simulationData%EndpointFile, status='replace', &
+      form='formatted', access='sequential')
+    if((simulationData%SimulationType .eq. 2) .or.                              &
+      (simulationData%SimulationType .eq. 4)) then
+        open(unit=pathlineUnit, file=simulationData%PathlineFile,               &
+          status='replace', form='formatted', access='sequential')
 !        open(unit=consolidatedPathlineUnit, file='consolidated.pathline7', status='replace', form='formatted', access='sequential')
-        open(unit=binPathlineUnit, status='scratch', form='binary', access='stream', action='readwrite')
-        call WritePathlineHeader(pathlineUnit, simulationData%TrackingDirection, simulationData%ReferenceTime)
+        open(unit=binPathlineUnit, status='scratch', form='unformatted',        &
+          access='stream', action='readwrite')
+        call WritePathlineHeader(pathlineUnit, simulationData%TrackingDirection,&
+          simulationData%ReferenceTime, modelGrid%OriginX, modelGrid%OriginY,   &
+          modelGrid%RotationAngle)
     end if
-    if((simulationData%SimulationType .eq. 3) .or. (simulationData%SimulationType .eq. 4)) then
-        open(unit=timeseriesUnit, file=simulationData%TimeseriesFile, status='replace', form='formatted', access='sequential')
-        call WriteTimeseriesHeader(timeseriesUnit, simulationData%TrackingDirection, simulationData%ReferenceTime)
+    if((simulationData%SimulationType .eq. 3) .or.                              &
+      (simulationData%SimulationType .eq. 4)) then
+        open(unit=timeseriesUnit, file=simulationData%TimeseriesFile,           &
+          status='replace', form='formatted', access='sequential')
+        call WriteTimeseriesHeader(timeseriesUnit,                              &
+          simulationData%TrackingDirection, simulationData%ReferenceTime,       &
+          modelGrid%OriginX, modelGrid%OriginY, modelGrid%RotationAngle)
     end if
     if(simulationData%TraceMode .gt. 0) then
-        open(unit=traceModeUnit, file=simulationData%TraceFile, status='replace', form='formatted', access='sequential')
-        write(traceModeUnit, '(1X,A,I10)') 'Particle group: ',simulationData%TraceGroup
-        write(traceModeUnit, '(1X,A,I10)') 'Particle ID: ',simulationData%TraceID
+        open(unit=traceModeUnit, file=simulationData%TraceFile,                 &
+          status='replace', form='formatted', access='sequential')
+        write(traceModeUnit, '(1X,A,I10)')                                      &
+          'Particle group: ',simulationData%TraceGroup
+        write(traceModeUnit, '(1X,A,I10)')                                      &
+          'Particle ID: ',simulationData%TraceID
     end if
     
     ! Begin time step loop
@@ -328,26 +443,42 @@
     ! Get the stress period and time step from the cummulative time step
     call tdisData%GetPeriodAndStep(ktime, period, step)
     
-    write(message,'(A,I5,A,I5,A,1PE12.5)') 'Processing Time Step ',step,' Period ',period,'.  Time = ',tdisData%TotalTimes(ktime)
-    write(*,'(A)') message
-    write(mplistUnit, *)
-    write(mplistUnit,'(1X,A)') '----------------------------------------------------------------------------------------------'
-    write(mplistUnit,'(A,A,I6,A)') message,'  (Cumulative step = ', ktime,')'
-    write(mplistUnit,'(1X,A)') '----------------------------------------------------------------------------------------------'
-    
     ! Load data for the current time step
     call trackingEngine%LoadTimeStep(period, step)
     
+    if(trackingEngine%SteadyState) then
+      write(message,'(A,I5,A,I5,A,1PE12.5,A)') 'Processing Time Step ',step,        &
+        ' Period ',period,'.  Time = ',tdisData%TotalTimes(ktime), &
+        '  Steady-state flow'
+    else
+      write(message,'(A,I5,A,I5,A,1PE12.5,A)') 'Processing Time Step ',step,        &
+        ' Period ',period,'.  Time = ',tdisData%TotalTimes(ktime), &
+        '  Transient flow'
+    end if
+    message = trim(message)
+    write(*,'(A)') message
+    write(mplistUnit, *)
+    write(mplistUnit,'(1X,A)')                                                  &
+      '----------------------------------------------------------------------------------------------'
+    write(mplistUnit,'(1X,A)') message
+    write(mplistUnit,'(1X,A,I6,A)') '  (Cumulative step = ', ktime,')'
+    write(mplistUnit,'(1X,A)')                                                  &
+      '----------------------------------------------------------------------------------------------'
+    
     ! Check water balance summary for the current time step
-    if(simulationData%BudgetOutputOption .gt. 0) call WriteWaterBalanceSummary(mplistUnit, trackingEngine, cellData)
+    if(simulationData%BudgetOutputOption .gt. 0)                                &
+      call WriteWaterBalanceSummary(mplistUnit, trackingEngine, cellData)
     
     ! Check cell-by-cell budgets for this time step
     if(simulationData%BudgetCellsCount .gt. 0) then
         write(mplistUnit, *) 
-        write(mplistUnit, '(1X,A,I10,A)') 'Cell data will be printed for', simulationData%BudgetCellsCount, ' cells.'
+        write(mplistUnit, '(1X,A,I10,A)') 'Cell data will be printed for',      &
+          simulationData%BudgetCellsCount, ' cells.'
         do n = 1, simulationData%BudgetCellsCount
-            call trackingEngine%FillCellBuffer(simulationData%BudgetCells(n), cellData)
-            call trackingEngine%WriteCellBuffer(mplistUnit, cellData, simulationData%TrackingOptions%BackwardTracking)
+            call trackingEngine%FillCellBuffer(simulationData%BudgetCells(n),   &
+              cellData)
+            call trackingEngine%WriteCellBuffer(mplistUnit, cellData,           &
+              simulationData%TrackingOptions%BackwardTracking)
         end do
     end if
     
@@ -399,10 +530,13 @@
                       pCoord%LocalY = p%LocalY
                       pCoord%LocalZ = p%LocalZ
                       pCoord%TrackingTime = p%TrackingTime
-                      call usgGrid%ConvertToGlobalXYZ(pCoord%CellNumber, pCoord%LocalX, pCoord%LocalY, pCoord%LocalZ, pCoord%GlobalX, pCoord%GlobalY, pCoord%GlobalZ)
+                      call modelGrid%ConvertToModelXYZ(pCoord%CellNumber,        &
+                        pCoord%LocalX, pCoord%LocalY, pCoord%LocalZ,            &
+                        pCoord%GlobalX, pCoord%GlobalY, pCoord%GlobalZ)
                       p%InitialGlobalZ = pCoord%GlobalZ
                       p%GlobalZ = p%InitialGlobalZ
-                      call WriteTimeseriesRecord(p%SequenceNumber, p%ID, groupIndex, ktime, 0, pCoord, timeseriesUnit)
+                      call WriteTimeseriesRecord(p%SequenceNumber, p%ID,        &
+                        groupIndex, ktime, 0, pCoord, geoRef, timeseriesUnit)
                   end if
             end do
         end do
@@ -454,7 +588,8 @@
                 ! Check to see if trace mode should be turned on for this particle
                 traceModeOn = .false.
                 if(simulationData%TraceMode .gt. 0) then 
-                    if((p%Group .eq. simulationData%TraceGroup) .and. (p%ID .eq. simulationData%TraceID)) traceModeOn = .true.
+                    if((p%Group .eq. simulationData%TraceGroup) .and.           &
+                      (p%ID .eq. simulationData%TraceID)) traceModeOn = .true.
                 end if
                 
                 ! If a particle is pending release (STATUS = 0), check to see if it should
@@ -483,7 +618,8 @@
                                 p%Status = 7
                             end if
                         end if
-                        call usgGrid%ConvertToGlobalZ(p%InitialCellNumber, p%InitialLocalZ, p%InitialGlobalZ, .true.)
+                        call modelGrid%ConvertToModelZ(p%InitialCellNumber,      &
+                          p%InitialLocalZ, p%InitialGlobalZ, .true.)
                         p%GlobalZ = p%InitialGlobalZ
                     end if
                 end if
@@ -504,7 +640,9 @@
                     pLoc%TrackingTime = p%TrackingTime
                     
                     ! Call TrackPath
-                    call trackingEngine%TrackPath(trackPathResult, traceModeOn, traceModeUnit, p%Group, p%ID, p%SequenceNumber, pLoc, maxTime, tPoint, tPointCount)
+                    call trackingEngine%TrackPath(trackPathResult, traceModeOn, &
+                      traceModeUnit, p%Group, p%ID, p%SequenceNumber, pLoc,     &
+                      maxTime, tPoint, tPointCount)
                     
                     ! Update endpoint data. The Face property will only be updated when the endpoint file is written
                     plCount = trackPathResult%ParticlePath%Pathline%GetItemCount()
@@ -540,15 +678,19 @@
                     end if
                     
                     ! Write particle output
-                    if((simulationData%SimulationType .eq. 2) .or. (simulationData%SimulationType .eq. 4)) then
+                    if((simulationData%SimulationType .eq. 2) .or.              &
+                      (simulationData%SimulationType .eq. 4)) then
                         ! Write pathline to pathline file
                         if(plCount .gt. 1) then
                             pathlineRecordCount = pathlineRecordCount + 1
                             select case (simulationData%PathlineFormatOption)
                                 case (1)
-                                    call WriteBinaryPathlineRecord(trackPathResult, binPathlineUnit, period, step)
+                                    call WriteBinaryPathlineRecord(             &
+                                      trackPathResult, binPathlineUnit, period, &
+                                      step, geoRef)
                                 case (2)
-                                    call WritePathlineRecord(trackPathResult, pathlineUnit, period, step)
+                                    call WritePathlineRecord(trackPathResult,   &
+                                      pathlineUnit, period, step, geoRef)
                             end select
                             
                         end if
@@ -557,7 +699,8 @@
                         if(tsCount .gt. 0) then
                         ! Write timeseries record to the timeseries file
                             pCoordTP => trackPathResult%ParticlePath%Timeseries%Items(1)
-                            call WriteTimeseriesRecord(p%SequenceNumber, p%ID, groupIndex, ktime, nt, pCoordTP, timeseriesUnit)
+                            call WriteTimeseriesRecord(p%SequenceNumber, p%ID,  &
+                              groupIndex, ktime, nt, pCoordTP, geoRef, timeseriesUnit)
                         end if
                     end if
                 end if
@@ -593,14 +736,15 @@
     ! Write endpoint file
     if(simulationData%ParticleGroupCount .gt. 0) then
         call ulog('Write endpoint file.', logUnit)
-        call WriteEndpoints(simulationData, usgGrid, endpointUnit)
+        call WriteEndpoints(simulationData, modelGrid, geoRef, endpointUnit)
     end if
     
     ! Finalize and process binary pathline file if pathline format option = 1
     if((simulationData%SimulationType .eq. 2) .or. (simulationData%SimulationType .eq. 4)) then
         if(simulationData%PathlineFormatOption .eq. 1) then
             call ulog('Consolidating pathline segments.', logUnit)
-            call ConsolidatePathlines(binPathlineUnit, pathlineUnit, pathlineRecordCount, simulationData%TotalParticleCount) 
+            call ConsolidatePathlines(binPathlineUnit, pathlineUnit,            &
+              pathlineRecordCount, simulationData%TotalParticleCount) 
         end if
     end if
     
@@ -612,7 +756,6 @@
     call ulog('Begin memory deallocation.', logUnit)
     if(allocated(headReader)) deallocate(headReader)
     if(allocated(budgetReader)) deallocate(budgetReader)
-    if(allocated(usgGrid)) deallocate(usgGrid)
     if(allocated(tdisData)) deallocate(tdisData)
     if(allocated(trackingEngine)) deallocate(trackingEngine)
     if(allocated(basicData)) deallocate(basicData)
@@ -649,32 +792,42 @@
     implicit none
     character*(*),intent(inout) :: mpsimFile
     character*200 comlin, line
-    integer :: icol, istart, istop, n, nc
+    integer :: icol, istart, istop, n, nc, narg, length, status
     real(kind=4) :: r
     logical :: exists
 !---------------------------------------------------------------------------------------------------------------
-   
-    mpsimFile = ' '
-    comlin = ' '
     
-    call getarg(1,comlin)
+    ! Get the number of command-line arguments
+    narg = command_argument_count()
     
-    icol = 1
-    if(comlin .ne. ' ') then
-      mpsimFile = comlin
-    else
-15     write (*,*) ' Enter the MODPATH simulation file: '
-      read (*,'(a)') mpsimFile
+    select case (narg)
+    ! No command-line argument, so prompt for user to enter mpsim file
+    case (0)
+      icol = 1
+      write(*, *) 'Enter the MODPATH simulation file: '
+      read(*, '(a)') mpsimFile
       call urword(mpsimFile,icol,istart,istop,0,n,r,0,0)
       mpsimFile = mpsimFile(istart:istop)
-      IF (mpsimFile .eq. ' ') goto 15
-    end if 
+    
+    ! Command-line argument was present, so set the mpsim file name equal to it.
+    case (1)
+        call get_command_argument(1, comlin, length, status)
+        mpsimFile = comlin(1:length)
+    
+    ! The command line has a problem, so call ustop with a message and stop.
+    case default
+        call ustop('An error occurred procxessing the command line. Stop.')
+    end select
+    
+    ! Check for existence and stop if the file is not found.
     inquire (file=mpsimFile, exist=exists)
     if(.not. exists) then
-      nc = index(mpsimFile,' ')
-      mpsimFile(nc:nc+5)='.mpsim'
-      inquire (file=mpsimFile, exist=exists)
-      if(.not. exists) return
+        nc = index(mpsimFile,' ')
+        mpsimFile(nc:nc+5)='.mpsim'
+        inquire (file=mpsimFile, exist=exists)
+        if(.not. exists) then
+          call ustop('The specified simulation file could not be found. Stop.')
+        end if
     end if
     mpsimFile = trim(mpsimFile)
     
@@ -696,13 +849,17 @@
     character(len=150) :: fname
     character(len=16) :: filtyp
     character(len=30) :: gridFileTypeString
-    integer,dimension(5) :: nfiltyp
+    character(len=80) :: message
+    character(len=132) :: errMessage
+    integer,dimension(6) :: nfiltyp
     integer :: inUnit, n, icol, ityp1, ityp2, inam1, inam2, nc, iflen, numflag, istart, istop
     doubleprecision :: r
     logical :: complete
 !---------------------------------------------------------------------------------------------------------------
     
-    do n = 1, 5
+    errMessage = ' '
+    
+    do n = 1, 6
         nfiltyp(n) = 0
     end do
     gridFile = ' '
@@ -710,6 +867,7 @@
     mpbasFile = ' '
     headFile = ' '
     budgetFile = ' '
+    gridMetaFile = ' '
     
     inUnit = 99
     open(unit=inUnit, file=filename, status='old', form='formatted', access='sequential')
@@ -720,7 +878,8 @@
         gridFileType = 0
     do
         read(inUnit, '(a)', end=1000) line
-        ! Check for comment lines
+        ! Check for comment lines or blank lines and skip over them if present
+        if(len_trim(line) .eq. 0) cycle
         if(line(1:1) .eq. '#') cycle
         if(line(1:1) .eq. '!') cycle
         if(line(1:2) .eq. '//') cycle
@@ -740,77 +899,101 @@
         end if
         call urword(line, icol, istart, istop, 0, n, r, outUnit, inUnit)
         iflen = istop - istart + 1
-        fname(1:iflen) = line(istart:istop)
+        fname = line(istart:istop)
         
         if(filtyp .eq. 'DIS') then
             gridFile = fname(1:iflen)
             open(unit=disUnit,file=gridFile,status='old', form='formatted', access='sequential')
-            write(outUnit,'(A15,A)') 'DIS File: ', gridFile(1:iflen)
+            write(outUnit,'(A15,A)') 'MODFLOW-2005/MODFLOW-USG Structured Grid File (DIS): ', gridFile(1:iflen)
             nfiltyp(1) = 1
             nfiltyp(2) = 1
             gridFileType = 1
-            cycle
-        end if
-        
-        if(filtyp .eq. 'MPUGRID') then
+        else if(filtyp .eq. 'DISU') then
             gridFile = fname(1:iflen)
-            open(unit=disUnit,file=gridFile,status='old', form='formatted', access='sequential')
-            write(outUnit,'(A15,A)') 'MPUGRID File: ', gridFile(1:iflen)
+            open(unit=disUnit,file=gridFile,status='old', form='formatted', access='sequential', err=500, iomsg=errMessage)
+            write(outUnit,'(A15,A)') 'DISU File: ', gridFile(1:iflen)
             nfiltyp(1) = 2
+            nfiltyp(2) = 1
             gridFileType = 2
-            cycle
-        end if
-        
-        if(filtyp .eq. 'TDIS') then
-            if((gridFileType .eq. 2) .or. (gridFileType .eq. 3)) then
+        else if(filtyp .eq. 'GRBDIS') then
+            gridFile = fname(1:iflen)
+            open(unit=disUnit,file=gridFile,form='unformatted',access='stream',status='old',action='read', err=500, &
+                iomsg=errMessage)
+            write(outUnit,'(A15,A)') 'GRBDIS File: ', gridFile(1:iflen)
+            nfiltyp(1) = 3
+            gridFileType = 3
+        else if(filtyp .eq. 'GRBDISV') then
+            gridFile = fname(1:iflen)
+            open(unit=disUnit,file=gridFile,form='unformatted',access='stream',status='old',action='read', err=500, &
+                iomsg=errMessage)
+            write(outUnit,'(A15,A)') 'GRBDISV File: ', gridFile(1:iflen)
+            nfiltyp(1) = 4
+            gridFileType = 4
+        else if(filtyp .eq. 'GRBDISU') then
+            call ustop('Binary grid file type DISU not yet supported. Stop.')
+        else if(filtyp .eq. 'TDIS') then
+            if(nfiltyp(1) .ge. 3) then
                 tdisFile = fname(1:iflen)
-                open(unit=tdisUnit,file=tdisFile,status='old', form='formatted', access='sequential')
+                open(unit=tdisUnit,file=tdisFile,status='old', form='formatted', access='sequential', err=500, iomsg=errMessage)
                 write(outUnit,'(A15,A)') 'TDIS File: ', tdisFile(1:iflen)
                 nfiltyp(2) = 1
             end if
-            cycle
-        end if
-        
-        if(filtyp .eq. 'MPBAS') then
+        else if(filtyp .eq. 'MPBAS') then
             mpbasFile = fname(1:iflen)
-            open(unit=mpbasUnit,file=mpbasFile,status='old', form='formatted', access='sequential')
+            open(unit=mpbasUnit,file=mpbasFile,status='old', form='formatted', access='sequential', err=500, iomsg=errMessage)
             write(outUnit,'(A15,A)') 'MPBAS File: ', mpbasFile(1:iflen)
             nfiltyp(3) = 1
-            cycle
-        end if
-        
-        if(filtyp .eq. 'HEAD') then
+        else if(filtyp .eq. 'HEAD') then
             headFile = fname(1:iflen)
             write(outUnit,'(A15,A)') 'HEAD File: ', headFile(1:iflen)
             nfiltyp(4) = 1
-            cycle
-        end if
-        
-        if(filtyp .eq. 'BUDGET') then
+        else if(filtyp .eq. 'BUDGET') then
             budgetFile = fname(1:iflen)
             write(outUnit,'(A15,A)') 'BUDGET File: ', budgetFile(1:iflen)
             nfiltyp(5) = 1
-            cycle
+        else if(filtyp .eq. 'GRIDMETA') then
+            gridMetaFile = fname(1:iflen)
+            open(unit=gridMetaUnit,file=gridMetaFile,status='old', form='formatted', access='sequential', err=500, iomsg=errMessage)
+            write(outUnit,'(A15,A)') 'GRIDMETA File: ', gridMetaFile(1:iflen)
+            nfiltyp(6) = 1
         end if
           
+        cycle
+        
     end do
     
 1000 continue
      
      if(gridFileType .eq. 0) then
-        call ustop('No valid grid file type was specified in the name file. Stop.')
+        message = 'No valid grid file type was specified in the name file. Stop.'
+        call ustop(message)
      else
          complete = .true.
          do n = 1, 5
-             if(nfiltyp(n) .eq. 0) complete = .false.
+             if(nfiltyp(n) .eq. 0) then
+                 complete = .false.
+                 message = 'The MODPATH name file is not complete. Stop.'
+             else
+                 if((nfiltyp(n) .eq. 2) .and. (nfiltyp(6) .eq. 0)) then
+                     complete = .false.
+                     message = 'A GRIDMETA file must be specified for grid type DISU. Stop.'
+                 else if((nfiltyp(n) .eq. 5) .and. (nfiltyp(6) .eq. 0)) then
+                     complete = .false.
+                     message = 'A GRIDMETA file must be specified for grid type GRBDISU. Stop.'
+                 end if
+             end if
          end do
          if(.not. complete) then
-             call ustop('The name file is not complete. Stop.')
+             write(outUnit, '(1x,a)') message
+             call ustop(message)
          end if
      end if
     
 100 continue
-   
+    return
+500 continue
+    call ustop(errMessage)
+    
     end subroutine
     
     subroutine WriteBudgetFileInfo(outUnit, budgetReader)
@@ -872,22 +1055,34 @@
         recordHeaderCount = budgetReader%GetRecordHeaderCount()
         do n = 1, recordHeaderCount
             budgetRecordHeader = budgetReader%GetRecordHeader(n)
-            write(outUnit, '(1x, 3i10,2x,a16)') n, budgetRecordHeader%StressPeriod, budgetRecordHeader%TimeStep, budgetRecordHeader%TextLabel
+            write(outUnit, '(1x, 3i10,2x,a16)')                                 &
+              n, budgetRecordHeader%StressPeriod, budgetRecordHeader%TimeStep,  &
+              budgetRecordHeader%TextLabel
         end do
     else if(budgetReader%GetBudgetFileFormat() .eq. 2) then
-        write(outUnit, '(1x,a)') '    Record    Period      Step      Text label      Method         Step length       Period length          Total time'
+        write(outUnit, '(1x,a)')                                                &
+          '    Record    Period      Step      Text label      Method         Step length       Period length          Total time'
         recordHeaderCount = budgetReader%GetRecordHeaderCount()
         do n = 1, recordHeaderCount
             budgetRecordHeader = budgetReader%GetRecordHeader(n)
-            write(outUnit, '(1x, 3i10,2x,a16,i10,3E20.12)') n, budgetRecordHeader%StressPeriod, budgetRecordHeader%TimeStep, budgetRecordHeader%TextLabel, budgetRecordHeader%Method, budgetRecordHeader%TimeStepLength,  budgetRecordHeader%StressPeriodLength, budgetRecordHeader%TotalTime
+            write(outUnit, '(1x, 3i10,2x,a16,i10,3E20.12)')                     &
+              n, budgetRecordHeader%StressPeriod, budgetRecordHeader%TimeStep,  &
+              budgetRecordHeader%TextLabel, budgetRecordHeader%Method,          &
+              budgetRecordHeader%TimeStepLength,                                &
+              budgetRecordHeader%StressPeriodLength,                            &
+              budgetRecordHeader%TotalTime
             if(budgetRecordHeader%Method .eq. 5) then
                 auxCount = budgetRecordHeader%GetAuxiliaryNamesCount()
-                write(outUnit, '(58x,a,i10,5x,a,i5)') 'List item count = ', budgetRecordHeader%ListItemCount, 'Auxiliary item count = ', auxCount
+                write(outUnit, '(58x,a,i10,5x,a,i5)')                           &
+                  'List item count = ', budgetRecordHeader%ListItemCount,       &
+                  'Auxiliary item count = ', auxCount
                 do m = 1, auxCount
-                    write(outUnit, '(58x,a)') budgetRecordHeader%AuxiliaryNames(m)
+                    write(outUnit, '(58x,a)')                                   &
+                      budgetRecordHeader%AuxiliaryNames(m)
                 end do
             else if(budgetRecordHeader%Method .eq. 2) then
-                write(outUnit, '(58x,a,i10)') 'List item count = ', budgetRecordHeader%ListItemCount                    
+                write(outUnit, '(58x,a,i10)')                                   &
+                  'List item count = ', budgetRecordHeader%ListItemCount                    
             end if
         end do
     end if
@@ -926,23 +1121,36 @@
             budgetIntervalBins(n) = 0
         end do 
         
-        call trackingEngine%GetVolumetricBalanceSummary(budgetIntervalBreakCount, budgetIntervalBreaks, budgetIntervalBins, maxError, maxErrorCell)
+        call trackingEngine%GetVolumetricBalanceSummary(                        &
+          budgetIntervalBreakCount, budgetIntervalBreaks, budgetIntervalBins,   &
+          maxError, maxErrorCell)
         
         write(outUnit, *)
         write(outUnit, '(1X,A)') 'Volumetric water balance summary:'
         write(outUnit, *)
         
-        write(outUnit, '(1X,I10,A,F8.2,A)') budgetIntervalBins(1), ' cells had errors less than or equal to', budgetIntervalBreaks(1), ' percent'
+        write(outUnit, '(1X,I10,A,F8.2,A)')                                     &
+          budgetIntervalBins(1), ' cells had errors less than or equal to',     &
+          budgetIntervalBreaks(1), ' percent'
         do n = 2, budgetIntervalBreakCount
-            write(outUnit, '(1X,I10,A,F8.2,A,F8.2,A)') budgetIntervalBins(n), ' cells had errors between ', budgetIntervalBreaks(n-1), ' and ', budgetIntervalBreaks(n), ' percent'                
+            write(outUnit, '(1X,I10,A,F8.2,A,F8.2,A)')                          &
+              budgetIntervalBins(n), ' cells had errors between ',              &
+              budgetIntervalBreaks(n-1), ' and ',                               &
+              budgetIntervalBreaks(n), ' percent'                
         end do
-        write(outUnit, '(1X,I10,A,F8.2,A)') budgetIntervalBins(budgetIntervalBreakCount + 1), ' cells had errors greater than ', budgetIntervalBreaks(budgetIntervalBreakCount), ' percent'
+        write(outUnit, '(1X,I10,A,F8.2,A)')                                     &
+          budgetIntervalBins(budgetIntervalBreakCount + 1),                     &
+          ' cells had errors greater than ',                                    &
+          budgetIntervalBreaks(budgetIntervalBreakCount), ' percent'
         
         write(outUnit, *)
-        write(outUnit, '(1X,A,E12.5,A,I10)') 'A maximum error of ', maxError, ' percent occurred in cell ', maxErrorCell
+        write(outUnit, '(1X,A,E12.5,A,I10)')                                    &
+          'A maximum error of ', maxError, ' percent occurred in cell ',        &
+          maxErrorCell
         write(outUnit, *)
         call trackingEngine%FillCellBuffer(maxErrorCell, cellData)
-        call trackingEngine%WriteCellBuffer(outUnit, cellData, simulationData%TrackingOptions%BackwardTracking)
+        call trackingEngine%WriteCellBuffer(outUnit, cellData,                  &
+          simulationData%TrackingOptions%BackwardTracking)
     
         return
         
@@ -985,7 +1193,8 @@
     write(outUnit, '(i10,1x,a)') statusBins(2), 'particles terminated at boundary faces.'
     write(outUnit, '(i10,1x,a)') statusBins(3), 'particles terminated at weak sink cells.'
     write(outUnit, '(i10,1x,a)') statusBins(4), 'particles terminated at weak source cells.'
-    write(outUnit, '(i10,1x,a)') statusBins(5), 'particles terminated at strong source/sink cells or other cells with no potential exit face.'
+    write(outUnit, '(i10,1x,a)') statusBins(5),                                 &
+      'particles terminated at strong source/sink cells or other cells with no potential exit face.'
     write(outUnit, '(i10,1x,a)') statusBins(6), 'particles terminated in cells with a specified zone number.'    
     write(outUnit, '(i10,1x,a)') statusBins(7), 'particles were stranded in inactive or dry cells.'
     write(outUnit, '(i10,1x,a)') statusBins(8), 'particles were unreleased.'
@@ -1007,6 +1216,6 @@
     write(*, '(a)') ' '
     
     end subroutine WriteParticleSummaryInfo
-    
+        
     end program MPath7
 

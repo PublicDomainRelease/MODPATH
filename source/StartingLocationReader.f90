@@ -1,6 +1,7 @@
 module StartingLocationReaderModule
 use ParticleGroupModule,only : ParticleGroupType
-use RectangularUnstructuredGridModule,only : RectangularUnstructuredGridType
+!use RectangularUnstructuredGridModule,only : RectangularUnstructuredGridType
+use ModflowRectangularGridModule,only : ModflowRectangularGridType
 use ParticleModule,only : ParticleType
 implicit none
 
@@ -11,7 +12,8 @@ public ReadAndPrepareLocations
   
 contains
 
-subroutine ReadAndPrepareLocations(inUnit, outUnit, particleGroup, ibound, cellCount, grid, seqNumber)
+subroutine ReadAndPrepareLocations(inUnit, outUnit, particleGroup, ibound,      &
+  cellCount, grid, seqNumber)
 !***************************************************************************************************************
 ! Description goes here
 !***************************************************************************************************************
@@ -28,13 +30,14 @@ integer :: singleReleaseCount, errorCode
 logical :: closeFile
 character (len=200) :: line
 integer,dimension(cellCount),intent(in) :: ibound
-type(RectangularUnstructuredGridType),intent(in) :: grid
+class(ModflowRectangularGridType),intent(in) :: grid
 !---------------------------------------------------------------------------------------------------------------
   
 ! Open starting locations file if inUnit is not positive. Otherwise, assume inUnit is open and read from it.
 if(inUnit .le. 0) then
     inu = 99
-    open(unit=inu, file=particleGroup%LocationFile, status='old', form='formatted', access='sequential')
+    open(unit=inu, file=particleGroup%LocationFile, status='old',               &
+      form='formatted', access='sequential')
     closeFile = .true.
 else
     inu = inUnit
@@ -76,8 +79,10 @@ do m = 1, singleReleaseCount
     if(particleGroup%Particles(m)%Id .gt. idmax) idmax = particleGroup%Particles(m)%Id
     particleGroup%Particles(m)%Group = particleGroup%Group
     particleGroup%Particles(m)%SequenceNumber = seqNumber
-    particleGroup%Particles(m)%InitialLayer = grid%GetLayer(particleGroup%Particles(m)%InitialCellNumber)
-    particleGroup%Particles(m)%Layer = grid%GetLayer(particleGroup%Particles(m)%CellNumber)
+    particleGroup%Particles(m)%InitialLayer =                                   &
+      grid%GetLayer(particleGroup%Particles(m)%InitialCellNumber)
+    particleGroup%Particles(m)%Layer =                                          &
+      grid%GetLayer(particleGroup%Particles(m)%CellNumber)
 end do
   
 ! Initialize particle data for all additional releases
@@ -122,7 +127,7 @@ subroutine pr_ReadLocations1(pGroup, inUnit, grid)
 use UTL8MODULE,only : ustop, ugetnode
 implicit none
 type(ParticleGroupType),intent(inout) :: pGroup
-type(RectangularUnstructuredGridType),intent(in) :: grid
+class(ModflowRectangularGridType),intent(in) :: grid
 integer,intent(in) :: inUnit
 integer :: count, n, drape, cellNumber, error, readId, particleId, locationStyle
 integer :: totalParticleCount, layer, row, column, gridType, layerCount, rowCount, columnCount
@@ -131,12 +136,15 @@ doubleprecision :: x, y, z, t
 
 ! Read Location style
 read(inUnit, *) locationStyle
-if((locationStyle .lt. 1) .or. (locationStyle .gt. 2)) call ustop('Unsupported locations style was specified in for starting locations. Stop.')
+if((locationStyle .lt. 1) .or. (locationStyle .gt. 2))                          &
+  call ustop('Unsupported locations style was specified in for starting locations. Stop.')
 
 ! Read particle count, drape option, particleId read option
 read(inUnit, *) count, readId
-if((locationStyle .eq. 1) .and. (grid%GetGridType() .eq.2)) then
-    call ustop('Starting locations cannot be specified by layer,row, column for unstructured grids. Stop.')
+if(locationStyle .eq. 1) then
+    if( (grid%GridType .eq.2) .or. (grid%GridType .eq.4) ) then
+         call ustop('Starting locations cannot be specified by layer,row, column for unstructured grids. Stop.')
+    end if
 end if
     
 ! Allocate the Particles array
@@ -145,9 +153,9 @@ if(allocated(pGroup%Particles)) deallocate(pGroup%Particles)
 allocate(pGroup%Particles(totalParticleCount))
 pGroup%TotalParticleCount = totalParticleCount
   
-layerCount = grid%GetLayerCount()
-rowCount = grid%GetRowCount()
-columnCount = grid%GetColumnCount()
+layerCount = grid%LayerCount
+rowCount = grid%RowCount
+columnCount = grid%ColumnCount
 do n = 1, count
     particleId = n
     if(locationStyle .eq. 1) then
@@ -206,13 +214,15 @@ subroutine pr_ReadLocations2(pGroup, inUnit, grid, ibound, gridCellCount)
 use UTL8MODULE,only : ustop, urword, ugetnode
 implicit none
 type(ParticleGroupType),intent(inout) :: pGroup
-type(RectangularUnstructuredGridType),intent(in) :: grid
+class(ModflowRectangularGridType),intent(in) :: grid
 integer,intent(in) :: inUnit, gridCellCount
 integer,intent(in),dimension(gridCellCount) :: ibound
 integer :: totalParticleCount, templateCount, cellRegionCount, intValue
 integer :: count,np,n,m,face,i,j,k,layerCount,rowCount,columnCount,cell,npcell
 doubleprecision :: dx,dy,dz,x,y,z,faceCoord,rowCoord,columnCoord,dr,dc
-integer,dimension(:),allocatable :: templateSubDivisionTypes,minLayers,maxLayers,minRows,maxRows,minColumns,maxColumns,templateCellRegionCounts,drape
+integer,dimension(:),allocatable :: templateSubDivisionTypes,minLayers,         &
+  maxLayers,minRows,maxRows,minColumns,maxColumns,templateCellRegionCounts,     &
+  drape
 integer,dimension(:,:),allocatable :: subDiv
 integer,dimension(12) :: sdiv
 integer :: nc,nr,nl,layer,row,column,cr
@@ -236,9 +246,9 @@ allocate(minColumns(cellRegionCount))
 allocate(maxColumns(cellRegionCount))
   
 ! Read data into temporary arrays and count the number of particles
-rowCount = grid%GetRowCount()
-columnCount = grid%GetColumnCount()
-layerCount = grid%GetLayerCount()
+rowCount = grid%RowCount
+columnCount = grid%ColumnCount
+layerCount = grid%LayerCount
 do n = 1, templateCount
     do m = 1, 12
         subDiv(n,m) = 0
@@ -251,7 +261,9 @@ do n = 1, templateCount
     read(inUnit, *) templateSubDivisionTypes(n), templateCellRegionCounts(n), drape(n)
     if(templateSubDivisionTypes(n) .eq. 1) then
         read(inUnit, *) (subDiv(n,i), i = 1, 12)
-        npcell = subDiv(n,1)*subDiv(n,2) + subDiv(n,3)*subDiv(n,4) + subDiv(n,5)*subDiv(n,6) + subDiv(n,7)*subDiv(n,8) + subDiv(n,9)*subDiv(n,10) + subDiv(n,11)*subDiv(n,12)
+        npcell = subDiv(n,1)*subDiv(n,2) + subDiv(n,3)*subDiv(n,4) +            &
+          subDiv(n,5)*subDiv(n,6) + subDiv(n,7)*subDiv(n,8) +                   &
+          subDiv(n,9)*subDiv(n,10) + subDiv(n,11)*subDiv(n,12)
     else if(templateSubDivisionTypes(n) .eq. 2) then
         read(inUnit, *) (subDiv(n,i), i = 1, 3)
         npcell = subDiv(n,1)*subDiv(n,2)*subDiv(n,3)
@@ -260,12 +272,14 @@ do n = 1, templateCount
     end if   
     
     do m = 1, templateCellRegionCounts(n)
-        read(inUnit, *) minLayers(m), minRows(m), minColumns(m), maxLayers(m), maxRows(m), maxColumns(m)
+        read(inUnit, *) minLayers(m), minRows(m), minColumns(m), maxLayers(m),  &
+          maxRows(m), maxColumns(m)
         if(npcell .gt. 0) then
             do layer = minLayers(m), maxLayers(m)
                 do row = minRows(m), maxRows(m)
                     do column = minColumns(m), maxColumns(m)
-                        call ugetnode(layerCount, rowCount, columnCount, layer, row, column, cell)
+                        call ugetnode(layerCount, rowCount, columnCount, layer, &
+                          row, column, cell)
                         if(ibound(cell) .ne. 0) then
                             np = np + npcell
                         end if
@@ -294,12 +308,15 @@ if(templateCount .gt. 0) then
             do layer = minLayers(cr), maxLayers(cr)
                 do row = minRows(cr), maxRows(cr)
                     do column = minColumns(cr), maxColumns(cr)
-                        call ugetnode(layerCount, rowCount, columnCount, layer, row, column, cell)
+                        call ugetnode(layerCount, rowCount, columnCount, layer, &
+                          row, column, cell)
                         if(ibound(cell) .ne. 0) then
                             if(templateSubDivisionTypes(n) .eq. 1) then
-                                call pr_CreateParticlesOnFaces(pGroup, cell, m, sdiv, drape(n))
+                                call pr_CreateParticlesOnFaces(pGroup, cell, m, &
+                                  sdiv, drape(n))
                             else if(templateSubDivisionTypes(n) .eq. 2) then
-                                call pr_CreateParticlesAsInternalArray(pGroup, cell, m, sdiv(1), sdiv(2), sdiv(3), drape(n))
+                                call pr_CreateParticlesAsInternalArray(pGroup,  &
+                                  cell, m, sdiv(1), sdiv(2), sdiv(3), drape(n))
                             end if
                         end if
                     end do
@@ -331,13 +348,15 @@ subroutine pr_ReadLocations3(pGroup, inUnit, grid, ibound, gridCellCount)
 use UTL8MODULE,only : ustop
 implicit none
 type(ParticleGroupType),intent(inout) :: pGroup
-type(RectangularUnstructuredGridType),intent(in) :: grid
+class(ModflowRectangularGridType),intent(in) :: grid
 integer,intent(in) :: inUnit, gridCellCount
 integer,intent(in),dimension(gridCellCount) :: ibound
 integer :: totalParticleCount,templateCount,templateCellCount,nc,nr,nl,layer,row,column
-integer :: count,np,n,m,nn,face,i,j,k,layerCount,rowCount,columnCount,subCellCount,cell,offset,npcell
+integer :: count,np,n,m,nn,face,i,j,k,layerCount,rowCount,columnCount,          &
+  subCellCount,cell,offset,npcell
 doubleprecision :: dx,dy,dz,x,y,z,faceCoord,rowCoord,columnCoord,dr,dc
-integer,dimension(:),allocatable :: templateSubDivisionTypes,templateCellNumbers,templateCellCounts, drape
+integer,dimension(:),allocatable :: templateSubDivisionTypes,                   &
+  templateCellNumbers,templateCellCounts, drape
 integer,dimension(:,:),allocatable :: subDiv
 integer,dimension(12) :: sdiv
 
@@ -352,9 +371,9 @@ allocate(drape(templateCount))
 allocate(templateCellNumbers(templateCellCount))
   
 ! Read data into temporary arrays and count the number of particles
-rowCount = grid%GetRowCount()
-columnCount = grid%GetColumnCount()
-layerCount = grid%GetLayerCount()
+rowCount = grid%RowCount
+columnCount = grid%ColumnCount
+layerCount = grid%LayerCount
 do n = 1, templateCount
     do m = 1, 12
         subDiv(n,m) = 0
@@ -368,7 +387,9 @@ do n = 1, templateCount
     read(inUnit, *) templateSubDivisionTypes(n), templateCellCounts(n), drape(n)
     if(templateSubDivisionTypes(n) .eq. 1) then
         read(inUnit, *) (subDiv(n,i), i = 1, 12)
-        npcell = subDiv(n,1)*subDiv(n,2) + subDiv(n,3)*subDiv(n,4) + subDiv(n,5)*subDiv(n,6) + subDiv(n,7)*subDiv(n,8) + subDiv(n,9)*subDiv(n,10) + subDiv(n,11)*subDiv(n,12)
+        npcell = subDiv(n,1)*subDiv(n,2) + subDiv(n,3)*subDiv(n,4) +            &
+          subDiv(n,5)*subDiv(n,6) + subDiv(n,7)*subDiv(n,8) +                   &
+          subDiv(n,9)*subDiv(n,10) + subDiv(n,11)*subDiv(n,12)
     else if(templateSubDivisionTypes(n) .eq. 2) then
         read(inUnit, *) (subDiv(n,i), i = 1, 3)
         npcell = subDiv(n,1)*subDiv(n,2)*subDiv(n,3)
@@ -417,7 +438,8 @@ if(templateCount .gt. 0) then
                 if(templateSubDivisionTypes(n) .eq. 1) then
                     call pr_CreateParticlesOnFaces(pGroup, cell, m, sdiv, drape(n))
                 else if(templateSubDivisionTypes(n) .eq. 2) then
-                    call pr_CreateParticlesAsInternalArray(pGroup, cell, m, sdiv(1), sdiv(2), sdiv(3), drape(n))
+                    call pr_CreateParticlesAsInternalArray(pGroup, cell, m,     &
+                      sdiv(1), sdiv(2), sdiv(3), drape(n))
                 end if
             end if
         end do
@@ -446,8 +468,10 @@ use UTL8MODULE,only : ustop, u3dintmp, u3dintmpusg
 implicit none
 type(ParticleGroupType),intent(inout) :: pGroup
 integer,intent(in) :: inUnit, outUnit, cellCount
-integer :: totalParticleCount, firstElement, lastElement, layerCount, maskValueCount, drape
-integer :: templateSubDivisionType, layer, np, nx, ny, nz, offset, n, m, row, column, face, layerCellCount, count, i, j, k, nf, npcell
+integer :: totalParticleCount, firstElement, lastElement, layerCount,           &
+  maskValueCount, drape
+integer :: templateSubDivisionType, layer, np, nx, ny, nz, offset, n, m, row,   &
+  column, face, layerCellCount, count, i, j, k, nf, npcell
 integer,intent(in),dimension(cellCount) :: ibound
 integer,dimension(12) :: subDiv
 integer,dimension(:),allocatable :: cells, offsets, layerCellCounts
@@ -455,12 +479,12 @@ doubleprecision :: dx,dy,dz,x,y,z,faceCoord,rowCoord,columnCoord,dr,dc
 integer,dimension(6) :: nc,nr
 integer,dimension(:),allocatable :: mask
 integer,dimension(:),allocatable :: maskValues
-type(RectangularUnstructuredGridType),intent(in) :: grid
+class(ModflowRectangularGridType),intent(in) :: grid
 character(len=24) :: arrayName
 
 read(inUnit, *) templateSubDivisionType, drape
   
-layerCount = grid%GetLayerCount()
+layerCount = grid%LayerCount
 allocate(offsets(layerCount))
 allocate(layerCellCounts(layerCount))
 allocate(mask(cellCount))
@@ -470,18 +494,6 @@ do n = 1, layerCount
     layerCellCounts(n) = grid%GetLayerCellCount(n)
 end do
   
-! Read mask array
-arrayName = 'LOCATION MASK'
-if(grid%GetGridType() .eq. 1) then
-    call u3dintmp(inUnit, outUnit, layerCount, grid%GetRowCount(), grid%GetColumnCount(), cellCount, mask, arrayName)                      
-else if(grid%GetGridType() .eq. 2) then
-    call u3dintmpusg(inUnit, outUnit, cellCount, layerCount, mask, arrayName, layerCellCounts)
-else
-    write(outUnit,*) 'Invalid grid type specified when reading IBOUND array data.'
-    write(outUnit,*) 'Stopping.'
-    call ustop(' ')          
-end if
-  
 ! Read mask value count
 read(inUnit, *) maskValueCount
   
@@ -490,11 +502,26 @@ if(maskValueCount .gt. 0) then
     allocate(maskValues(maskValueCount))
     read(inUnit, *) (maskValues(m), m = 1, maskValueCount)
 end if
+  
+! Read mask array
+arrayName = 'LOCATION MASK'
+if((grid%GridType .eq. 1) .or. (grid%GridType .eq. 3)) then
+    call u3dintmp(inUnit, outUnit, layerCount, grid%RowCount,              &
+      grid%ColumnCount, cellCount, mask, arrayName)                      
+else if((grid%GridType .eq. 2) .or. (grid%GridType .eq. 4) ) then
+    call u3dintmpusg(inUnit, outUnit, cellCount, layerCount, mask, arrayName,   &
+      layerCellCounts)
+else
+    write(outUnit,*) 'Invalid grid type specified when reading IBOUND array data.'
+    write(outUnit,*) 'Stopping.'
+    call ustop(' ')          
+end if
 
 npcell = 0
 if(templateSubDivisionType .eq. 1) then
     read(inUnit, *) (subDiv(i), i = 1, 12)
-    npcell = subDiv(1)*subDiv(2) + subDiv(3)*subDiv(4) + subDiv(5)*subDiv(6) + subDiv(7)*subDiv(8) + subDiv(9)*subDiv(10) + subDiv(11)*subDiv(12)
+    npcell = subDiv(1)*subDiv(2) + subDiv(3)*subDiv(4) + subDiv(5)*subDiv(6) +  &
+      subDiv(7)*subDiv(8) + subDiv(9)*subDiv(10) + subDiv(11)*subDiv(12)
 else if(templateSubDivisionType .eq. 2) then
     read(inUnit, *) (subDiv(i), i = 1, 3)
     npcell = subDiv(1)*subDiv(2)*subDiv(3)
@@ -543,7 +570,8 @@ if(count .gt. 0) then
         end do
     else if(templateSubDivisionType .eq. 2) then
         do n = 1, count
-            call pr_CreateParticlesAsInternalArray(pGroup, cells(n), m, subDiv(1), subDiv(2), subDiv(3), drape)
+            call pr_CreateParticlesAsInternalArray(pGroup, cells(n), m,         &
+              subDiv(1), subDiv(2), subDiv(3), drape)
         end do
     end if
 end if
@@ -572,7 +600,8 @@ end if
   
 end function pr_FindFace
 
-subroutine pr_CreateParticlesOnFaces(pGroup, cellNumber, currentParticleCount, subDiv, drape)
+subroutine pr_CreateParticlesOnFaces(pGroup, cellNumber, currentParticleCount,  &
+  subDiv, drape)
 !***************************************************************************************************************
 ! Description goes here
 !***************************************************************************************************************
@@ -638,7 +667,8 @@ currentParticleCount = m
   
 end subroutine pr_CreateParticlesOnFaces
 
-subroutine pr_CreateParticlesAsInternalArray(pGroup, cellNumber, currentParticleCount, nx, ny, nz, drape)
+subroutine pr_CreateParticlesAsInternalArray(pGroup, cellNumber,                &
+  currentParticleCount, nx, ny, nz, drape)
 !***************************************************************************************************************
 ! Description goes here
 !***************************************************************************************************************

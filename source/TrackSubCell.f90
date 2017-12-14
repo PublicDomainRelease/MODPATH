@@ -208,7 +208,7 @@ contains
   vvv = dva / vv
   if(vvv .lt. 1.0d-4) then
     zro = tol
-    zrom = -zrom
+    zrom = -zro
     v = v1
     x = xL * dx
     if(v1 .gt. zro) dt = (dx - x) / v1
